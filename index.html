@@ -232,9 +232,16 @@
 
 <script>
 window.addEventListener('error', function(ev){
+  // Only report errors from the game's own code. Browser extensions, content blockers and other
+  // outside scripts produce a vague "Script error." that has nothing to do with the game.
+  var msg=String(ev.message||ev.error||'');
+  var here=location.href.split('#')[0];
+  var fromGame=ev.filename && ev.filename.split('#')[0]===here;
+  if(!fromGame || /^Script error\.?$/i.test(msg)) return;
   var b=document.getElementById('errBox');
-  if(b){ b.style.display='block'; b.textContent='ERROR: '+(ev.message||ev.error)+'  (line '+(ev.lineno||'?')+')'; }
+  if(b){ b.style.display='block'; b.textContent='ERROR: '+msg+'  (line '+(ev.lineno||'?')+')  — tap to hide'; }
 });
+document.addEventListener('DOMContentLoaded',function(){ var b=document.getElementById('errBox'); if(b){ b.addEventListener('click',function(){ b.style.display='none'; }); b.style.cursor='pointer'; } });
 </script>
 <script>
 "use strict";
