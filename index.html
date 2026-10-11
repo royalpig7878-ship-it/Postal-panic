@@ -1915,7 +1915,7 @@ function drawWheel(cx,cy,id,t){
     rr(cx-17,cy-6,34,10,5); ctx.fillStyle='#262a3a'; ctx.fill(); outline(2);
     ctx.fillStyle='#ff2e88'; rr(cx-12,cy+1,24,3,1.5); ctx.fill(); return;
   }
-  const spin=-t*0.05;
+  const spin=t*0.025;   // all rims turn clockwise (the way the wheels roll when driving right)
   ctx.fillStyle='#1a1a1a'; ctx.beginPath(); ctx.arc(cx,cy,15,0,7); ctx.fill();
   if(id==='standard'){ ctx.fillStyle='#7f8c8d'; ctx.beginPath(); ctx.arc(cx,cy,6,0,7); ctx.fill(); return; }
   if(id==='whitewall'){ ctx.strokeStyle='#fdfdfd'; ctx.lineWidth=3.5; ctx.beginPath(); ctx.arc(cx,cy,11,0,7); ctx.stroke(); ctx.fillStyle='#b8bfc6'; ctx.beginPath(); ctx.arc(cx,cy,7,0,7); ctx.fill(); ctx.fillStyle='#e5e9ec'; ctx.beginPath(); ctx.arc(cx,cy,3,0,7); ctx.fill(); return; }
@@ -1926,7 +1926,7 @@ function drawWheel(cx,cy,id,t){
   const g=ctx.createRadialGradient(cx-3,cy-3,1,cx,cy,11); g.addColorStop(0,rim[0]); g.addColorStop(1,rim[1]);
   ctx.fillStyle=g; ctx.beginPath(); ctx.arc(cx,cy,10.5,0,7); ctx.fill();
   ctx.strokeStyle=id==='gold'?'#8a6d00':'#6b737b'; ctx.lineWidth=2;
-  const spokes=id==='spinner'?3:5, rot=id==='spinner'?t*0.25:spin;
+  const spokes=id==='spinner'?3:5, rot=id==='spinner'?t*0.125:spin;
   for(let k=0;k<spokes;k++){ const a=rot+k*Math.PI*2/spokes; ctx.beginPath();
     if(id==='spinner'){ ctx.moveTo(cx,cy); ctx.quadraticCurveTo(cx+Math.cos(a+0.6)*8,cy+Math.sin(a+0.6)*8,cx+Math.cos(a)*10,cy+Math.sin(a)*10); }
     else { ctx.moveTo(cx+Math.cos(a)*3,cy+Math.sin(a)*3); ctx.lineTo(cx+Math.cos(a)*9.5,cy+Math.sin(a)*9.5); }
@@ -2004,7 +2004,18 @@ function renderLook(containerId,canvasId,canBuy,coinsElId){
   if(tip){ if(tryOn){ const it=findItem(tryOn.cat==='outfit'?OUTFITS:tryOn.cat==='shades'?SHADES:tryOn.cat==='wheels'?WHEELS:TRUCKS,tryOn.id);
       tip.textContent=canBuy?(bankCoins>=it.price?'Trying on '+it.name+' — tap it again to buy for 🪙'+it.price:'Trying on '+it.name+' — you need 🪙'+it.price+' (you have '+bankCoins+')'):'Preview of '+it.name+' — buy it in the shop between levels'; }
     else tip.textContent=''; }
-  drawPreview(canvasId);
+  drawPreview(canvasId); animatePreview(canvasId);
+}
+// keep the preview moving (spinner rims, neon glow, hover pads) while its screen is open
+let previewRaf=null, previewCanvas=null;
+function animatePreview(canvasId){
+  previewCanvas=canvasId; if(previewRaf) return;
+  const tick=function(){
+    const pc=document.getElementById(previewCanvas), scr=pc && pc.closest('.overlay');
+    if(!pc || !scr || scr.classList.contains('hidden') || running){ previewRaf=null; return; }
+    drawT++; drawPreview(previewCanvas); previewRaf=requestAnimationFrame(tick);
+  };
+  previewRaf=requestAnimationFrame(tick);
 }
 
 // ---------- Enemy variants ----------
