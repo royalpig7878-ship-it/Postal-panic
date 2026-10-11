@@ -88,6 +88,16 @@
     #startScreen .btn-stack #startBtn { grid-column:1 / -1; }
     #startScreen .tip { font-size:11px; }
   }
+  @media (max-height: 520px) {
+    #settingsScreen .panel { padding:12px 20px; gap:7px; }
+    #settingsScreen h2 { font-size:22px; margin:0; }
+    #settingsScreen .menu-btn { padding:9px 0; font-size:16px; }
+    #settingsScreen .set-tog small { display:none; }
+    #settingsScreen .tip { display:none; }
+    #settingsScreen .set-row { font-size:14px; } #settingsScreen .set-row input[type=range] { height:22px; }
+    #settingsScreen .set-row label br { display:none; }
+    .tog { width:50px; height:28px; } .tog::after { width:20px; height:20px; } .tog.on::after { left:26px; }
+  }
   .preview { width:min(320px,80vw); height:auto; border-radius:14px; border:2px solid rgba(255,255,255,.15); }
   .look-box { width:100%; display:flex; flex-direction:column; gap:6px; text-align:left; }
   .look-h { font-weight:bold; font-size:14px; color:#ffe14d; margin-top:6px; }
@@ -133,6 +143,11 @@
   @media (max-height:520px) { .elev-btn { padding:5px 10px; } .elev-num { width:32px; height:32px; font-size:15px; } }
   .set-row { display:grid; grid-template-columns: 1fr 1.3fr 44px; align-items:center; gap:10px; width:100%; text-align:left; font-weight:bold; font-size:15px; }
   .set-row input[type=range] { width:100%; accent-color:#ffe14d; height:28px; touch-action:pan-x; }
+  .set-tog { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; text-align:left; font-weight:bold; font-size:15px; }
+  .set-tog small { display:block; font-weight:normal; font-size:12px; opacity:.7; }
+  .tog { flex-shrink:0; width:58px; height:32px; border-radius:16px; border:none; background:rgba(255,255,255,.18); position:relative; cursor:pointer; transition:background .2s; }
+  .tog::after { content:''; position:absolute; top:4px; left:4px; width:24px; height:24px; border-radius:50%; background:#fff; transition:left .2s; box-shadow:0 2px 4px rgba(0,0,0,.3); }
+  .tog.on { background:#27ae60; } .tog.on::after { left:30px; }
   .set-val { font-variant-numeric:tabular-nums; text-align:right; color:#ffe14d; }
   @media (max-width:420px) { .set-row { grid-template-columns: 1fr 44px; } .set-row input[type=range] { grid-column:1 / -1; grid-row:2; } }
   .menu-btn.danger { background:#c0392b; box-shadow:0 4px 0 #922b21; }
@@ -354,12 +369,15 @@
   </div>
 
   <div id="settingsScreen" class="overlay hidden">
-    <div class="panel" style="width:min(400px,92vw)">
+    <div class="panel scroll" style="width:min(400px,92vw)">
       <h2>⚙ Settings</h2>
       <div class="set-row"><label for="volMusic">🎵 Music</label><input type="range" id="volMusic" min="0" max="100" step="5"><span class="set-val" id="volMusicVal"></span></div>
       <div class="set-row"><label for="volSfx">🔔 Sound effects</label><input type="range" id="volSfx" min="0" max="100" step="5"><span class="set-val" id="volSfxVal"></span></div>
       <div class="set-row"><label for="volVoices">🐕 Animals &amp; people</label><input type="range" id="volVoices" min="0" max="100" step="5"><span class="set-val" id="volVoicesVal"></span></div>
       <p class="tip">Drag a slider to hear a sample. The 🔊 button during play still mutes everything.</p>
+      <div class="set-tog"><span>💡 Tip banners<small>Level intros, new-enemy tips, boss and replay notes</small></span><button class="tog" id="togHints" role="switch" aria-label="Tip banners"></button></div>
+      <div class="set-tog"><span>👆 Button prompts<small>"Press E — Deliver" and other action reminders</small></span><button class="tog" id="togPrompts" role="switch" aria-label="Button prompts"></button></div>
+      <p class="tip" style="margin-top:-4px">The tutorial always shows its hints.</p>
       <div class="btn-stack" style="flex-direction:row;width:100%">
         <button class="menu-btn ghost" id="settingsReset" style="flex:1">Reset volume</button>
         <button class="menu-btn green" id="settingsDone" style="flex:1.4">Done</button>
@@ -488,7 +506,7 @@ fitCanvas();
 // ---------- Audio (synthesized) ----------
 let actx=null, muted=false;
 // Volume settings (0..1), saved in this browser. Each channel has its own gain node ("bus").
-const SETTINGS_DEFAULT={music:0.8, sfx:0.8, voices:0.7};
+const SETTINGS_DEFAULT={music:0.8, sfx:0.8, voices:0.7, hints:true, prompts:true};
 let settings=Object.assign({},SETTINGS_DEFAULT);
 try{ const sv=JSON.parse(localStorage.getItem('pp_settings')||'null'); if(sv) settings=Object.assign({},SETTINGS_DEFAULT,sv); }catch(e){}
 const buses={};
@@ -1227,6 +1245,7 @@ function updatePrompt(){
   else if(nearTruck()){ if(boss){ if(state.ammo<ammoCap()) msg='Press E — Restock mail ✉️'; } else if(state.delivered>=state.goal) msg='Press E — Finish Shift! 🎉'; else if(state.bag<BAG_MAX) msg='Press E — Load packages 📦'; }
   else if(nearSwing()) msg='Press Jump to grab the rope 🪢';
   else { for(let i=0;i<houses.length;i++){ const h=houses[i]; if(!h.delivered && Math.abs(player.x-h.mailX)<46){ msg= state.bag>0?'Press E — Deliver 📬':'Bag empty! Back to truck'; break; } } }
+  if(!settings.prompts && !tutorial) msg='';
   if(msg){ promptEl.textContent=msg; promptEl.classList.remove('hidden'); } else promptEl.classList.add('hidden');
 }
 
@@ -2604,6 +2623,7 @@ window.__elevKey=function(ev){
   return true;
 };
 function showBanner(step,text,ms){
+  if(!settings.hints && !tutorial) return;
   const box=$('tutBox'); $('tutStep').textContent=step; $('tutText').textContent=text;
   box.classList.remove('hidden'); box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop');
   clearTimeout(bannerTimer); bannerTimer=setTimeout(function(){ if(!tutorial) box.classList.add('hidden'); }, ms||5000);
@@ -3030,7 +3050,7 @@ function startGame(){
   if(boss && B){ showBanner('⚔ Boss fight', B.D.name+', '+B.D.title+'. Hit it with mail until its health runs out. Watch for the ! before each attack. Mail sacks drop in, and the truck restocks your ammo.',6000); setTimeout(function(){ if(boss) $('tutBox').classList.add('hidden'); },6000); }
   if(apt) showBanner('🏢 Apartment delivery','Go inside '+apt.name+' and deliver to every door. Take the elevator between floors, and restock your bag at the lobby mailroom.',6000);
   if(!boss && !apt && !tutorial && !state.replay && subLevel(level)===1 && SIGNATURE[theme.kind]) showBanner('🆕 New in '+theme.name, SIGNATURE[theme.kind].tip, 6000);
-  if(state.replay){ if(apt||boss) $('tutStep').textContent+=' · ↻ replay: 25% coins'; else showBanner('↻ Replay','You already beat this level, so coins pay 25% this time.',3500); }
+  if(state.replay){ if((apt||boss) && settings.hints) $('tutStep').textContent+=' · ↻ replay: 25% coins'; else showBanner('↻ Replay','You already beat this level, so coins pay 25% this time.',3500); }
   audioInit(); musicStop(); musicStart();
   cancelAnimationFrame(raf); lastFrameT=0; frameAcc=0; loop();
 }
@@ -3342,6 +3362,7 @@ function openSettings(from){
   settingsFrom=from; audioInit();
   [['volMusic','music'],['volSfx','sfx'],['volVoices','voices']].forEach(function(p){ $(p[0]).value=Math.round(settings[p[1]]*100); $(p[0]+'Val').textContent=Math.round(settings[p[1]]*100)+'%'; });
   $('wipeBtn').classList.toggle('hidden', from!=='startScreen');
+  syncToggles();
   $(from).classList.add('hidden'); $('settingsScreen').classList.remove('hidden');
 }
 function closeSettings(){ $('settingsScreen').classList.add('hidden'); $(settingsFrom).classList.remove('hidden'); }
@@ -3355,8 +3376,12 @@ function playSample(kind){
 });
 $('settingsBtn').addEventListener('click',function(){ SFX.click(); openSettings('startScreen'); });
 $('pauseSettingsBtn').addEventListener('click',function(){ SFX.click(); openSettings('pauseScreen'); });
+function syncToggles(){ [['togHints','hints'],['togPrompts','prompts']].forEach(function(p){ const b=$(p[0]); b.classList.toggle('on',!!settings[p[1]]); b.setAttribute('aria-checked',settings[p[1]]?'true':'false'); }); }
+[['togHints','hints'],['togPrompts','prompts']].forEach(function(p){ $(p[0]).addEventListener('click',function(){
+  settings[p[1]]=!settings[p[1]]; applySettings(); syncToggles(); SFX.click();
+  if(!tutorial){ if(!settings.hints) $('tutBox').classList.add('hidden'); if(!settings.prompts) $('prompt').classList.add('hidden'); } }); });
 $('settingsDone').addEventListener('click',function(){ SFX.click(); closeSettings(); });
-$('settingsReset').addEventListener('click',function(){ settings=Object.assign({},SETTINGS_DEFAULT); applySettings(); openSettings(settingsFrom); SFX.click(); });
+$('settingsReset').addEventListener('click',function(){ settings=Object.assign({},SETTINGS_DEFAULT,{hints:settings.hints,prompts:settings.prompts}); applySettings(); openSettings(settingsFrom); SFX.click(); });
 $('elevCancel').addEventListener('click',function(){ SFX.click(); closeElevator(); });
 $('tutorialBtn').addEventListener('click',function(){ audioInit(); SFX.click(); tutorial=true; level=1; bankCoins=0; upg={bag:0,boots:0,armor:0,ammo:0,stam:0}; $('startScreen').classList.add('hidden'); startGame(); });
 $('howToBtn').addEventListener('click',function(){ SFX.click(); $('startScreen').classList.add('hidden'); $('howToScreen').classList.remove('hidden'); });
