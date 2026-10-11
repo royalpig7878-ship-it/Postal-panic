@@ -78,6 +78,16 @@
   }
   @media (max-width: 460px) { #hud { flex-wrap:wrap; row-gap:4px; } }
   .panel.scroll { max-height:94vh; overflow-y:auto; }
+  /* short screens (phones held sideways): compact main menu with a two-column button grid */
+  @media (max-height: 520px) {
+    #startScreen { gap:8px; padding:10px 16px; justify-content:center; }
+    #startScreen .badge-art, #startScreen > p:not(.tip) { display:none; }
+    #startScreen h1 { font-size:30px; margin:0; }
+    #startScreen .btn-stack { display:grid; grid-template-columns:1fr 1fr; gap:9px; width:min(560px,92vw); margin-top:0; }
+    #startScreen .btn-stack .menu-btn { padding:10px 0; font-size:16px; }
+    #startScreen .btn-stack #startBtn { grid-column:1 / -1; }
+    #startScreen .tip { font-size:11px; }
+  }
   .preview { width:min(320px,80vw); height:auto; border-radius:14px; border:2px solid rgba(255,255,255,.15); }
   .look-box { width:100%; display:flex; flex-direction:column; gap:6px; text-align:left; }
   .look-h { font-weight:bold; font-size:14px; color:#ffe14d; margin-top:6px; }
@@ -141,6 +151,33 @@
   .lv .mk { position:absolute; top:-6px; right:-6px; width:16px; height:16px; border-radius:50%; background:#2ecc71; color:#fff; font-size:10px; line-height:1; display:flex; align-items:center; justify-content:center; border:2px solid #14202e; }
   .lv .mk.lock { background:#4a5563; font-size:8px; }
   .lv .apt { position:absolute; bottom:0; left:2px; font-size:9px; }
+  #achPop { position:absolute; left:50%; top:58px; transform:translate(-50%,-140%); display:flex; align-items:center; gap:12px; background:linear-gradient(180deg,#2b2410,#1c1708);
+            border:2px solid #f5c542; border-radius:16px; padding:8px 16px 8px 10px; color:#fff; z-index:30; pointer-events:none; box-shadow:0 8px 26px rgba(0,0,0,.5), 0 0 18px rgba(245,197,66,.35);
+            transition:transform .35s cubic-bezier(.2,1.4,.4,1), opacity .3s; opacity:0; min-width:260px; max-width:92vw; }
+  #achPop.show { transform:translate(-50%,0); opacity:1; }
+  #achPop .ai { font-size:30px; width:44px; height:44px; display:flex; align-items:center; justify-content:center; background:rgba(245,197,66,.18); border-radius:12px; }
+  #achPop .at { font-size:11px; letter-spacing:1px; color:#f5c542; font-weight:bold; text-transform:uppercase; }
+  #achPop .an { font-size:16px; font-weight:bold; }
+  #achPop .ar { margin-left:auto; font-weight:bold; color:#ffe14d; font-size:15px; white-space:nowrap; }
+  @media (max-height:520px) { #achPop { top:40px; padding:5px 12px 5px 8px; } #achPop .ai { width:34px; height:34px; font-size:22px; } #achPop .an { font-size:14px; } }
+  .ach-head { width:100%; display:flex; align-items:center; gap:10px; font-weight:bold; }
+  .ach-bar { flex:1; height:10px; background:rgba(255,255,255,.12); border-radius:6px; overflow:hidden; }
+  .ach-bar > i { display:block; height:100%; background:linear-gradient(90deg,#f5c542,#ffe14d); border-radius:6px; }
+  .ach-list { width:100%; display:flex; flex-direction:column; gap:7px; text-align:left; }
+  .ach-cat { margin:8px 0 0; font-size:14px; opacity:.8; letter-spacing:1px; text-transform:uppercase; }
+  .ach { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.06); border:2px solid transparent; border-radius:12px; padding:7px 10px; }
+  .ach.got { border-color:rgba(245,197,66,.55); background:rgba(245,197,66,.10); }
+  .ach .ai { font-size:24px; width:38px; text-align:center; flex-shrink:0; }
+  .ach:not(.got) .ai { filter:grayscale(1); opacity:.55; }
+  .ach .info { flex:1; min-width:0; }
+  .ach .nm { font-weight:bold; font-size:14px; }
+  .ach .ds { font-size:12px; opacity:.75; }
+  .ach .pg { display:flex; align-items:center; gap:6px; font-size:11px; opacity:.85; margin-top:3px; }
+  .ach .pg .ach-bar { height:6px; }
+  .ach .rw { font-weight:bold; font-size:13px; white-space:nowrap; color:#ffe14d; }
+  .ach.got .rw { color:#2ecc71; }
+  .ach-stats { width:100%; display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:6px; font-size:12px; text-align:left; }
+  .ach-stats div { background:rgba(255,255,255,.06); border-radius:10px; padding:6px 9px; } .ach-stats b { display:block; font-size:16px; }
   #toast { position:absolute; left:50%; bottom:28px; transform:translateX(-50%); background:rgba(20,32,46,.95); color:#fff; border:2px solid #2ecc71; border-radius:14px; padding:10px 18px; font-weight:bold; z-index:20; }
   .hidden { display:none !important; }
   .hudbtn { pointer-events:auto; cursor:pointer; border:none; color:#fff; font:inherit; font-weight:bold; }
@@ -213,6 +250,7 @@
     <div class="btn-stack">
       <button class="menu-btn green" id="startBtn">▶  Start Shift</button>
       <button class="menu-btn" id="levelsBtn">🗺  Levels</button>
+      <button class="menu-btn" id="achBtn">🏆  Achievements</button>
       <button class="menu-btn" id="tutorialBtn">🎓  Tutorial</button>
       <button class="menu-btn" id="howToBtn">❓  How to Play</button>
       <button class="menu-btn ghost" id="settingsBtn">⚙  Settings</button>
@@ -230,6 +268,7 @@
       </p>
       <p style="font-size:15px">Load packages at the 🚚 truck, deliver to every 🏠 mailbox, then return to the truck to finish the level. Beat a level to advance — they get longer and harder forever. Throw junk mail (limited ✉️ ammo) at enemies; grab glowing mail-sacks to restock. Each neighborhood adds its own troublemaker: 🐿 acorn-throwing squirrels (Autumn), 🦝 package-stealing raccoons (Dusk), ☃️ snowball kids and slippery ice (Snow), possums and swooping bats (Night), and 🤖 armored robot dogs (Neo City). Need a breather? Jump on the 🚚 truck roof: dogs, geese and neighbors can't reach you there. Watch the sky: birds drop rocks — dodge their shadow!</p>
       <p style="font-size:14px;opacity:.85">After every neighborhood's 10th level comes a ⚔ boss fight: hit the boss with mail and dodge its attacks. Your progress, coins and upgrades are saved. Use 🗺 Levels to replay any level you've unlocked (replays pay 25% coins). Every 5th level is an 🏢 apartment building: press E at the front door to go in, deliver to each numbered door, and use the 🛗 elevator to change floors.</p>
+      <p style="font-size:14px;opacity:.85">🏆 Earn achievements for deliveries, knockouts, flawless shifts, bosses and more. Each one pays bonus coins the moment you unlock it.</p>
       <p style="font-size:14px;opacity:.85">Mind the gaps! 🌉 walk the bridge, ride the moving platform, or press Jump near a 🪢 rope to swing across. Jump onto raised ground and floating platforms.</p>
       <button class="menu-btn ghost" id="howToBack" style="width:200px">Back</button>
     </div>
@@ -301,6 +340,18 @@
     </div>
   </div>
   <div id="toast" class="hidden"></div>
+  <div id="achPop"><span class="ai"></span><div><div class="at">🏆 Achievement unlocked</div><div class="an"></div></div><span class="ar"></span></div>
+  <div id="achScreen" class="overlay hidden">
+    <div class="panel scroll" style="width:min(560px,94vw)">
+      <h2>🏆 Achievements</h2>
+      <div class="ach-head"><span id="achCount">0 / 0</span><div class="ach-bar"><i id="achFill" style="width:0"></i></div><span id="achCoins" style="color:#ffe14d"></span></div>
+      <p class="tip" style="margin:-4px 0 0">Every achievement pays coins the moment you unlock it, even on replays.</p>
+      <div id="achList" class="ach-list"></div>
+      <h3 class="ach-cat" style="align-self:flex-start">📊 Career stats</h3>
+      <div id="achStats" class="ach-stats"></div>
+      <button class="menu-btn ghost" id="achBack" style="width:100%">Back</button>
+    </div>
+  </div>
 
   <div id="settingsScreen" class="overlay hidden">
     <div class="panel" style="width:min(400px,92vw)">
@@ -477,6 +528,7 @@ const SFX = {
   jump(){ tone(380,0.14,'square',0.1,640); },
   damage(){ tone(220,0.25,'sawtooth',0.2,70); noise(0.15,0.18,900); },
   step(){ noise(0.04,0.06,500); },
+  achieve(){ [784,988,1175,1568].forEach((f,i)=>setTimeout(()=>tone(f,0.22,'triangle',0.15),i*90)); setTimeout(()=>tone(2093,0.35,'sine',0.08),380); },
   win(){ [523,659,784,1046].forEach((f,i)=>setTimeout(()=>tone(f,0.2,'square',0.16),i*120)); },
   lose(){ [392,330,262,196].forEach((f,i)=>setTimeout(()=>tone(f,0.25,'sawtooth',0.14),i*150)); },
   click(){ tone(660,0.06,'square',0.1); },
@@ -1018,7 +1070,7 @@ function update(){
 
     if(consume('jump')){
       const sw=nearSwing();
-      if(sw){ player.swing=sw; player.swingAng=Math.atan2(player.x-sw.ax,player.y-sw.ay); player.swingVel=player.vx*0.004+player.face*0.02; SFX.jump(); }
+      if(sw){ stat('swings'); player.swing=sw; player.swingAng=Math.atan2(player.x-sw.ax,player.y-sw.ay); player.swingVel=player.vx*0.004+player.face*0.02; SFX.jump(); }
       else if(player.onGround){ player.vy=-12.8; player.onGround=false; SFX.jump(); }
     }
 
@@ -1045,18 +1097,19 @@ function update(){
       if(gt!==null && player.y>=gt){ player.y=gt; player.vy=0; player.onGround=true; }
       else player.onGround=false;
     }
-    if(gt===null && player.y>GROUND+140){ damage(); respawnFromFall(); }
+    if(gt===null && player.y>GROUND+140){ damage(); respawnFromFall(); stat('falls'); }
   }
 
   player.x=Math.max(20,Math.min(LEVEL_LEN-20,player.x));
 
   if(player.throwCd>0) player.throwCd--;
   if(consume('throw') && player.throwCd<=0){
-    if(state.ammo>0){ projectiles.push({x:player.x+player.face*20,y:player.y-26,vx:player.face*8.5,vy:-2,life:90}); state.ammo--; player.throwCd=14; SFX.throw(); }
+    if(state.ammo>0){ projectiles.push({x:player.x+player.face*20,y:player.y-26,vx:player.face*8.5,vy:-2,life:90}); state.ammo--; player.throwCd=14; SFX.throw(); stat('throws'); }
     else { player.throwCd=20; SFX.empty(); }
   }
 
   if(consume('interact')) handleInteract();
+  if(!ach.stats.roof && onTruckRoof()) statMax('roof',1);
 
   const maxCam=Math.max(0,LEVEL_LEN-W);
   let ct=player.x-W*0.4; if(ct<0) ct=0; if(ct>maxCam) ct=maxCam;
@@ -1102,7 +1155,7 @@ function update(){
       if(hit(p.x-7,p.y-7,14,14, e.x-tw/2,e.y-th,tw,th)){
         if(e.kind==='snowkid' && e.ducked){ p.dead=true; p.life=0; pop(p.x,p.y,'#ffffff',6); SFX.thud(); break; }   // the fort blocks mail
         p.dead=true; p.life=0; e.hp--; e.hitCd=10; if(e.kind!=='snowkid') e.x+=p.vx*1.4; pop(e.x,e.y-e.h/2,'#fff',5); lastAnimalSnd=0; animalSound(e.kind,e.x,true);
-        if(e.hp<=0){ e.alive=false; addCoins(2); pop(e.x,e.y-e.h/2,'#ffe14d',8); SFX.defeat();
+        if(e.hp<=0){ e.alive=false; addCoins(2); noteKO(e); pop(e.x,e.y-e.h/2,'#ffe14d',8); SFX.defeat();
           if(e.stolen){ state.bag=Math.min(bagMax(),state.bag+e.stolen); pop(e.x,e.y-30,'#c8924a',10); SFX.restock(); } }
         else SFX.hit();
         break;
@@ -1146,18 +1199,18 @@ function handleInteract(){
     if(apt.cur===0 && Math.abs(player.x-APT_MAILROOM_X)<60){ if(state.bag<bagMax()){ state.bag=bagMax(); pop(player.x,player.y-30,'#3498db',6); SFX.restock(); } return; }
   }
   if(nearTruck()){
-    if(!boss && state.delivered>=state.goal){ endGame(true); return; }
+    if(!boss && state.delivered>=state.goal){ if(!state.over) endGame(true); return; }
     state.bag=bagMax(); if(!tutorial) state.ammo=ammoCap(); pop(player.x,player.y-30,'#3498db',6); SFX.restock(); return;
   }
   for(let i=0;i<houses.length;i++){
     const h=houses[i];
     if(!h.delivered && Math.abs(player.x-h.mailX)<46){
-      if(state.bag>0){ state.bag--; h.delivered=true; state.delivered++; addCoins(7); pop(h.mailX,h.mailTop-58,'#27ae60',10); SFX.deliver(); }
+      if(state.bag>0){ state.bag--; h.delivered=true; state.delivered++; addCoins(7); stat('delivered'); pop(h.mailX,h.mailTop-58,'#27ae60',10); SFX.deliver(); }
       return;
     }
   }
 }
-function damage(){ state.hp--; state.invuln=70; pop(player.x,player.y-26,'#e74c3c',8); SFX.damage(); player.x-=player.face*30; }
+function damage(){ state.hurt=(state.hurt||0)+1; state.hp--; state.invuln=70; pop(player.x,player.y-26,'#e74c3c',8); SFX.damage(); player.x-=player.face*30; }
 function pop(x,y,color,n){ for(let i=0;i<(n||5);i++) particles.push({x:x,y:y,vx:(Math.random()-0.5)*5,vy:-Math.random()*4-1,life:24+Math.random()*16,color:color,r:2+Math.random()*3}); }
 function hit(ax,ay,aw,ah,bx,by,bw,bh){ return ax<bx+bw && ax+aw>bx && ay<by+bh && ay+ah>by; }
 
@@ -1916,7 +1969,7 @@ function renderLook(containerId,canvasId,canBuy,coinsElId){
       const st=(look[cat]===it.id&&!(tryOn&&tryOn.cat===cat))?'sel':(trying?'try':(isOwned?'':'locked'));
       r.appendChild(chip(it.name,swatchFn?swatchFn(it):null,st,it.price,function(){
         if(isOwned){ look[cat]=it.id; tryOn=null; saveLook(); SFX.click(); }
-        else if(trying && canBuy && bankCoins>=it.price){ bankCoins-=it.price; owned[cat].push(it.id); look[cat]=it.id; tryOn=null; saveLook(); saveProgress(); SFX.ammo(); }
+        else if(trying && canBuy && bankCoins>=it.price){ bankCoins-=it.price; owned[cat].push(it.id); look[cat]=it.id; tryOn=null; saveLook(); saveProgress(); SFX.ammo(); stat('spent',it.price); statMax('styles',styleCount()); }
         else if(trying){ SFX.empty(); }
         else { tryOn={cat:cat,id:it.id}; SFX.click(); }
         rerender();
@@ -2218,7 +2271,7 @@ function updateBirds(){
       const p=projectiles[pi]; if(p.dead) continue;
       if(hit(p.x-6,p.y-6,12,12,b.x-18,b.y-12,36,24)){
         p.dead=true; p.life=0; b.hp--; b.hitCd=10; pop(b.x,b.y,'#fff',6);
-        if(b.hp<=0){ b.alive=false; addCoins(3); pop(b.x,b.y,'#ffe14d',10); SFX.defeat(); } else SFX.hit();
+        if(b.hp<=0){ b.alive=false; addCoins(3); stat('ko'); stat('birds'); pop(b.x,b.y,'#ffe14d',10); SFX.defeat(); } else SFX.hit();
         break;
       }
     }
@@ -3016,13 +3069,14 @@ function endGame(won){
   $('endDelivered').textContent=state.delivered; $('endTime').textContent=Math.floor(state.time);
   if(tutorial){
     $('endCoins').textContent=state.coins; $('shopBtn').classList.add('hidden'); pendingAdvance=false; tutDone=won;
-    if(won){ $('endTitle').textContent='🎓 TUTORIAL COMPLETE'; $('endMsg').textContent="You're ready for a real shift. Load up, deliver everything, and get back to the truck!"; $('retryBtn').textContent='▶  Start Shift'; SFX.win(); }
+    if(won){ if(state.delivered>=state.goal) stat('tutorial'); $('endTitle').textContent='🎓 TUTORIAL COMPLETE'; $('endMsg').textContent="You're ready for a real shift. Load up, deliver everything, and get back to the truck!"; $('retryBtn').textContent='▶  Start Shift'; SFX.win(); }
     else { $('endTitle').textContent='💥 TRY AGAIN'; $('endMsg').textContent='No worries. Run the tutorial again and take it step by step.'; $('retryBtn').textContent='↻  Restart Tutorial'; SFX.lose(); }
     return;
   }
   if(boss){
     if(won){ progress.bosses[level]=1; }
     $('shopBtn').classList.remove('hidden'); pendingAdvance=false; if(won) bankCoins=state.coins; saveProgress(); $('endCoins').textContent=bankCoins; $('bossBar').classList.add('hidden');
+    if(won && bossWon){ stat('bosses'); stat('boss'+biomeIndex(level)); if(!state.hurt) stat('bossPerfect'); statMax('reached',frontier().level); statMax('maxCoins',bankCoins); }
     const D=bossDef();
     if(won && bossWon){ $('endTitle').textContent='🏆 '+D.name.toUpperCase()+' DEFEATED!'; $('endMsg').textContent='Boss reward: +'+(state.bossPaid||0)+' coins'+(state.replay?' (replay: 25%)':'')+'. The road to '+themeFor(level+1).name+' is open!'; $('retryBtn').textContent='▶  Enter '+themeFor(level+1).name; SFX.win(); }
     else if(won){ bossWon=true; $('endTitle').textContent='⏭ BOSS SKIPPED'; $('endMsg').textContent='On to '+themeFor(level+1).name+'.'; $('retryBtn').textContent='▶  Enter '+themeFor(level+1).name; }
@@ -3036,6 +3090,10 @@ function endGame(won){
     const bonus=Math.max(0,Math.min(30,Math.round((par*1.4-state.time)/2)));
     const bonusPaid=addCoins(bonus); bankCoins=state.coins; progress.done[level]=1; saveProgress();
     $('endCoins').textContent=state.coins;
+    if(state.delivered>=state.goal){   // a real finish (not the ⏭ skip button)
+      stat('levels'); if(apt) stat('apts'); if(!state.hurt) stat('perfect'); if(bonus>=30) stat('speed'); if(state.hp===1) stat('closecall');
+      statMax('reached',frontier().level); statMax('maxCoins',bankCoins);
+    }
     if(biomeDone){
       $('endTitle').textContent='🌟 '+theme.name.toUpperCase()+' CLEARED!';
       $('endMsg').textContent='You finished all 10 levels of '+theme.name+' (+'+bonusPaid+' coins). But '+bossDef().name+' blocks the road out...';
@@ -3097,7 +3155,7 @@ function renderShop(){
     btn.addEventListener('click', function(){
       const key=btn.dataset.k, u=UPGRADES.find(function(x){return x.key===key;});
       const cost=upgCost(u);
-      if(bankCoins>=cost && upg[key]<u.max){ bankCoins-=cost; upg[key]++; saveProgress(); SFX.ammo(); renderShop(); }
+      if(bankCoins>=cost && upg[key]<u.max){ bankCoins-=cost; upg[key]++; saveProgress(); SFX.ammo(); stat('spent',cost); statMax('maxUpg',UPGRADES.filter(function(x){ return upg[x.key]>=x.max; }).length); renderShop(); }
       else SFX.empty();
     });
   });
@@ -3144,14 +3202,134 @@ function playLevel(L,b){ $('levelsScreen').classList.add('hidden'); tutorial=fal
 $('levelsBtn').addEventListener('click',function(){ audioInit(); SFX.click(); openLevels(); });
 $('levelsBack').addEventListener('click',function(){ SFX.click(); $('levelsScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); });
 
+// ---------- Achievements ----------
+// Each achievement watches one career stat; reaching `goal` unlocks it and pays `coins` straight into the bank.
+const ACH_CATS=[['deliver','📬 Deliveries'],['levels','🗺 Shifts'],['ko','🥊 Knockouts'],['boss','⚔ Bosses'],['money','🪙 Money & Style'],['fun','🎉 Just for Fun']];
+const ACHS=[
+  {id:'d1',cat:'deliver',icon:'📦',name:'First Delivery',desc:'Deliver your first package',stat:'delivered',goal:1,coins:10},
+  {id:'d2',cat:'deliver',icon:'📬',name:'Regular Route',desc:'Deliver 50 packages',stat:'delivered',goal:50,coins:25},
+  {id:'d3',cat:'deliver',icon:'🧢',name:'Seasoned Carrier',desc:'Deliver 250 packages',stat:'delivered',goal:250,coins:60},
+  {id:'d4',cat:'deliver',icon:'👑',name:'Postal Legend',desc:'Deliver 1,000 packages',stat:'delivered',goal:1000,coins:150},
+  {id:'a1',cat:'deliver',icon:'🏢',name:'Going Up',desc:'Finish an apartment level',stat:'apts',goal:1,coins:25},
+  {id:'a2',cat:'deliver',icon:'🛗',name:'Elevator Regular',desc:'Finish 10 apartment levels',stat:'apts',goal:10,coins:75},
+  {id:'tut',cat:'levels',icon:'🎓',name:'Trainee',desc:'Finish the tutorial',stat:'tutorial',goal:1,coins:10},
+  {id:'l1',cat:'levels',icon:'⏰',name:'Clocked In',desc:'Finish your first level',stat:'levels',goal:1,coins:10},
+  {id:'l2',cat:'levels',icon:'📅',name:'Full-Timer',desc:'Finish 25 levels',stat:'levels',goal:25,coins:50},
+  {id:'l3',cat:'levels',icon:'🏅',name:'Employee of the Month',desc:'Finish 100 levels',stat:'levels',goal:100,coins:150},
+  {id:'p1',cat:'levels',icon:'🛡',name:'Not a Scratch',desc:'Finish a level without losing a heart',stat:'perfect',goal:1,coins:30},
+  {id:'p2',cat:'levels',icon:'💎',name:'Untouchable',desc:'Finish 10 levels without losing a heart',stat:'perfect',goal:10,coins:100},
+  {id:'sp',cat:'levels',icon:'⚡',name:'Express Delivery',desc:'Earn the full speed bonus on a level',stat:'speed',goal:1,coins:40},
+  {id:'cc',cat:'levels',icon:'😅',name:'Close Call',desc:'Finish a level with only 1 heart left',stat:'closecall',goal:1,coins:25},
+  {id:'w1',cat:'levels',icon:'🌃',name:'World Traveler',desc:'Make it all the way to Neo City',stat:'reached',goal:51,coins:100,noBar:true},
+  {id:'w2',cat:'levels',icon:'♾',name:'Overtime',desc:'Clear all six neighborhoods and start the second lap',stat:'reached',goal:61,coins:250,noBar:true},
+  {id:'k1',cat:'ko',icon:'✉️',name:'Return to Sender',desc:'Knock out an enemy with junk mail',stat:'ko',goal:1,coins:10},
+  {id:'k2',cat:'ko',icon:'👮',name:'Neighborhood Watch',desc:'Knock out 100 enemies',stat:'ko',goal:100,coins:40},
+  {id:'k3',cat:'ko',icon:'💥',name:'Junk Mail Juggernaut',desc:'Knock out 500 enemies',stat:'ko',goal:500,coins:120},
+  {id:'kd',cat:'ko',icon:'🐕',name:'Down, Boy!',desc:'Knock out 25 dogs',stat:'dogs',goal:25,coins:30},
+  {id:'kg',cat:'ko',icon:'🪿',name:'Goose Chase',desc:'Knock out 25 geese and ducks',stat:'geese',goal:25,coins:30},
+  {id:'kn',cat:'ko',icon:'😤',name:'Noise Complaint',desc:'Knock out 25 grumpy neighbors',stat:'neighbors',goal:25,coins:30},
+  {id:'kc',cat:'ko',icon:'🦝',name:'Critter Control',desc:'Knock out 25 squirrels, raccoons, snow kids, possums or robot dogs',stat:'critters',goal:25,coins:40},
+  {id:'kb',cat:'ko',icon:'🐦',name:'Bird Watcher',desc:'Knock 10 birds or bats out of the sky',stat:'birds',goal:10,coins:40},
+  {id:'ks',cat:'ko',icon:'🔥',name:'Hot Streak',desc:'Knock out 3 enemies within 5 seconds',stat:'streak',goal:3,coins:30},
+  {id:'kt',cat:'ko',icon:'🗞',name:'Paper Cannon',desc:'Throw 500 pieces of junk mail',stat:'throws',goal:500,coins:40},
+  {id:'b0',cat:'boss',icon:'🐶',name:'Bruno Busted',desc:'Defeat Big Bruno',stat:'boss0',goal:1,coins:50},
+  {id:'b1',cat:'boss',icon:'🪿',name:'Goose Cooked',desc:'Defeat the Goose King',stat:'boss1',goal:1,coins:50},
+  {id:'b2',cat:'boss',icon:'📋',name:'Motion Denied',desc:'Defeat HOA President Harriet',stat:'boss2',goal:1,coins:50},
+  {id:'b3',cat:'boss',icon:'⛄',name:'Snowball Melted',desc:'Defeat Snowball Sam',stat:'boss3',goal:1,coins:50},
+  {id:'b4',cat:'boss',icon:'🦇',name:'Crowley Grounded',desc:'Defeat Count Crowley',stat:'boss4',goal:1,coins:50},
+  {id:'b5',cat:'boss',icon:'🦈',name:'Shark Sunk',desc:'Defeat the Sky Shark',stat:'boss5',goal:1,coins:50},
+  {id:'bp',cat:'boss',icon:'🏆',name:'Flawless Victory',desc:'Defeat a boss without losing a heart',stat:'bossPerfect',goal:1,coins:80},
+  {id:'m1',cat:'money',icon:'🐷',name:'Piggy Bank',desc:'Have 500 coins saved up',stat:'maxCoins',goal:500,coins:30},
+  {id:'m2',cat:'money',icon:'🛍',name:'Big Spender',desc:'Spend 1,000 coins in the shop',stat:'spent',goal:1000,coins:60},
+  {id:'m3',cat:'money',icon:'⬆️',name:'Maxed Out',desc:'Fully upgrade any one upgrade',stat:'maxUpg',goal:1,coins:50},
+  {id:'m4',cat:'money',icon:'🕶',name:'Fashionista',desc:'Buy 10 style items',stat:'styles',goal:10,coins:50},
+  {id:'f1',cat:'fun',icon:'🚚',name:'High Ground',desc:'Stand on top of your mail truck',stat:'roof',goal:1,coins:10},
+  {id:'f2',cat:'fun',icon:'🪢',name:'Tarzan Mail',desc:'Swing on 20 ropes',stat:'swings',goal:20,coins:30},
+  {id:'f3',cat:'fun',icon:'🕳',name:'Watch Your Step',desc:'Fall into a gap',stat:'falls',goal:1,coins:5}
+];
+let ach={stats:{},got:{}};
+function loadAch(){ try{ const a=JSON.parse(localStorage.getItem('pp_ach')||'null'); if(a) ach={stats:a.stats||{},got:a.got||{}}; }catch(e){} }
+function saveAch(){ try{ localStorage.setItem('pp_ach',JSON.stringify(ach)); }catch(e){} }
+let achQueue=[], achShowing=false, achQuiet=false;
+function achCheck(statName){
+  let paid=0, n=0;
+  ACHS.forEach(function(a){ if(a.stat!==statName || ach.got[a.id]) return; if((ach.stats[a.stat]||0)>=a.goal){ ach.got[a.id]=Date.now(); paid+=a.coins; n++; if(!achQuiet) achQueue.push(a); } });
+  if(paid){ bankCoins+=paid; if(state && !state.over) state.coins+=paid; saveProgress(); syncCoinsUI(); }
+  saveAch(); if(n){ achBtnLabel(); if(!achQuiet) achNext(); }
+  return paid;
+}
+function achBtnLabel(){ const b=$('achBtn'); if(b) b.textContent='🏆  Achievements · '+Object.keys(ach.got).length+'/'+ACHS.length; }
+function stat(name,n){ ach.stats[name]=(ach.stats[name]||0)+(n===undefined?1:n); return achCheck(name); }
+function statMax(name,v){ if(v>(ach.stats[name]||0)){ ach.stats[name]=v; return achCheck(name); } return 0; }
+function syncCoinsUI(){
+  try{ if(running) syncHUD(); }catch(e){}
+  const ec=$('endCoins'); if(ec && !$('endScreen').classList.contains('hidden')) ec.textContent=bankCoins;
+  const sc=$('shopCoins'); if(sc && !$('shopScreen').classList.contains('hidden')) sc.textContent=bankCoins;
+}
+function achNext(){
+  if(achShowing || !achQueue.length) return;
+  const a=achQueue.shift(), el=$('achPop'); achShowing=true;
+  el.querySelector('.ai').textContent=a.icon; el.querySelector('.an').textContent=a.name; el.querySelector('.ar').textContent='+'+a.coins+' 🪙';
+  el.classList.add('show'); try{ SFX.achieve(); }catch(e){}
+  setTimeout(function(){ el.classList.remove('show'); setTimeout(function(){ achShowing=false; achNext(); },420); },2800);
+}
+// stats the game already knows from saved progress (so players with old saves get credit)
+function achSyncFromProgress(){
+  statMax('reached',frontier().level);
+  for(const L in progress.bosses){ if(progress.bosses[L]) statMax('boss'+biomeIndex(+L),1); }
+  statMax('levels',Object.keys(progress.done).length);
+  statMax('apts',Object.keys(progress.done).filter(function(L){ return L%5===0; }).length);
+  statMax('maxCoins',bankCoins);
+  statMax('maxUpg',UPGRADES.filter(function(u){ return upg[u.key]>=u.max; }).length);
+  statMax('styles',styleCount());
+}
+function styleCount(){ let n=0; ['outfit','shades','truck','wheels'].forEach(function(k){ n+=owned[k].length; }); return Math.max(0,n-7); }
+let koTimes=[];
+function noteKO(e){
+  stat('ko');
+  const t=e.type, k=e.kind;
+  if(t==='bat') stat('birds');
+  else if(t==='critter'||t==='kid'||k==='robodog') stat('critters');
+  else if(t==='dog') stat('dogs');
+  else if(t==='goose') stat('geese');
+  else if(t==='neighbor') stat('neighbors');
+  const now=state.time; koTimes=koTimes.filter(function(x){ return now-x<5; }); koTimes.push(now); statMax('streak',koTimes.length);
+}
+function openAch(){
+  const list=$('achList'); list.innerHTML='';
+  let got=0, earned=0, total=0;
+  ACH_CATS.forEach(function(c){
+    const h=document.createElement('h3'); h.className='ach-cat'; h.textContent=c[1]; list.appendChild(h);
+    ACHS.filter(function(a){ return a.cat===c[0]; }).forEach(function(a){
+      const done=!!ach.got[a.id], v=Math.min(a.goal,ach.stats[a.stat]||0); total+=a.coins; if(done){ got++; earned+=a.coins; }
+      const row=document.createElement('div'); row.className='ach'+(done?' got':'');
+      let prog='';
+      if(!done && a.goal>1 && !a.noBar) prog='<div class="pg"><div class="ach-bar"><i style="width:'+(100*v/a.goal)+'%"></i></div><span>'+v.toLocaleString()+' / '+a.goal.toLocaleString()+'</span></div>';
+      row.innerHTML='<span class="ai">'+a.icon+'</span><div class="info"><div class="nm">'+a.name+'</div><div class="ds">'+a.desc+'</div>'+prog+'</div><span class="rw">'+(done?'✓ ':'')+'🪙 '+a.coins+'</span>';
+      list.appendChild(row);
+    });
+  });
+  $('achCount').textContent=got+' / '+ACHS.length; $('achFill').style.width=(100*got/ACHS.length)+'%'; $('achCoins').textContent='🪙 '+earned+' / '+total;
+  const S=ach.stats, st=[['📦','Packages delivered',S.delivered],['✅','Levels finished',S.levels],['🥊','Enemies knocked out',S.ko],['🗞','Junk mail thrown',S.throws],['⚔','Bosses beaten',S.bosses],['🛡','Flawless levels',S.perfect],['🔥','Best KO streak',S.streak],['🛍','Coins spent',S.spent]];
+  $('achStats').innerHTML=st.map(function(r){ return '<div>'+r[0]+' '+r[1]+'<b>'+(r[2]||0).toLocaleString()+'</b></div>'; }).join('');
+  $('startScreen').classList.add('hidden'); $('achScreen').classList.remove('hidden');
+  $('achScreen').querySelector('.panel').scrollTop=0;
+}
+loadAch(); achBtnLabel();
+(function(){ achQuiet=true; const before=Object.keys(ach.got).length, c0=bankCoins; achSyncFromProgress(); achQuiet=false;
+  const n=Object.keys(ach.got).length-before; if(n>0) setTimeout(function(){ showToast('🏆 '+n+' achievement'+(n>1?'s':'')+' unlocked from your progress so far (+'+(bankCoins-c0)+' coins)'); },600); })();
+$('achBtn').addEventListener('click',function(){ audioInit(); SFX.click(); openAch(); });
+$('achBack').addEventListener('click',function(){ SFX.click(); $('achScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); });
+
 // ---------- Reset everything ----------
 function showToast(msg){ const t=$('toast'); t.textContent=msg; t.classList.remove('hidden'); clearTimeout(showToast.tm); showToast.tm=setTimeout(function(){ t.classList.add('hidden'); },3000); }
 function wipeEverything(){
-  ['pp_progress','pp_look','pp_owned','pp_settings','pp_muted'].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+  ['pp_progress','pp_look','pp_owned','pp_settings','pp_muted','pp_ach'].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
   progress=PROGRESS_EMPTY(); restoreRun(); level=1; boss=false; bossNext=false; bossWon=false;
   look=Object.assign({},LOOK_DEFAULT); owned={outfit:['blue','red','green','purple'],shades:['none'],truck:['navy'],wheels:['standard']};
   settings=Object.assign({},SETTINGS_DEFAULT); applySettings();
   if(muted){ muted=false; $('muteBtn').textContent='🔊'; musicMute(false); }
+  ach={stats:{},got:{}}; achQueue=[]; achBtnLabel();
   reset(); draw(); updateStartButton();
 }
 $('wipeBtn').addEventListener('click',function(){ SFX.click(); $('settingsScreen').classList.add('hidden'); $('resetScreen').classList.remove('hidden'); });
