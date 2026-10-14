@@ -25,8 +25,16 @@
   .btn, .menu-btn, .hudbtn, .chip, .sw, .tab, .buy-btn { touch-action:manipulation; }
   #rotateHint { display:none; position:absolute; left:50%; top:92px; transform:translateX(-50%); background:rgba(0,0,0,.7); color:#fff; padding:6px 12px; border-radius:14px; font-size:13px; pointer-events:none; z-index:5; white-space:nowrap; }
   @media (orientation:portrait) and (max-width:600px) and (pointer:coarse) { #rotateHint.show { display:block; } }
-  #joy { position:relative; width:180px; height:56px; border-radius:28px; border:2.5px solid rgba(255,255,255,.7); background:rgba(18,28,42,.4) linear-gradient(90deg,transparent 0 48%,rgba(255,255,255,.35) 48% 52%,transparent 52%); pointer-events:auto; touch-action:none; align-self:flex-end; }
-  #joyKnob { position:absolute; left:50%; top:50%; width:50px; height:42px; margin:-21px 0 0 -25px; border-radius:21px; background:rgba(255,255,255,.55); border:2px solid rgba(255,255,255,.9); pointer-events:none; }
+  #joy { position:relative; width:250px; height:72px; border-radius:36px; border:2.5px solid rgba(255,255,255,.7); background:rgba(18,28,42,.4) linear-gradient(90deg,transparent 0 48%,rgba(255,255,255,.35) 48% 52%,transparent 52%); pointer-events:auto; touch-action:none; align-self:flex-end; }
+  #aimJoy { display:none; position:relative; width:128px; height:128px; border-radius:50%; border:2.5px solid rgba(255,255,255,.75); background:rgba(18,28,42,.4); pointer-events:auto; touch-action:none; align-self:flex-end; }
+  #aimJoy::before { content:''; position:absolute; left:50%; top:10%; bottom:10%; width:2px; margin-left:-1px; background:rgba(255,255,255,.3); } #aimJoy::after { content:''; position:absolute; top:50%; left:10%; right:10%; height:2px; margin-top:-1px; background:rgba(255,255,255,.3); }
+  #aimKnob { position:absolute; left:50%; top:50%; width:52px; height:52px; margin:-26px 0 0 -26px; border-radius:50%; background:rgba(255,255,255,.55); border:2px solid rgba(255,255,255,.9); pointer-events:none; z-index:1; }
+  #controls.arcade #joy, #controls.arcade [data-key=interact], #controls.arcade [data-key=jump], #controls.arcade #sprintBtn { display:none !important; }
+  #controls.arcade #aimJoy { display:block; }
+  #controls.arcade .rpad [data-key=throw] { right:30px !important; bottom:26px !important; width:96px; height:96px; border-radius:50%; font-size:34px; background:rgba(224,64,40,.62); border-color:rgba(255,200,190,.95); }
+  @media (orientation:portrait) { #aimJoy { width:140px; height:140px; margin-bottom:14px; } #controls.arcade .rpad [data-key=throw] { right:22px !important; bottom:34px !important; width:108px; height:108px; } }
+  @media (max-width:480px) { #joy { width:196px; } }
+  #joyKnob { position:absolute; left:50%; top:50%; width:62px; height:54px; margin:-27px 0 0 -31px; border-radius:27px; background:rgba(255,255,255,.55); border:2px solid rgba(255,255,255,.9); pointer-events:none; }
   @media (orientation:portrait) and (pointer:coarse) { #hud { padding-top:max(4px, calc(env(safe-area-inset-top) * 0.55)) !important; margin-top:0; } }
   .cluster { display:flex; gap:10px; pointer-events:auto; }
   .btn { width:62px; height:62px; border-radius:16px; border:2.5px solid rgba(255,255,255,.75); background:rgba(18,28,42,.5);
@@ -69,7 +77,7 @@
     #hud { flex-wrap:nowrap; gap:6px; padding:6px max(10px, env(safe-area-inset-right)) 6px max(10px, env(safe-area-inset-left)); font-size:15px; }
     #hud .pill { padding:5px 9px; white-space:nowrap; flex-shrink:0; border-radius:16px; }
     #hud .hudbtn { padding:5px 0; flex-shrink:0; min-width:40px; min-height:34px; text-align:center; font-size:16px; }
-    #timePill { display:none; }
+    #timePill { padding:5px 7px !important; }
     #stamWrap { min-width:0 !important; }
     #stamTrack { width:52px !important; height:10px !important; }
   }
@@ -81,6 +89,12 @@
   }
   @media (max-width: 460px) { #hud { flex-wrap:wrap; row-gap:5px; font-size:15px; } }
   .panel.scroll { max-height:94vh; overflow-y:auto; }
+  /* medium-height screens (small phones, laptops): two-column button grid so every menu button fits */
+  @media (max-height: 900px) {
+    #startScreen .btn-stack { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:min(560px,92vw); }
+    #startScreen .btn-stack .menu-btn { padding:11px 0; font-size:17px; }
+    #startScreen .btn-stack #startBtn { grid-column:1 / -1; }
+  }
   /* short screens (phones held sideways): compact main menu with a two-column button grid */
   @media (max-height: 520px) {
     #startScreen { gap:8px; padding:10px 16px; justify-content:center; }
@@ -91,6 +105,9 @@
     #startScreen .btn-stack #startBtn { grid-column:1 / -1; }
     #startScreen .tip { font-size:11px; }
   }
+  /* if the menu is ever taller than the screen, scroll it (instead of cutting off the top and bottom buttons) */
+  #startScreen { overflow-y:auto; justify-content:flex-start; }
+  #startScreen::before, #startScreen::after { content:''; margin:auto; }
   @media (max-height: 520px) {
     #settingsScreen .panel { padding:12px 20px; gap:7px; }
     #settingsScreen h2 { font-size:22px; margin:0; }
@@ -205,6 +222,12 @@
   .ach.got .rw { color:#2ecc71; }
   .ach-stats { width:100%; display:grid; grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); gap:6px; font-size:12px; text-align:left; }
   .ach-stats div { background:rgba(255,255,255,.06); border-radius:10px; padding:6px 9px; } .ach-stats b { display:block; font-size:16px; }
+  .radio-bar { position:sticky; top:-14px; z-index:3; display:flex; align-items:center; gap:8px; width:100%; background:rgba(36,52,72,.98); border:2px solid #ffe14d; border-radius:14px; padding:8px 10px; box-shadow:0 6px 14px rgba(0,0,0,.45); }
+  .radio-bar #radioTitle { flex:1; min-width:0; font-weight:bold; font-size:14px; text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .radio-bar .buy-btn { padding:8px 11px; font-size:15px; }
+  .rd-song { cursor:pointer; touch-action:manipulation; }
+  .rd-song.on { border-color:#ffe14d; background:rgba(255,225,77,.14); }
+  .rd-song.locked { opacity:.55; cursor:default; }
   #toast { position:absolute; left:50%; bottom:28px; transform:translateX(-50%); background:rgba(20,32,46,.95); color:#fff; border:2px solid #2ecc71; border-radius:14px; padding:10px 18px; font-weight:bold; z-index:20; }
   .hidden { display:none !important; }
   .hudbtn { pointer-events:auto; cursor:pointer; border:none; color:#fff; font:inherit; font-weight:bold; }
@@ -266,9 +289,10 @@
 
   <div id="controls" class="hidden">
     <div id="joy" aria-label="slide left or right"><div id="joyKnob"></div></div>
+    <div id="aimJoy" aria-label="aim"><div id="aimKnob"></div></div>
     <div class="rpad">
       <button class="btn small" id="sprintBtn" data-toggle="sprint" style="right:104px;bottom:96px">💨</button>
-      <button class="btn" data-key="interact" style="right:14px;bottom:104px">E</button>
+      <button class="btn" data-key="interact" style="right:14px;bottom:104px">📦</button>
       <button class="btn" data-key="throw" style="right:106px;bottom:8px">✉</button>
       <button class="btn jump" data-key="jump" style="right:0;bottom:0">⤒</button>
     </div>
@@ -282,8 +306,10 @@
       <button class="menu-btn green" id="startBtn">▶  Start Shift</button>
       <button class="menu-btn" id="levelsBtn">🗺  Levels</button>
       <button class="menu-btn" id="achBtn">🏆  Achievements</button>
+      <button class="menu-btn" id="lbBtn">📊  Leaderboards</button>
       <button class="menu-btn" id="shopMenuBtn">🛒  Upgrade Shop</button>
       <button class="menu-btn" id="arcMenuBtn">🎯  Arcade</button>
+      <button class="menu-btn" id="radioBtn">📻  Radio</button>
       <button class="menu-btn" id="tutorialBtn">🎓  Tutorial</button>
       <button class="menu-btn" id="howToBtn">❓  How to Play</button>
       <button class="menu-btn ghost" id="settingsBtn">⚙  Settings</button>
@@ -295,12 +321,12 @@
       <h2>How to Play</h2>
       <p style="font-size:17px;line-height:1.5;text-align:left;max-width:460px;margin:8px auto">
         🚚 Load packages at your truck, then run to every 🏠 mailbox and deliver.<br>
-        ⬆ Jump (tap again to double jump) and ✉️ throw junk mail at enemies.<br>
+        ⬆ Jump (Spring Soles in the shop unlock the double jump) and ✉️ throw junk mail at enemies.<br>
         🏁 Return to the truck to finish. Beat the ⚔ boss after level 10.<br>
         🪙 Earn coins, then spend them in the shop. Don't run out of ❤️!<br>
-        🏖 Save up to retire, then cruise resorts in a golf cart: Space to hop obstacles, F to honk.
+        🏖 Save up to retire, then cruise resorts in a golf cart: ⤒ to hop obstacles, ✉ to honk.
       </p>
-      <p class="keys">Move <span>← →</span> Jump <span>Space</span> Throw <span>F</span> Sprint <span>Shift</span> Interact <span>E</span> Pause <span>Esc</span></p>
+      <p class="keys">Move <span>◀ ▶ / A D</span> Jump <span>⤒ Space</span> Throw <span>✉ F</span> Sprint <span>💨 Shift</span> Pick up / deliver <span>📦 E</span> Pause <span>Esc</span></p>
       <button class="menu-btn ghost" id="howToBack" style="width:200px">Back</button>
     </div>
   </div>
@@ -333,12 +359,14 @@
     <div class="btn-stack">
       <button class="menu-btn green" id="retryBtn">New Shift</button>
       <button class="menu-btn" id="shopBtn">🛒  Upgrade Shop</button>
+      <button class="menu-btn ghost" id="endMenuBtn">🏠  Main Menu</button>
     </div>
   </div>
 
   <div id="lookScreen" class="overlay hidden">
     <div class="panel scroll" style="max-width:520px;width:min(520px,94vw)">
       <h2>Pick your look</h2>
+      <div style="display:flex;gap:8px;align-items:center;font-size:14px">Name <input id="playerName" maxlength="12" placeholder="Your carrier name" style="width:180px;padding:8px 10px;border-radius:10px;border:none;font:inherit;background:rgba(255,255,255,.14);color:#fff;text-align:center"></div>
       <canvas id="lookCanvas" class="preview" width="320" height="190"></canvas>
       <div id="lookListTip" class="tip" style="min-height:18px;opacity:.9"></div>
       <div id="lookList" class="look-box"></div>
@@ -370,6 +398,7 @@
       </div>
     </div>
   </div>
+  <div id="adScreen" class="overlay hidden" style="z-index:40"><div class="panel" style="width:min(360px,90vw)"><div class="badge-art">📺</div><h2>Ad break</h2><p>Free play unlocks when the ad ends.<br><span style="opacity:.7;font-size:13px">(Ad placeholder: the real ad goes here.)</span></p><div style="font-size:34px;font-weight:bold;color:#ffe14d" id="adCount">5</div></div></div>
   <div id="arcadeEnd" class="overlay hidden" style="z-index:25">
     <div class="panel" style="width:min(420px,92vw)">
       <div class="badge-art" id="arcIcon">🎯</div>
@@ -402,6 +431,18 @@
   </div>
   <div id="toast" class="hidden"></div>
   <div id="achPop"><span class="ai"></span><div><div class="at">🏆 Achievement unlocked</div><div class="an"></div></div><span class="ar"></span></div>
+  <div id="lbScreen" class="overlay hidden">
+    <div class="panel scroll" style="width:min(560px,94vw)">
+      <h2>📊 Leaderboards</h2>
+      <p class="tip" id="lbWho" style="margin:-4px 0 0"></p>
+      <div id="lbList" class="ach-list"></div>
+      <h3 class="ach-cat" style="align-self:flex-start">⏱ Fastest time per level</h3>
+      <div id="lbTimes" class="ach-stats"></div>
+      <p class="tip" id="lbNote"></p>
+      <button class="menu-btn ghost" id="lbBack" style="width:100%">Back</button>
+    </div>
+  </div>
+
   <div id="achScreen" class="overlay hidden">
     <div class="panel scroll" style="width:min(560px,94vw)">
       <h2>🏆 Achievements</h2>
@@ -414,15 +455,26 @@
     </div>
   </div>
 
+  <div id="radioScreen" class="overlay hidden">
+    <div class="panel scroll" style="width:min(560px,94vw)">
+      <h2>📻 Radio</h2>
+      <p class="tip" style="margin:-4px 0 0">Beat a neighborhood's boss to unlock its songs, then play them any time. Tap a song to play it again to stop.</p>
+      <div class="radio-bar"><span id="radioTitle">Pick a song to play</span><button class="buy-btn" id="radioPrev" aria-label="Previous song">⏮</button><button class="buy-btn" id="radioStop" aria-label="Stop">⏹</button><button class="buy-btn" id="radioNext" aria-label="Next song">⏭</button></div>
+      <div id="radioList" class="ach-list"></div>
+      <button class="menu-btn ghost" id="radioBack" style="width:100%">Back</button>
+    </div>
+  </div>
+
   <div id="settingsScreen" class="overlay hidden">
     <div class="panel scroll" style="width:min(400px,92vw)">
       <h2>⚙ Settings</h2>
       <div class="set-row"><label for="volMusic">🎵 Music</label><input type="range" id="volMusic" min="0" max="100" step="5"><span class="set-val" id="volMusicVal"></span></div>
       <div class="set-row"><label for="volSfx">🔔 Sound effects</label><input type="range" id="volSfx" min="0" max="100" step="5"><span class="set-val" id="volSfxVal"></span></div>
       <div class="set-row"><label for="volVoices">🐕 Animals &amp; people</label><input type="range" id="volVoices" min="0" max="100" step="5"><span class="set-val" id="volVoicesVal"></span></div>
+      <div class="set-row"><label for="ctlAlpha">🎮 Button see-through</label><input type="range" id="ctlAlpha" min="10" max="100" step="5"><span class="set-val" id="ctlAlphaVal"></span></div>
       <p class="tip">Drag a slider to hear a sample. The 🔊 button during play still mutes everything.</p>
       <div class="set-tog"><span>💡 Tip banners<small>Level intros, new-enemy tips, boss and replay notes</small></span><button class="tog" id="togHints" role="switch" aria-label="Tip banners"></button></div>
-      <div class="set-tog"><span>👆 Button prompts<small>"Press E — Deliver" and other action reminders</small></span><button class="tog" id="togPrompts" role="switch" aria-label="Button prompts"></button></div>
+      <div class="set-tog"><span>👆 Button prompts<small>"Press 📦 — Deliver" and other action reminders</small></span><button class="tog" id="togPrompts" role="switch" aria-label="Button prompts"></button></div>
       <p class="tip" style="margin-top:-4px">The tutorial always shows its hints.</p>
       <div class="set-tog"><span>🛠 Developer mode<small>Unlocks every level, shop item and upgrade (free), plus the triple jump. Your real save is untouched.</small></span><button class="tog" id="togDev" role="switch" aria-label="Developer mode"></button></div>
       <div class="btn-stack" style="flex-direction:row;width:100%">
@@ -599,6 +651,12 @@ function shiftArrays(dy){
   particles.forEach(function(q){ q.y+=dy; });
   rocks.forEach(function(q){ q.y+=dy; });
   eShots.forEach(function(q){ q.y+=dy; });
+  obstacles.forEach(function(o){ if(o.base!=null) o.base+=dy; });   // dumpsters etc. keep standing on the street after a rotation
+  vents.forEach(function(v){ if(v.top!=null) v.top+=dy; });
+  sands.forEach(function(q){ if(q.top!=null) q.top+=dy; });
+  hazards.forEach(function(h){ if(h.y!=null) h.y+=dy; });
+  if(typeof B!=='undefined' && B){ B.y+=dy; }
+  if(typeof bossShots!=='undefined' && bossShots) bossShots.forEach(function(q){ q.y+=dy; });
 }
 function onResize(){
   const oldGround=GROUND, oldW=W;
@@ -617,7 +675,7 @@ fitCanvas();
 // ---------- Audio (synthesized) ----------
 let actx=null, muted=false;
 // Volume settings (0..1), saved in this browser. Each channel has its own gain node ("bus").
-const SETTINGS_DEFAULT={music:0.8, sfx:0.8, voices:0.7, hints:true, prompts:true};
+const SETTINGS_DEFAULT={music:0.8, sfx:0.8, voices:0.7, hints:true, prompts:true, ctlAlpha:1};
 let settings=Object.assign({},SETTINGS_DEFAULT);
 try{ const sv=JSON.parse(localStorage.getItem('pp_settings')||'null'); if(sv) settings=Object.assign({},SETTINGS_DEFAULT,sv); }catch(e){}
 const buses={};
@@ -626,9 +684,11 @@ function bus(name){
   if(!buses[name]){ buses[name]=actx.createGain(); buses[name].gain.value=settings[name]; buses[name].connect(actx.destination); }
   return buses[name];
 }
-function applySettings(){ ['music','sfx','voices'].forEach(function(k){ if(buses[k]&&actx){ const g=buses[k].gain; g.cancelScheduledValues(actx.currentTime); g.value=settings[k]; g.setValueAtTime(settings[k],actx.currentTime); } }); try{ localStorage.setItem('pp_settings',JSON.stringify(settings)); }catch(e){} }
+function applyCtlAlpha(){ const c=document.getElementById('controls'); if(c) c.style.opacity=String(Math.max(0.1,Math.min(1,settings.ctlAlpha===undefined?1:settings.ctlAlpha))); }
+function applySettings(){ applyCtlAlpha(); ['music','sfx','voices'].forEach(function(k){ if(buses[k]&&actx){ const g=buses[k].gain; g.cancelScheduledValues(actx.currentTime); g.value=settings[k]; g.setValueAtTime(settings[k],actx.currentTime); } }); try{ localStorage.setItem('pp_settings',JSON.stringify(settings)); }catch(e){} try{ fmApplyAll(); }catch(e){} }
 function audioInit(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(actx && typeof loadAnimalSounds==='function') loadAnimalSounds();
-  if(actx && actx.state==='suspended') actx.resume(); }
+  if(actx && actx.state==='suspended') actx.resume();
+  try{ if(fm && fm.needPlay) fmUnlock(); }catch(e){} }   // a blocked song retries on the next tap
 function tone(freq,dur,type,vol,slideTo){
   if(!actx||muted) return;
   const o=actx.createOscillator(), g=actx.createGain();
@@ -767,8 +827,10 @@ let musTimer=null, musStep=0, musGain=null, musTrack=null, musName='', musPhrase
 const MUSIC_VOL=0.42;
 function midi(m){ return 440*Math.pow(2,(m-69)/12); }
 function musicFor(){
+  if(arcadeMode) return 'arcade';
   if(resortMode&&RS) return 'resort:'+RS.id;
   if(tutorial) return 'tutorial';
+  if(isRetLevel(level) && progress && progress.retiredTo) return 'ret:'+progress.retiredTo;   // Retirement Days levels play the retirement world's songs
   if(boss) return 'boss:'+theme.kind;
   if(apt && apt.cur>=0) return 'apt:'+theme.kind;
   return theme.kind;
@@ -859,12 +921,176 @@ function musicTick(){
     musStep++; musNext+=stepDur;
   }
 }
+// ---------- Music files: your own songs from the PostalPanicMusic folder (the synth above is the fallback) ----------
+// Keys match what musicFor() returns: 'menu', 'arcade', a neighbourhood kind (street levels), 'apt:<kind>' (special building levels 5 and 10),
+// 'boss:<kind>', and 'resort:<id>' (retirement worlds; 'ret:<id>' reuses the same files for the Retirement Days levels).
+// Areas with more than one file pick one at random each time the area starts. Only the song that is needed gets loaded.
+const MUSIC_DIR='PostalPanicMusic/';
+const MUSIC_MANIFEST={
+  'menu':['MainMenu.mp3'],
+  'arcade':['Arcade.mp3'],
+  'suburbs':['Suburbs_ Street.mp3'],      'apt:suburbs':['Suburbs_ building.mp3'],      'boss:suburbs':['Suburbs_ boss.mp3'],
+  'autumn':['Autumn _ streets.mp3'],      'apt:autumn':['Autumn _ building.mp3'],      'boss:autumn':['Autumn _ boss.mp3'],
+  'farm':['Farm_ streets.mp3'],           'apt:farm':['Farm_ building.mp3'],           'boss:farm':['Farm_ boss.mp3'],
+  'dusk':['Dusk_ streets.mp3'],           'apt:dusk':['Dusk_ building.mp3'],           'boss:dusk':['Dusk_ boss.mp3'],
+  'snow':['Snow_ streets.mp3'],           'apt:snow':['Snow_ building.mp3'],           'boss:snow':['Snow_ boss.mp3'],
+  'river':['River _ street.mp3'],         'apt:river':['River _ building.mp3'],        'boss:river':['River _ boss.mp3'],
+  'patriot':['Patriot_ street.mp3'],      'apt:patriot':['Patriot_ building.mp3'],     'boss:patriot':['Patriot_ boss.mp3'],
+  'night':['Night_ streets.mp3'],         'apt:night':['Night_ building.mp3'],         'boss:night':['Night_ boss.mp3'],
+  'desert':['Desert_ street.mp3'],        'apt:desert':['Desert_ building.mp3'],       'boss:desert':['Desert_ boss.mp3'],
+  'city':['City_ streets.mp3'],           'apt:city':['City_ building.mp3'],           'boss:city':['City_ boss.mp3'],
+  'alley':['Back ally _ streets.mp3'],    'apt:alley':['Back ally _ building.mp3'],    'boss:alley':['Back ally _ boss.mp3'],
+  'pirate':['Pirate _ street.mp3'],       'apt:pirate':['Pirate _ building.mp3'],      'boss:pirate':['Pirate _ boss.mp3'],
+  'treehouse':['Tree top _ streets.mp3'], 'apt:treehouse':['Tree top _ building.mp3'], 'boss:treehouse':['Tree top _ boss.mp3'],
+  'fantasy':['Fantasy _  street.mp3'],    'apt:fantasy':['Fantasy _  building.mp3'],   'boss:fantasy':['Fantasy _  boss.mp3'],
+  'candy':['Candy _ streets.mp3'],        'apt:candy':['Candy _ building.mp3'],        'boss:candy':['Candy _boss.mp3'],
+  'horror':['Horror_ streets.mp3'],       'apt:horror':['Horror_ building.mp3'],       'boss:horror':['Horror_ boss.mp3'],
+  'cyber':['Cyber _ Streets.mp3'],        'apt:cyber':['Cyber _ building.mp3'],        'boss:cyber':['Cyber _ boss.mp3'],
+  'trippy':['Trippy _ streets.mp3'],      'apt:trippy':['Trippy _ building.mp3'],      'boss:trippy':['Trippy _ boss.mp3'],
+  'resort:basement':['Moms basement1.mp3','Moms basement2.mp3','Moms basement3.mp3'],
+  'resort:studio':['Suburbs retirement1.mp3','Suburbs retirement2.mp3','Suburbs retirement3.mp3','Suburbs retirement4.mp3'],
+  'resort:cabin':['Lakeside cabin1.mp3','Lakeside cabin2.mp3','Lakeside cabin3.mp3','Lakeside cabin4.mp3'],
+  'resort:bungalow':['Beach bungalow1.mp3','Beach bungalow2.mp3','Beach bungalow3.mp3','Beach bungalow4.mp3'],
+  'resort:chalet':['Mountain chalet1.mp3','Mountain chalet2.mp3','Mountain chalet3.mp3','Mountain chalet4.mp3'],
+  'resort:castle':['Castle1.mp3','Castle2.mp3','Castle3.mp3','Castle4.mp3'],
+  'resort:trippy':['Trippy world1.mp3','Trippy world2.mp3','Trippy world3.mp3','Trippy world4.mp3'],
+  'resort:island':['Private island1.mp3','Private island2.mp3','Private island3.mp3','Private island4.mp3']
+};
+Object.keys(MUSIC_MANIFEST).forEach(function(k){ if(k.indexOf('resort:')===0) MUSIC_MANIFEST['ret:'+k.slice(7)]=MUSIC_MANIFEST[k]; });
+const FM_VOL=0.6, FM_IN=2, FM_OUT=1, FM_TAIL=20;   // song loudness vs the sound effects, fade-in / fade-out seconds, never start inside the last N seconds
+const FM_SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+let fm=null, fmOld=[], fmPool=null, fmTimer=null, fmReq=0, fmFadeUntil=0, fmPending=false, fmMuF=1, fmMuTo=1, fmMuInit=false, fmOk=0, fmBad=0, fmOff=false;
+const fmFailed={}, fmLast={}, fmRouted=/^https?:$/.test(location.protocol);   // routed = through Web Audio (volume bus + iPhone fades); not possible from file://, which uses element volume instead
+function fmWanted(name){ if(fmOff) return false; const l=MUSIC_MANIFEST[name]; return !!(l && l.some(function(f){ return !fmFailed[f]; })); }
+function fmPick(name){
+  const all=(MUSIC_MANIFEST[name]||[]).filter(function(f){ return !fmFailed[f]; });
+  if(!all.length) return null;
+  const pool=all.length>1 ? all.filter(function(f){ return f!==fmLast[name]; }) : all;   // don't repeat the last song of this area
+  const f=pool[Math.floor(Math.random()*pool.length)]; fmLast[name]=f; return f;
+}
+function fmPoolInit(){
+  if(fmPool||!actx) return; fmPool=[];
+  for(let i=0;i<3;i++){
+    const e={el:new Audio(),gain:null,busy:false,unlocked:false}; e.el.preload='auto';
+    if(fmRouted){ try{ const s=actx.createMediaElementSource(e.el); e.gain=actx.createGain(); e.gain.gain.value=0; s.connect(e.gain); e.gain.connect(bus('music')); }catch(err){ e.gain=null; } }
+    fmPool.push(e);
+  }
+}
+// Called inside the first tap / click / key: lets phones play our audio elements later without needing another tap, and retries a blocked song.
+function fmUnlock(){
+  fmPoolInit(); if(!fmPool) return;
+  fmPool.forEach(function(e){
+    if(e.busy||e.unlocked) return; e.unlocked=true;
+    try{ e.el.src=FM_SILENT; const p=e.el.play(); if(p&&p.then) p.then(function(){ if(!e.busy) e.el.pause(); },function(){}); }catch(err){}
+  });
+  const t=fm; if(t&&t.needPlay&&!t.paused){ t.needPlay=false; t.f=0; fmApply(t); fmPlay(t); if(t.ready) fmRamp(t,1,FM_IN); }
+}
+function fmApply(t){
+  if(t.dead) return; const v=Math.max(0,Math.min(1,t.f*FM_VOL*fmMuF));
+  try{ if(t.ent.gain) t.ent.gain.gain.value=v; else t.el.volume=Math.max(0,Math.min(1,v*settings.music)); }catch(e){}
+}
+function fmApplyAll(){ if(fm) fmApply(fm); fmOld.forEach(fmApply); }
+function fmEnsureTick(){ if(!fmTimer) fmTimer=setInterval(fmTick,30); }
+function fmTick(){
+  const now=performance.now(); let busy=false;
+  if(fmMuF!==fmMuTo){ const st=30/200; fmMuF=fmMuF<fmMuTo?Math.min(fmMuTo,fmMuF+st):Math.max(fmMuTo,fmMuF-st); busy=true; }
+  (fm?[fm]:[]).concat(fmOld).forEach(function(t){
+    if(t.dur){ const k=Math.min(1,(now-t.t0)/t.dur); t.f=t.from+(t.to-t.from)*k; if(k>=1){ t.dur=0; const d=t.done; t.done=null; if(d) d(); } else busy=true; }
+    fmApply(t);
+  });
+  if(!busy){ clearInterval(fmTimer); fmTimer=null; }
+}
+function fmRamp(t,to,sec,done){ t.from=t.f; t.to=to; t.t0=performance.now(); t.dur=Math.max(1,sec*1000); t.done=done||null; fmEnsureTick(); }
+function fmPlay(t){
+  try{ const p=t.el.play(); if(p&&p.catch) p.catch(function(err){ if(t.dead) return; if(err&&err.name==='NotAllowedError') t.needPlay=true; else if(!(err&&err.name==='AbortError')) fmFail(t); }); }catch(err){ fmFail(t); }
+}
+function fmGetEnt(){
+  for(let i=0;i<fmPool.length;i++) if(!fmPool[i].busy) return fmPool[i];
+  const o=fmOld[0]; if(o){ fmRelease(o); return o.ent; }
+  return null;
+}
+function fmRelease(t){
+  if(t.dead) return; t.dead=true; clearTimeout(t.wd);
+  const e=t.el; e.onerror=null; e.onloadedmetadata=null; e.onseeked=null;
+  try{ e.pause(); e.removeAttribute('src'); e.load(); }catch(err){}
+  t.ent.busy=false; const i=fmOld.indexOf(t); if(i>=0) fmOld.splice(i,1); if(fm===t) fm=null;
+}
+function fmStart(name,req,onFail){
+  if(!fmMuInit){ fmMuInit=true; fmMuF=fmMuTo=muted?0:1; }
+  fmPoolInit();
+  const file=fmPick(name), ent=(file&&fmPool)?fmGetEnt():null;
+  if(!file||!ent){ onFail(); return; }
+  const el=ent.el, t={name:name,file:file,ent:ent,el:el,f:0,from:0,to:0,t0:0,dur:0,done:null,ready:false,paused:false,dead:false,needPlay:false,onFail:onFail,req:req,wd:0};
+  ent.busy=true; fm=t; fmApply(t);
+  el.onerror=function(){ fmFail(t); };
+  el.onloadedmetadata=function(){ fmMeta(t); };
+  t.wd=setTimeout(function(){ if(!t.ready) fmFail(t); },12000);   // never loaded: use the synth instead
+  try{ el.loop=true; el.src=MUSIC_DIR+encodeURIComponent(file); }catch(err){ fmFail(t); return; }
+  fmPlay(t);   // plays silently (volume 0) while it loads, so phones count it as started by the tap
+}
+// Pick a random start point (never inside the last FM_TAIL seconds), then fade in once the seek has landed.
+function fmMeta(t){
+  if(t.dead) return; t.el.onloadedmetadata=null;
+  const d=t.el.duration; let st=0;
+  if(isFinite(d) && d>FM_TAIL+10 && t.name.indexOf('radio:')!==0) st=Math.random()*(d-FM_TAIL);   // the Radio plays songs from the start
+  if(st>1){
+    t.el.onseeked=function(){ t.el.onseeked=null; fmReady(t); };
+    setTimeout(function(){ fmReady(t); },3500);
+    try{ t.el.currentTime=st; }catch(err){ fmReady(t); }
+  } else fmReady(t);
+}
+function fmReady(t){
+  if(t.ready||t.dead) return; t.ready=true; clearTimeout(t.wd); fmOk++;
+  if(!t.paused && !t.needPlay) fmRamp(t,1,FM_IN);
+}
+function fmFail(t){   // missing file / can't load: try another file of this area, else fall back to the synth tune
+  if(t.dead) return;
+  const cur=(fm===t), name=t.name, req=t.req, onFail=t.onFail;
+  fmFailed[t.file]=true; fmBad++; if(!fmOk && fmBad>=2) fmOff=true;   // folder not there at all: stop trying
+  fmRelease(t);
+  if(!cur||req!==fmReq) return;
+  if(fmWanted(name)) fmStart(name,req,onFail); else onFail();
+}
+function fmStopCur(){   // fade the current song out (about 1 second), then drop it
+  const t=fm; if(!t) return; fm=null;
+  if(t.paused||!t.ready||t.needPlay||t.f<0.02){ fmRelease(t); return; }
+  fmOld.push(t); fmRamp(t,0,FM_OUT,function(){ fmRelease(t); });
+  fmFadeUntil=performance.now()+FM_OUT*1000;
+}
+function fmPauseNow(){   // game paused: pause the song in place instead of switching to the synth pause tune
+  const t=fm; if(!t||t.dead) return false; if(t.paused) return true;
+  t.paused=true; fmRamp(t,0,0.3,function(){ if(t.paused&&!t.dead){ try{ t.el.pause(); }catch(e){} } });
+  return true;
+}
+function fmResume(){
+  const t=fm; if(!t||!t.paused) return; t.paused=false; fmPlay(t);
+  if(t.ready && !t.needPlay) fmRamp(t,1,0.6);
+}
 function musicStart(name){
   if(!actx) return;
   name=name||musicFor();
-  if(musTimer && name===musName) return;
-  musicStop();
-  musName=name; musTrack=Object.assign({name:name},TRACKS[name]||(name.indexOf(':')>0?derivedTrack(name):TRACKS.suburbs)); musPhrase=buildPhrase(musTrack);
+  if(name==='pause' && fmPauseNow()) return;
+  if((musTimer||fm||fmPending) && name===musName){ fmResume(); return; }
+  musicStop();   // fades the old song out; the new one waits for that, then fades in
+  musName=name; fmPending=true;
+  const req=++fmReq, wait=fmFadeUntil-performance.now();
+  const go=function(){
+    if(req!==fmReq||!actx) return;
+    fmPending=false;
+    if(fmWanted(name)) fmStart(name,req,function(){ if(req===fmReq) synthStart(name); });
+    else synthStart(name);
+  };
+  if(wait>30) setTimeout(go,wait); else go();
+}
+function synthKey(name){   // which built-in synth tune stands in for an area's file
+  if(name.indexOf('radio:')===0) name=RADIO_SYN[name]||'menu';
+  if(name==='arcade') return 'boss:'+theme.kind;
+  if(name.indexOf('ret:')===0) return theme.kind;
+  return name;
+}
+function synthStart(name){   // the built-in synthesized music (used when there is no file for an area, or the file can't load)
+  const sn=synthKey(name);
+  musName=name; musTrack=Object.assign({name:sn},TRACKS[sn]||(sn.indexOf(':')>0?derivedTrack(sn):TRACKS.suburbs)); musPhrase=buildPhrase(musTrack);
   musGain=actx.createGain(); musGain.gain.value=0; musGain.connect(bus('music'));
   if(!muted){ musGain.gain.setValueAtTime(0,actx.currentTime); musGain.gain.linearRampToValueAtTime(MUSIC_VOL*(musTrack.vol||1), actx.currentTime+0.8); }
   setupDelay();
@@ -872,16 +1098,19 @@ function musicStart(name){
   musTimer=setInterval(musicTick,40);
 }
 function musicStop(){
-  if(musTimer){ clearInterval(musTimer); musTimer=null; }
+  fmReq++; fmPending=false; fmStopCur();
+  if(musTimer){ clearInterval(musTimer); musTimer=null; fmFadeUntil=Math.max(fmFadeUntil,performance.now()+300); }
   if(musGain&&actx){ const g=musGain; try{ g.gain.cancelScheduledValues(actx.currentTime); g.gain.setValueAtTime(g.gain.value,actx.currentTime); g.gain.linearRampToValueAtTime(0,actx.currentTime+0.25); }catch(e){} setTimeout(function(){ try{ g.disconnect(); }catch(e){} },400); }
   musGain=null; musName='';
 }
 function screenTrack(){ return running ? musicFor() : (paused ? 'pause' : 'menu'); }
 function menuMusic(delay){ setTimeout(function(){ if(!running && !paused && actx) musicStart('menu'); }, delay||0); }
 // browsers only allow sound after the first tap/click/key, so start the menu music then
-['pointerdown','keydown'].forEach(function(evName){ window.addEventListener(evName,function first(){ audioInit(); if(!running && !paused) musicStart('menu'); window.removeEventListener(evName,first); }); });
-function musicSwitch(){ if(musTimer && musicFor()!==musName) musicStart(musicFor()); }
+// (touchend and click are listed too: some phones only count those as a tap that unlocks audio)
+['pointerdown','touchend','click','keydown'].forEach(function(evName){ window.addEventListener(evName,function first(){ audioInit(); fmUnlock(); if(!running && !paused) musicStart('menu'); window.removeEventListener(evName,first); }); });
+function musicSwitch(){ if((musTimer||fm||fmPending) && musicFor()!==musName) musicStart(musicFor()); }
 function musicMute(m){
+  fmMuInit=true; fmMuTo=m?0:1; fmEnsureTick();
   if(!musGain||!actx) return;
   const g=musGain.gain; g.cancelScheduledValues(actx.currentTime); g.setValueAtTime(g.value,actx.currentTime);
   g.linearRampToValueAtTime(m?0:MUSIC_VOL*((musTrack&&musTrack.vol)||1), actx.currentTime+0.2);
@@ -914,7 +1143,7 @@ Array.prototype.forEach.call(document.querySelectorAll('.btn[data-key]'),functio
 });
 (function(){ // virtual joystick: left/right
   const j=document.getElementById('joy'), kn=document.getElementById('joyKnob'); let id=null;
-  function set(dx){ const R=58, c=Math.max(-R,Math.min(R,dx)); kn.style.transform='translateX('+c+'px)'; const l=dx<-16, r=dx>16;
+  function set(dx){ const R=(j.offsetWidth||250)/2-34, c=Math.max(-R,Math.min(R,dx)); kn.style.transform='translateX('+c+'px)'; const l=dx<-20, r=dx>20;
     if(r&&!keys.right) edge.right=true; if(l&&!keys.left) edge.left=true; keys.left=l; keys.right=r; }
   function pos(e){ const t=e.changedTouches?Array.prototype.find.call(e.changedTouches,function(x){return x.identifier===id;}):e; if(!t) return null; const b=j.getBoundingClientRect(); return t.clientX-(b.left+b.width/2); }
   function start(e){ e.preventDefault(); audioInit(); if(e.changedTouches) id=e.changedTouches[0].identifier; else id='m'; const d=pos(e); if(d!==null) set(d); }
@@ -976,14 +1205,15 @@ const UPGRADES=[
   // Re-tuned for the 25-loop run: the first tier of each is cheap, the last tiers cost 15k-40k, so coins spread over
   // roughly the first dozen loops (pay rises ~12% per loop and the last tiers are the big goals); the rest goes to the retirement plan.
   {key:'bag',   name:'Bigger Bag',   icon:'📦', desc:'+1 package slot',  max:6, base:90,  mult:3.0},
-  {key:'boots', name:'Faster Boots', icon:'👟', desc:'+8% walk speed',   max:5, base:100, mult:4.0},
+  {key:'boots', name:'Faster Boots', icon:'👟', desc:'+5% walk speed',   max:5, base:100, mult:4.0},
   {key:'armor', name:'Armor',        icon:'🛡', desc:'+1 max health',     max:4, base:125, mult:6.5},
   {key:'ammo',  name:'Ammo Belt',    icon:'✉', desc:'+5 ammo capacity',  max:5, base:70,  mult:3.8},
   {key:'stam',  name:'Stamina',      icon:'💨', desc:'Sprint longer',     max:4, base:90,  mult:5.5},
   {key:'fire',  name:'Rapid Fire',   icon:'🔥', desc:'Throw mail faster · helps in the Arcade too', max:5, base:80, mult:3.6},
-  {key:'dj',    name:'Spring Soles', icon:'🦘', desc:'Stronger double jump · max tier unlocks a triple jump', max:4, base:110, mult:5.8}
+  {key:'dj',    name:'Spring Soles', icon:'🦘', desc:'Level 1 unlocks the double jump. Higher levels jump higher', max:4, base:110, mult:5.8},
+  {key:'tj',    name:'Triple Jump',  icon:'🦅', desc:'A third jump in mid-air. Unlocks once Spring Soles are maxed', max:1, base:3500, mult:1}
 ];
-let upg={bag:0,boots:0,armor:0,ammo:0,stam:0,dj:0,fire:0};
+let upg={bag:0,boots:0,armor:0,ammo:0,stam:0,dj:0,fire:0,tj:0};
 let bankCoins=0;
 // ---------- Saved progress (this browser) ----------
 // done[L] = level L cleared, bosses[L] = boss after level L beaten (L = 10, 20, ...). Coins + upgrades carry over.
@@ -997,7 +1227,7 @@ function lkey(L,b){ return L*2+(b?1:0); }
 function isUnlocked(L,b){ if(devMode) return true; const f=frontier(); return lkey(L,b)<=lkey(f.level,f.boss); }
 function isReplay(L,b){ return b ? !!progress.bosses[L] : !!progress.done[L]; }
 function hasProgress(){ return Object.keys(progress.done).length>0 || (progress.coins||0)>0; }
-function restoreRun(){ bankCoins=progress.coins||0; upg=Object.assign({bag:0,boots:0,armor:0,ammo:0,stam:0,dj:0,fire:0},progress.upg||{}); }
+function restoreRun(){ bankCoins=progress.coins||0; upg=Object.assign({bag:0,boots:0,armor:0,ammo:0,stam:0,dj:0,fire:0,tj:0},progress.upg||{}); }
 function hoodName(L){ const n=Math.floor((L-1)/10), t=THEMES[n%THEMES.length]; return t.name+(n>=THEMES.length?' '+(Math.floor(n/THEMES.length)+1):''); }
 function levelName(L,b){ if(L>RL_BASE) return '🏖 '+retPlaceName()+' '+(L-RL_BASE)+'/10'; return b ? '⚔ '+BOSSES[Math.floor((L-1)/10)%BOSSES.length].name : hoodName(L)+' '+(((L-1)%10)+1)+'/10'; }
 function retPlaceName(){ const p=RETIRE_PLACES.find(function(x){ return x.id===progress.retiredTo; }); return p?p.name:'Retirement'; }
@@ -1006,12 +1236,12 @@ function addCoins(n,flat){ const r=((state&&state.replay)?REPLAY_RATE:1)*(flat?1
 loadProgress(); restoreRun();
 function upgCost(u){ if(devMode) return 0; return Math.round(u.base*Math.pow(u.mult,upg[u.key])/5)*5; }
 function bagMax(){ return BAG_MAX + upg.bag; }
-function ammoCap(){ return AMMO_MAX + upg.ammo*5; }
-function moveSpeedMul(){ return 1 + upg.boots*0.08; }
+function ammoCap(){ return Math.max(4,AMMO_MAX + upg.ammo*5 - (lfx(15)?3:0)); }
+function moveSpeedMul(){ return 1 + upg.boots*0.05; }
 function armorBonus(){ return upg.armor; }
 function stamDrainMul(){ return 1 - upg.stam*0.12; }
-function maxAir(){ return (upg.dj>=4||devMode)?2:1; }   // max Spring Soles unlocks the triple jump
-function djPower(){ return 6.0 + upg.dj*0.55; }   // double-jump kick: a small hop at first, Spring Soles make it a bit stronger (max 8.2)
+function maxAir(){ if(tutorial) return 1; return ((upg.dj>=1||devMode)?1:0)+((upg.tj>=1||devMode)?1:0); }   // Spring Soles unlock the double jump; the Triple Jump is its own purchase
+function djPower(){ return 6.0 + Math.max(0,upg.dj-1)*0.7; }   // double-jump kick: a small hop at first, Spring Soles make it a bit stronger (max 8.2)
 function stamRegenMul(){ return 1 + upg.stam*0.15; }
 
 // ---------- Terrain helpers ----------
@@ -1061,13 +1291,13 @@ function respawnFromFall(){
 // ---------- Tutorial level ----------
 let tutorial=false, tutStep=0, tutDone=false;
 const TUT_STEPS=[
-  {t:'Press E at the 🚚 truck to load your packages', done:function(){ return state.bag>0; }},
-  {t:'Walk right with ▶  (keyboard: D or →)', done:function(){ return player.x>430; }},
-  {t:'Jump with ⤒  (Space or W) onto the floating platform and grab the mail sack. Tap jump again in the air to double jump!', done:function(){ return pickups.every(function(k){ return k.taken; }); }},
-  {t:'A dog! Throw mail at it with ✉  (F). It takes two hits', done:function(){ return enemies.every(function(e){ return !e.alive; }); }},
+  {t:'Press 📦 at the 🚚 truck to load your packages', done:function(){ return state.bag>0; }},
+  {t:'Walk right with ▶', done:function(){ return player.x>430; }},
+  {t:'Jump with ⤒ onto the floating platform and grab the mail sack. Tap jump again in the air to double jump!', done:function(){ return pickups.every(function(k){ return k.taken; }); }},
+  {t:'A dog! Throw mail at it with ✉. It takes two hits', done:function(){ return enemies.every(function(e){ return !e.alive; }); }},
   {t:'Cross the gap on the bridge', done:function(){ return player.x>1560; }},
-  {t:'Stand by the 📬 mailbox and press E to deliver', done:function(){ return state.delivered>=state.goal; }},
-  {t:'Delivered! Head back to the 🚚 truck to finish. Tap 💨 (or hold Shift) to sprint', done:function(){ return false; }}
+  {t:'Stand by the 📬 mailbox and press 📦 to deliver', done:function(){ return state.delivered>=state.goal; }},
+  {t:'Delivered! Head back to the 🚚 truck to finish. Tap 💨 to sprint', done:function(){ return false; }}
 ];
 function showTutStep(){
   const box=$('tutBox'); $('tutStep').textContent='Tutorial · step '+(tutStep+1)+' of '+TUT_STEPS.length; $('tutText').textContent=TUT_STEPS[tutStep].t;
@@ -1107,7 +1337,7 @@ function reset(){ tripT=0; tripAge=0; cv.style.filter=''; cv.style.transform='';
          ammo:Math.min(ammoCap(),P.ammoStart+upg.ammo*3),goal:P.houses,level:level};
   if(hidden) state.hp=Math.max(1,Math.min(state.maxhp,hidden.hp));   // you arrive with the health you had left
   player={x:140,y:G,vx:0,vy:0,w:34,h:46,onGround:true,face:1,throwCd:0,walkT:0,stamina:100,stepCd:0,exhausted:false,swing:null,swingAng:0,swingVel:0};
-  projectiles=[]; particles=[]; enemies=[]; birds=[]; rocks=[]; pickups=[]; houses=[]; gaps=[]; platforms=[]; swings=[]; eShots=[]; ices=[]; obstacles=[]; hazards=[]; sands=[]; tumbleT=200; vents=[];
+  debris=[]; rollers=[]; projectiles=[]; particles=[]; enemies=[]; birds=[]; rocks=[]; pickups=[]; houses=[]; gaps=[]; platforms=[]; swings=[]; eShots=[]; ices=[]; obstacles=[]; hazards=[]; sands=[]; tumbleT=200; vents=[];
   truck={x:TRUCK_X,y:G-92,w:120,h:92};
   camX=0; camY=0; tree=null;
   apt=null; B=null; bossShots=[]; waves=[]; shake=0;
@@ -1177,6 +1407,7 @@ function reset(){ tripT=0; tripAge=0; cv.style.filter=''; cv.style.transform='';
         platforms.push({x:Math.round(mn+(mx-mn)*rnd()),y:lowY+2,w:Math.round(lw),h:14,kind:'log',moving:true,min:mn,max:Math.max(mn+1,mx),dir:rnd()<0.5?-1:1,spd:Math.min(2.0,1.0+D*0.06+k*0.25)}); }
       continue;
     }
+    if(type==='mover' && g.x2-g.x1<=150) continue;   // a short gap is an easy jump: no moving platform needed
     if(type==='bridge'){
       const br={x:g.x1,y:lowY,w:g.x2-g.x1,h:14,kind:theme.kind==='snow'?'thinice':'bridge',moving:false,stand:0};
       platforms.push(br);
@@ -1249,7 +1480,7 @@ function reset(){ tripT=0; tripAge=0; cv.style.filter=''; cv.style.transform='';
   // enemies
   let placed=0, tries=0;
   const minSpacing=Math.max(160,300-D*8);
-  while(placed<P.enemyCount && tries<600){
+  while(placed<Math.ceil(P.enemyCount*(lfx(11)?1.3:1)) && tries<600){
     tries++;
     const ex=520+rnd()*(LEVEL_LEN-700), et=groundTopAt(ex);
     if(et===null || inSand(ex,50)) continue;
@@ -1269,6 +1500,7 @@ function reset(){ tripT=0; tripAge=0; cv.style.filter=''; cv.style.transform='';
   { // extra road past the last stop so it ends mid-screen, clear of the touch buttons
     const pad=Math.round(Math.max(260,W*0.42)), last=segs[segs.length-1];
     if(last && last.x2===LEVEL_LEN){ last.x2+=pad; LEVEL_LEN+=pad; } }
+  addLoopHearts();
 }
 
 // ---------- Treetop Village: climb a giant tree to treehouses on decks, then come back down to the truck ----------
@@ -1316,7 +1548,9 @@ function buildTreehouse(G,P,D){
 
 // ---------- Update ----------
 function update(){
-  state.time+=1/60;
+  state.time+=1/60; loopFxUpdate();
+  if(state.sack==='armed' && player.x>TRUCK_X+800){ state.sack='lost'; state.ammo=0; SFX.damage(); showBanner('🎒 Oops!','You dropped your sack! Run back to the truck. The level starts over when you get there.',6000); }
+  else if(state.sack==='lost' && player.x<TRUCK_X+150 && player.onGround){ state.sack='done'; setTimeout(function(){ startGame(); showToast('🎒 Sack recovered. The shift starts over!'); },0); }
   if(state.invuln>0) state.invuln--;
 
   platforms.forEach(function(pf){
@@ -1336,18 +1570,18 @@ function update(){
     player.x = s.ax + Math.sin(player.swingAng)*s.len;
     player.y = s.ay + Math.cos(player.swingAng)*s.len;
     if(consume('jump')){
-      const dir = player.swingVel>=0?1:-1;
-      player.vx=dir*8.5; player.vy=-10.5; player.face=dir;
+      const dir = player.swingVel>=0?1:-1, ang=player.swingAng, tv=player.swingVel*s.len;   // tv = speed along the arc
+      player.vx=Math.max(-15,Math.min(15,tv*Math.cos(ang)*1.3+dir*3)); player.vy=Math.max(-17,Math.min(-5,-tv*Math.sin(ang)*1.3*dir*dir-8-Math.min(5,Math.abs(tv)*0.5))); player.face=dir;   // you leave with the swing's momentum
       player.swing=null; player.onGround=false; player.airJumps=maxAir(); SFX.jump();
     }
     player.walkT+=0.1;
   } else {
     const wantSprint = (keys.sprint||sprintToggle) && !player.exhausted && (keys.left||keys.right);
-    if(wantSprint){ player.stamina-=0.9*stamDrainMul(); if(player.stamina<=0){ player.stamina=0; player.exhausted=true; setSprintToggle(false); SFX.stamina(); } }
+    if(wantSprint){ player.stamina-=0.9*stamDrainMul()*(lfx(14)?1.35:1); if(player.stamina<=0){ player.stamina=0; player.exhausted=true; setSprintToggle(false); SFX.stamina(); } }
     else { player.stamina=Math.min(100,player.stamina+0.5*stamRegenMul()); if(player.exhausted&&player.stamina>=35) player.exhausted=false; }
     const sprinting = wantSprint && player.stamina>0;
     const walk = 4.2*moveSpeedMul();                         // boots make walking faster...
-    let speed = sprinting ? Math.min(walk*1.5, 7.2) : walk;
+    let speed = sprinting ? Math.min(walk*1.4, 6.3) : walk;
     const qs=player.onGround ? quicksandAt(player.x,player.y) : null;
     if(boss && theme.kind==='desert' && player.onGround && !qs && Math.abs(player.y-GROUND)<2) speed*=0.8;
     if(qs && !player.inQs) stat('pits'); player.inQs=!!qs;
@@ -1355,9 +1589,12 @@ function update(){
       if(player.sink>150){ player.sink=0; damage(); player.vy=-10; player.onGround=false; pop(player.x,player.y-6,'#d9b36a',10); } }
     else player.sink=Math.max(0,(player.sink||0)-3);  // ...but sprint tops out at a sane speed
     player.vx=0;
+    if(lfx(13)) speed*=0.93;
     if(keys.left){ player.vx=-speed; player.face=-1; }
     if(keys.right){ player.vx=speed; player.face=1; }
-    if(player.onGround && onIce()) player.vx=(player.iceVx||0)*0.995+(player.vx-(player.iceVx||0))*0.022;   // slippery!
+    if(!player.swing) player.vx+=windNow();
+    if(player.onGround && onIce()) player.vx=(player.iceVx||0)*0.995+(player.vx-(player.iceVx||0))*0.022;
+    else if(player.onGround && lfx(10)) player.vx=(player.iceVx||0)*0.93+(player.vx-(player.iceVx||0))*0.07;   // slippery!
     player.iceVx=player.vx;
     if(player.vx!==0) player.walkT+= sprinting?0.42:0.25; else player.walkT=0;
 
@@ -1368,8 +1605,8 @@ function update(){
       const sw=nearSwing();
       if(sw){ stat('swings'); player.swing=sw; player.swingAng=Math.atan2(player.x-sw.ax,player.y-sw.ay); player.swingVel=player.vx*0.004+player.face*0.02; SFX.jump(); }
       else if(player.onGround){ player.vy=-12.8; player.onGround=false; player.airJumps=maxAir(); SFX.jump(); }
-      else if((player.airJumps===undefined?1:player.airJumps)>0){   // double jump: one extra jump in the air
-        player.airJumps=(player.airJumps===undefined?1:player.airJumps)-1; player.vy=-djPower()*(player.airJumps<maxAir()-1?0.92:1); player.dj=14; SFX.jump(); setTimeout(function(){ tone(760,0.08,'square',0.07,980); },30);
+      else if((player.airJumps===undefined?maxAir():player.airJumps)>0){   // double jump: one extra jump in the air
+        player.airJumps=(player.airJumps===undefined?maxAir():player.airJumps)-1; player.vy=-djPower()*(player.airJumps<maxAir()-1?0.92:1); player.dj=14; SFX.jump(); setTimeout(function(){ tone(760,0.08,'square',0.07,980); },30);
         for(let k=0;k<6;k++) particles.push({x:player.x+(k-2.5)*5,y:player.y,vx:(k-2.5)*0.6,vy:1+Math.random(),life:18,r:3,color:'rgba(255,255,255,.85)'});
         stat('doublejumps'); }
     }
@@ -1409,7 +1646,7 @@ function update(){
 
   if(player.throwCd>0) player.throwCd--;
   if(consume('throw') && player.throwCd<=0){
-    if(state.ammo>0){ projectiles.push({x:player.x+player.face*20,y:player.y-26,vx:player.face*8.5,vy:-2,life:90}); state.ammo--; player.throwCd=Math.max(4,14-(upg.fire||0)*2); SFX.throw(); stat('throws'); }
+    if(state.ammo>0){ projectiles.push({x:player.x+player.face*20,y:player.y-26,vx:player.face*8.5,vy:-2,life:90}); state.ammo--; player.throwCd=Math.round(Math.max(4,14-(upg.fire||0)*2)*(lfx(22)?1.25:1)); SFX.throw(); stat('throws'); }
     else { player.throwCd=20; SFX.empty(); }
   }
 
@@ -1443,10 +1680,11 @@ function update(){
     else if(e.type==='goose'){ if(canReach&&dist<e.range&&dist>6) nx+=Math.sign(dx)*e.spd; else nx+=Math.sin(e.t*2)*1.0; }
     else if(e.kind==='pickpocket'){ if(e.flee>0){ e.flee-=1/60; e.faceDir=e.fleeDir; nx+=e.fleeDir*5; } else { e.faceDir=0; if(canReach&&dist<e.range&&dist>6) nx+=Math.sign(dx)*e.spd; else nx+=Math.sin(e.t)*0.6; } }
     else if(e.kind==='rowdy'){ e.atk=(e.atk==null?1+Math.random():e.atk)-1/60; if(canReach&&dist<420&&dist>50&&e.atk<=0){ enemyThrow(e,'bottle'); e.atk=2.2+Math.random(); } nx+=Math.sin(e.t*1.5)*0.4; }
-    else if(e.kind==='janitor' && e.sleeper){   // the napping maintenance man: sneak (walk, don't sprint or jump) or he wakes up and chases you
+    else if(e.kind==='janitor' && e.sleeper){   // the napping maintenance man: jump over him to keep him asleep or he wakes up and chases you
       if(e.sleep){
-        const near=canReach && dist<170, loud=(keys.sprint&&Math.abs(player.vx)>1)||!player.onGround;
-        e.zz=Math.max(0,(e.zz||0)+(near?(loud?0.03:(dist<45?0.004:-0.003)):-0.01));
+        // walk past him and he wakes up; hop over him and he sleeps right through it
+        const walkBy=player.onGround && canReach && dist<80 && Math.abs(player.vx)>0.3, over=!player.onGround && dist<110;
+        e.zz=Math.max(0,(e.zz||0)+(walkBy?0.05:(over?-0.004:-0.01)));
         if(e.hitCd>0) e.zz=1;
         if(e.zz>=1){ e.sleep=false; e.dir=Math.sign(dx)||1; pop(e.x,e.y-70,'#ffd54a',8); tone(520,0.2,'square',0.08,300); }
       } else { e.dir=Math.sign(dx)||1; if(canReach&&dist>8) nx+=e.dir*e.spd*1.5; else nx+=Math.sin(e.t*2)*0.3; }
@@ -1546,7 +1784,7 @@ function handleInteract(){
     }
   }
 }
-function damage(){ state.hurt=(state.hurt||0)+1; state.hp--; state.invuln=70; pop(player.x,player.y-26,'#e74c3c',8); SFX.damage(); player.x-=player.face*30; }
+function damage(){ state.hurt=(state.hurt||0)+1; state.hp--; state.invuln=lfx(19)?45:70; pop(player.x,player.y-26,'#e74c3c',8); SFX.damage(); player.x-=player.face*(lfx(17)?60:30); }
 function pop(x,y,color,n){ for(let i=0;i<(n||5);i++) particles.push({x:x,y:y,vx:(Math.random()-0.5)*5,vy:-Math.random()*4-1,life:24+Math.random()*16,color:color,r:2+Math.random()*3}); }
 function hit(ax,ay,aw,ah,bx,by,bw,bh){ return ax<bx+bw && ax+aw>bx && ay<by+bh && ay+ah>by; }
 
@@ -1554,16 +1792,16 @@ const promptEl=document.getElementById('prompt');
 function updatePrompt(){
   let msg='';
   if(apt && !apt.transitioning){
-    if(apt.cur<0 && Math.abs(player.x-apt.doorX)<55) msg = state.delivered>=state.goal ? 'All delivered! Back to the 🚚 truck' : 'Press E — Go inside 🏢';
-    else if(apt.cur===0 && Math.abs(player.x-apt.exitX)<55) msg='Press E — Exit to the street 🚪';
-    else if(apt.cur>=0 && Math.abs(player.x-apt.elevX)<60) msg='Press E — Elevator 🛗';
-    else if(apt.cur===0 && Math.abs(player.x-APT_MAILROOM_X)<60) msg = state.bag<bagMax() ? 'Press E — Restock packages 📦' : 'Mailroom — your bag is full';
+    if(apt.cur<0 && Math.abs(player.x-apt.doorX)<55) msg = state.delivered>=state.goal ? 'All delivered! Back to the 🚚 truck' : 'Press 📦 — Go inside 🏢';
+    else if(apt.cur===0 && Math.abs(player.x-apt.exitX)<55) msg='Press 📦 — Exit to the street 🚪';
+    else if(apt.cur>=0 && Math.abs(player.x-apt.elevX)<60) msg='Press 📦 — Elevator 🛗';
+    else if(apt.cur===0 && Math.abs(player.x-APT_MAILROOM_X)<60) msg = state.bag<bagMax() ? 'Press 📦 — Restock packages 📦' : 'Mailroom — your bag is full';
   }
   if(msg){} else if(player.swing) msg='Jump to release! ◀ ▶ to pump';
-  else if(nearTruck()){ if(boss){ if(state.ammo<ammoCap()) msg='Press E — Restock mail ✉️'; } else if(state.delivered>=state.goal) msg='Press E — Finish Shift! 🎉'; else if(state.bag<BAG_MAX) msg='Press E — Load packages 📦'; }
-  else if(nearSwing()) msg='Press Jump to grab the rope 🪢';
-  else if(atCrate()) msg = state.bag<bagMax() ? 'Press E — Restock from the mail pulley 📦' : 'Mail pulley — your bag is full';
-  else { for(let i=0;i<houses.length;i++){ const h=houses[i]; if(!h.delivered && atMailbox(h)){ msg= state.bag>0?'Press E — Deliver 📬':'Bag empty! Back to truck'; break; } } }
+  else if(nearTruck()){ if(boss){ if(state.ammo<ammoCap()) msg='Press 📦 — Restock mail ✉️'; } else if(state.delivered>=state.goal) msg='Press 📦 — Finish Shift! 🎉'; else if(state.bag<BAG_MAX) msg='Press 📦 — Load packages 📦'; }
+  else if(nearSwing()) msg='Press ⤒ to grab the rope 🪢';
+  else if(atCrate()) msg = state.bag<bagMax() ? 'Press 📦 — Restock from the mail pulley 📦' : 'Mail pulley — your bag is full';
+  else { for(let i=0;i<houses.length;i++){ const h=houses[i]; if(!h.delivered && atMailbox(h)){ msg= state.bag>0?'Press 📦 — Deliver 📬':'Bag empty! Back to truck'; break; } } }
   if(!settings.prompts && !tutorial) msg='';
   if(msg){ promptEl.textContent=msg; promptEl.classList.remove('hidden'); } else promptEl.classList.add('hidden');
 }
@@ -1725,6 +1963,7 @@ function draw(){
   }
 
   drawStreetProps(K,T);
+  drawAmbientLife(K,T,'bg');
   // gaps
   gaps.forEach(function(g){
     if(K==='river'||K==='pirate'||K==='candy'){   // a stretch of river / sea / chocolate instead of a pit
@@ -1737,8 +1976,7 @@ function draw(){
     }
     // pit starts at the LOWER side's surface so it never shows as a tall box above the street
     const topY=Math.max(g.leftTop,g.rightTop)+16;
-    const pit=ctx.createLinearGradient(0,topY,0,H); pit.addColorStop(0,shade(theme.dirtB,-25)); pit.addColorStop(0.35,'#140e0a'); pit.addColorStop(1,'#050403');
-    ctx.fillStyle=pit; ctx.beginPath(); ctx.moveTo(g.x1,topY); ctx.lineTo(g.x2,topY); ctx.lineTo(g.x2-8,H); ctx.lineTo(g.x1+8,H); ctx.closePath(); ctx.fill();
+    drawPit(g,topY,K,T);
     // jagged dirt lips on both edges
     ctx.fillStyle=theme.dirtA;
     [[g.x1,1],[g.x2,-1]].forEach(function(e){ ctx.beginPath(); ctx.moveTo(e[0],topY-2); for(let k=0;k<6;k++){ ctx.lineTo(e[0]+e[1]*(4+hash(e[0]+k)*9),topY+k*18+9); ctx.lineTo(e[0],topY+k*18+18); } ctx.closePath(); ctx.fill(); });
@@ -1780,6 +2018,7 @@ function draw(){
   drawWeather(K,T);
   drawAmbientLife(K,T);
   drawLoopMood(K,T);
+  if(state.sack==='lost'){ const a=0.75+0.25*Math.sin(T*0.2); ctx.save(); ctx.globalAlpha=a; ctx.font='bold 15px system-ui,sans-serif'; ctx.textAlign='center'; const msg='🎒 You dropped your sack! Run back to the truck ◀'; const w=ctx.measureText(msg).width+24; ctx.fillStyle='rgba(20,20,30,.82)'; rr(W/2-w/2,52,w,28,14); ctx.fill(); ctx.fillStyle='#ffd45e'; ctx.fillText(msg,W/2,71); ctx.restore(); }
 }
 
 
@@ -1950,19 +2189,121 @@ function drawObstacles(){
       ctx.fillStyle='rgba(120,190,255,.35)'; ctx.beginPath(); ctx.ellipse(x+18,G-1,22,3,0,0,7); ctx.fill(); }
   });
 }
-// every lap of the six neighbourhoods feels a little different
-const LOOP_MOODS=[null,
-  {name:'Overtime',     tip:'Golden-hour shifts. Hard-hat enemies take an extra hit, and barrels roll across the bridges.'},
-  {name:'Storm Season', tip:'Rain on every street, bigger gaps, and even more hard hats. Watch your footing!'},
-  {name:'Night Shift',  tip:'The streets are dark now. Stay sharp: everything is tougher on the night shift.'}];
-function loopMood(){ const lp=loopIndex(level); return lp<=0 ? null : LOOP_MOODS[Math.min(lp,3)]; }
+// every lap of the six neighbourhoods adds ONE new thing (and keeps all the earlier ones). Each entry below is really implemented; see lfx() hooks.
+const LOOP_FX=[null,
+ {name:'Overtime',        tip:'Golden-hour light. Hard-hat enemies take an extra hit, barrels roll across the bridges, and the gaps in the road are wider.'},
+ {name:'Storm Season',    tip:'Rain (or snow) on every street, and even more hard-hat enemies.'},
+ {name:'Night Shift',     tip:'Real darkness now. You can only see around your own lantern, so watch the edges of the screen.'},
+ {name:'Heart Drops',     tip:'Hearts now sit on the streets. Grab one to heal when you are hurt.'},
+ {name:'Gusty Winds',     tip:'Wind gusts push you sideways, left and right. Leaning into a gust slows you down.'},
+ {name:'Thick Fog',       tip:'Fog rolls in and hides what is ahead of you.'},
+ {name:'Speedy Pups',     tip:'Every enemy runs 15% faster.'},
+ {name:'Lightning',       tip:'Lightning flashes light up the whole screen, followed by thunder.'},
+ {name:'Falling Debris',  tip:'Junk falls from the sky. A shadow shows where it lands: step away before it drops!'},
+ {name:'Slick Streets',   tip:'The ground is slippery everywhere, so you slide when you stop or turn.'},
+ {name:'Crowded Streets', tip:'30% more enemies on every street.'},
+ {name:'Runaway Barrels', tip:'Barrels roll down the street: jump over them! Enemies are also 20% bigger with an extra hit point, and one more heart drops on each street.'},
+ {name:'Loose Tires',     tip:'Big tires roll down the street. Your bag is heavy too: you walk 7% slower.'},
+ {name:'Bowling Alley',   tip:'Fast bowling balls come rolling. Sprinting drains your stamina 35% faster.'},
+ {name:'Rockslide',       tip:'Huge boulders roll slowly down the street. Your mail chute is tighter: you carry 3 fewer letters (never below 4).'},
+ {name:'Snowball Fight',  tip:'Giant snowballs roll in. Enemies also notice you from 25% farther away.'},
+ {name:'Watermelon Run',  tip:'Watermelons come bouncing along fast. Getting hit knocks you back twice as far.'},
+ {name:'Blood Moon',      tip:'A red moon rises and pumpkins roll in. Every enemy has one more hit point, and one more heart drops on each street.'},
+ {name:'Cannon Fire',     tip:'Cannonballs shoot along the ground very fast. After a hit you are protected for a shorter time.'},
+ {name:'Meteor Shower',   tip:'Falling debris comes twice as often and it burns. Disco balls roll along the street too.'},
+ {name:'Donut Disaster',  tip:'Giant donuts roll in, and icy hail pours down across the whole street.'},
+ {name:'Soccer Practice', tip:'Soccer balls whiz by. You also throw mail 25% slower.'},
+ {name:'Howling Gales',   tip:'Spiked balls roll in, and the wind gusts are 60% stronger.'},
+ {name:'Final Overtime',  tip:'Beach balls bounce in, and every enemy runs another 10% faster. Good luck!'}];
+function lfx(n){ return !boss && !tutorial && !hidden && !isRetLevel(level) && loopIndex(level)>=n; }   // is loop feature n active here?
+function lfxAny(n){ return !tutorial && loopIndex(level)>=n; }
+function loopMood(){ const lp=loopIndex(level); if(lp<=0) return null; if(lp<LOOP_FX.length) return LOOP_FX[lp];
+  const k=lp-(LOOP_FX.length-1); return {name:'Endless Overtime '+k, tip:'Rolling hazards come '+Math.min(60,k*8)+'% more often and everything on the street moves '+Math.min(100,k*5)+'% faster than in the final loop.'}; }
+// rolling hazards (from loop 12): each loop adds a new kind that rolls along the ground toward you. Jump over them!
+const ROLL_KINDS=[ {k:'barrel',r:16,spd:2.0},{k:'tire',r:18,spd:2.6},{k:'bowling',r:11,spd:4.5},{k:'boulder',r:24,spd:1.4},{k:'snowball',r:20,spd:2.2},{k:'melon',r:15,spd:3.2},{k:'pumpkin',r:17,spd:2.8},{k:'cannon',r:10,spd:6.5},{k:'disco',r:16,spd:3.5},{k:'donut',r:20,spd:2.4},{k:'soccer',r:14,spd:4.0},{k:'spiked',r:16,spd:3.0},{k:'beach',r:16,spd:3.0} ];
+function rollerEndless(){ return Math.max(0,loopIndex(level)-24); }
+function drawRoller(o){
+  const r=o.r, a=o.rot; ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(a);
+  const ball=function(c){ ctx.fillStyle=c; ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.fill(); outline(2); };
+  switch(o.k){
+    case 'barrel': ctx.fillStyle='#9c6a3a'; rr(-r*0.9,-r,r*1.8,r*2,r*0.4); ctx.fill(); outline(2); ctx.fillStyle='#4a4a52'; ctx.fillRect(-r*0.9,-r*0.5,r*1.8,3); ctx.fillRect(-r*0.9,r*0.3,r*1.8,3); break;
+    case 'tire': ball('#23232a'); ctx.fillStyle='#8b8b95'; ctx.beginPath(); ctx.arc(0,0,r*0.45,0,7); ctx.fill(); ctx.fillStyle='#3b3b44'; ctx.fillRect(-2,-r,4,5); break;
+    case 'bowling': ball('#1d3f8a'); ctx.fillStyle='#0b1a3d'; [[-3,-4],[3,-5],[0,2]].forEach(function(q){ ctx.beginPath(); ctx.arc(q[0],q[1],1.8,0,7); ctx.fill(); }); break;
+    case 'boulder': ball('#8e8a84'); ctx.fillStyle='#6f6b66'; ctx.beginPath(); ctx.arc(-r*0.3,-r*0.2,r*0.3,0,7); ctx.arc(r*0.35,r*0.3,r*0.25,0,7); ctx.fill(); break;
+    case 'snowball': ball('#f4f8ff'); ctx.fillStyle='#cfd9ea'; ctx.beginPath(); ctx.arc(r*0.3,r*0.2,r*0.3,0,7); ctx.fill(); break;
+    case 'melon': ball('#2f9e4a'); ctx.strokeStyle='#1c6b30'; ctx.lineWidth=2.5; for(let k=-1;k<=1;k++){ ctx.beginPath(); ctx.moveTo(k*r*0.5,-r*0.9); ctx.quadraticCurveTo(k*r*0.9,0,k*r*0.5,r*0.9); ctx.stroke(); } break;
+    case 'pumpkin': ball('#ff8a1e'); ctx.strokeStyle='#c35d00'; ctx.lineWidth=2; for(let k=-1;k<=1;k++){ ctx.beginPath(); ctx.moveTo(k*r*0.45,-r*0.9); ctx.quadraticCurveTo(k*r*0.8,0,k*r*0.45,r*0.9); ctx.stroke(); } ctx.fillStyle='#3a7d2b'; ctx.fillRect(-2,-r-3,4,5); break;
+    case 'cannon': ball('#1c1c22'); ctx.fillStyle='rgba(255,255,255,.35)'; ctx.beginPath(); ctx.arc(-3,-3,2.5,0,7); ctx.fill(); break;
+    case 'disco': ball('#c8d2e0'); ctx.strokeStyle='rgba(90,100,120,.7)'; ctx.lineWidth=1; for(let k=-2;k<=2;k++){ ctx.beginPath(); ctx.moveTo(-r,k*r*0.4); ctx.lineTo(r,k*r*0.4); ctx.moveTo(k*r*0.4,-r); ctx.lineTo(k*r*0.4,r); ctx.stroke(); } ctx.fillStyle='rgba(255,255,255,.9)'; ctx.fillRect(r*0.2,-r*0.5,4,4); break;
+    case 'donut': ball('#f08cb4'); ctx.fillStyle='#8c5a3a'; ctx.beginPath(); ctx.arc(0,0,r*0.35,0,7); ctx.fill(); ctx.fillStyle='#fff'; [[-8,-8],[8,-6],[4,9],[-9,6]].forEach(function(q){ ctx.fillRect(q[0],q[1],4,2); }); break;
+    case 'soccer': ball('#f5f5f5'); ctx.fillStyle='#222'; for(let k=0;k<5;k++){ const t=k/5*Math.PI*2; ctx.beginPath(); ctx.arc(Math.cos(t)*r*0.55,Math.sin(t)*r*0.55,r*0.2,0,7); ctx.fill(); } ctx.beginPath(); ctx.arc(0,0,r*0.22,0,7); ctx.fill(); break;
+    case 'spiked': ctx.fillStyle='#4b4f58'; for(let k=0;k<10;k++){ const t=k/10*Math.PI*2; ctx.beginPath(); ctx.moveTo(Math.cos(t-0.18)*r*0.8,Math.sin(t-0.18)*r*0.8); ctx.lineTo(Math.cos(t)*(r+7),Math.sin(t)*(r+7)); ctx.lineTo(Math.cos(t+0.18)*r*0.8,Math.sin(t+0.18)*r*0.8); ctx.fill(); } ball('#6a6f7a'); break;
+    default: ball('#ff5d8f'); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(0,0,r*0.5,0,3.14); ctx.fill(); ctx.fillStyle='#3a8dff'; ctx.beginPath(); ctx.arc(0,0,r*0.5,3.14,6.28); ctx.fill();
+  }
+  ctx.restore();
+}
+function rollersUpdate(){
+  const lp=loopIndex(level);
+  if(lp<12 || boss || tutorial || hidden || apt || isRetLevel(level)){ rollers.length=0; return; }
+  const kinds=ROLL_KINDS.slice(0,Math.min(ROLL_KINDS.length,lp-11)), end=rollerEndless();
+  if(!state.rlT) state.rlT=240;
+  if(--state.rlT<=0 && rollers.length<2+Math.min(3,Math.floor(end/3))){
+    state.rlT=Math.max(110,Math.round((380-(lp-12)*12)*(1-Math.min(0.6,end*0.08))*(0.7+Math.random()*0.7)));
+    const kd=kinds[Math.floor(Math.random()*kinds.length)], x=player.x+W*0.62+Math.random()*120, gt=groundTopAt(x);
+    if(gt!==null && x<LEVEL_LEN) rollers.push({k:kd.k,r:kd.r,x:x,y:gt-kd.r,spd:kd.spd*(1+Math.min(1,end*0.05)),rot:0});
+  }
+  rollers.forEach(function(o){
+    o.x-=o.spd; o.rot-=o.spd/o.r; const gt=groundTopAt(o.x); if(gt===null){ o.dead=true; return; } o.y=gt-o.r;
+    if(state.invuln<=0 && !state.over && Math.abs(player.x-o.x)<o.r+14 && player.y>o.y-o.r+2 && player.y-46<o.y+o.r){ damage(); o.dead=true; pop(o.x,o.y,'#ffcf4a',8); }
+    if(o.x<camX-80) o.dead=true; });
+  rollers=rollers.filter(function(o){ return !o.dead; });
+}
+
+let rollers=[], debris=[], lightT=400, lightFlash=0, pendingSack=false;
+function windNow(){ if(!lfx(5)) return 0; const m=lfx(23)?1.6:1; return (Math.sin(state.time*0.7)*0.6+Math.sin(state.time*1.9+1)*0.4)*0.9*m; }
+function addLoopHearts(){
+  if(!lfx(4) || boss || tutorial) return;
+  const n=1+(lfx(12)?1:0)+(lfx(18)?1:0);
+  for(let k=0;k<n;k++){ const fr=(k+1)/(n+1); let x=Math.round(LEVEL_LEN*fr), gt=groundTopAt(x), t=0;
+    while(gt===null && t<40){ x+=24; gt=groundTopAt(x); t++; }
+    if(gt!==null) pickups.push({x:x,y:gt-26,bob:rnd()*6,taken:false,kind:'heart',life:1e9}); }
+}
+function loopFxUpdate(){
+  rollersUpdate();
+  if(!lfx(9)||apt) { debris.length=0; return; }
+  if(!state.dbT) state.dbT=120;
+  if(--state.dbT<=0){ state.dbT=(lfx(20)?85:170)+Math.floor(Math.random()*90);
+    const x=player.x+(Math.random()-0.35)*420, gt=groundTopAt(x);
+    if(gt!==null && x>200) debris.push({x:x,gy:gt,t:0,k:Math.floor(Math.random()*3)}); }
+  debris.forEach(function(d){ d.t++;
+    if(d.t===78){ if(Math.abs(player.x-d.x)<28 && player.y>d.gy-62 && state.invuln<=0 && !state.over){ damage(); }
+      pop(d.x,d.gy-6,lfx(20)?'#ff8a3c':'#9a8f80',10); SFX.hit(); shake=Math.max(shake||0,3); } });
+  debris=debris.filter(function(d){ return d.t<92; });
+}
 function drawLoopMood(K,T){
-  if(boss||tutorial) return; const lp=loopIndex(level); if(lp<=0) return;
-  if(lp===1){ ctx.fillStyle='rgba(255,150,60,.10)'; ctx.fillRect(0,0,W,H); }
+  if(boss||tutorial||hidden||apt) return; const lp=loopIndex(level); if(lp<=0||isRetLevel(level)) return;
+  ctx.fillStyle=lp===1?'rgba(255,150,60,.10)':'rgba(255,150,60,.04)'; ctx.fillRect(0,0,W,H);   // golden hour
   if(lp>=2 && K!=='snow' && K!=='cyber'){ ctx.strokeStyle='rgba(200,215,240,.45)'; ctx.lineWidth=1.2; ctx.beginPath();
     for(let i=0;i<80;i++){ const y=wrap(hash(i)*H+T*10,H+40)-20, x=wrap(hash(i+300)*W-T*2.5-camX*0.3,W); ctx.moveTo(x,y); ctx.lineTo(x-3,y+13); } ctx.stroke();
     ctx.fillStyle='rgba(40,50,70,.12)'; ctx.fillRect(0,0,W,H); }
-  if(lp>=3){ const g=ctx.createRadialGradient(W*0.4,GROUND-40,60,W*0.4,GROUND-40,Math.max(W,H)); g.addColorStop(0,'rgba(10,15,40,0)'); g.addColorStop(1,'rgba(10,15,40,.45)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
+  if(lp>=5){ const w=windNow(); ctx.strokeStyle='rgba(235,240,250,.30)'; ctx.lineWidth=1.4; ctx.beginPath();
+    for(let i=0;i<14;i++){ const y=hash(i*7.7)*H*0.8+20, x=wrap(hash(i*3.1)*W+T*(60+w*90)*(w>=0?1:1),W+80)-40, L=26+Math.abs(w)*40; ctx.moveTo(x,y); ctx.lineTo(x+(w>=0?L:-L),y+2); } ctx.stroke(); }
+  if(lp>=6){ const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(220,228,236,.30)'); g.addColorStop(1,'rgba(220,228,236,.55)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    for(let i=0;i<5;i++){ const x=wrap(hash(i*5.3)*W*1.4+T*8*(1+i*0.3),W*1.4)-W*0.2, y=GROUND-90-i*26; ctx.fillStyle='rgba(235,240,245,.20)'; ctx.beginPath(); ctx.ellipse(x,y,150,26,0,0,7); ctx.fill(); } }
+  if(lp>=8){ if(--lightT<=0){ lightT=320+Math.floor(Math.random()*480); lightFlash=1; if(!state.over) setTimeout(function(){ noise(0.9,0.28,260); tone(70,0.8,'sawtooth',0.12,40); },220); }
+    if(lightFlash>0){ ctx.fillStyle='rgba(235,240,255,'+(lightFlash*0.55).toFixed(3)+')'; ctx.fillRect(0,0,W,H); lightFlash=Math.max(0,lightFlash-0.045); } }
+  if(lp>=18){ ctx.fillStyle='rgba(150,15,30,.13)'; ctx.fillRect(0,0,W,H); }
+  if(lp>=21){ ctx.strokeStyle='rgba(235,245,255,.7)'; ctx.lineWidth=2; ctx.beginPath(); for(let i=0;i<60;i++){ const y=wrap(hash(i+90)*H+T*22,H+40)-20, x=wrap(hash(i+400)*W-T*4,W); ctx.moveTo(x,y); ctx.lineTo(x-2,y+9); } ctx.stroke(); }
+  if(lp>=12){ ctx.save(); ctx.translate(-camX,-(camY||0)); rollers.forEach(drawRoller); ctx.restore(); }
+  if(lp>=9){ ctx.save(); ctx.translate(-camX,-(camY||0));
+    debris.forEach(function(d){ const warn=Math.min(1,d.t/78);
+      if(d.t<78){ ctx.fillStyle='rgba(0,0,0,'+(0.15+warn*0.3).toFixed(2)+')'; ctx.beginPath(); ctx.ellipse(d.x,d.gy-2,10+warn*16,4+warn*3,0,0,7); ctx.fill();
+        ctx.strokeStyle='rgba(255,70,50,'+(0.4+0.4*Math.sin(d.t*0.5)).toFixed(2)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(d.x,d.gy-2,26,8,0,0,7); ctx.stroke();
+        const fy=d.gy-380+warn*warn*372; ctx.fillStyle=lp>=20?'#ff7a2c':'#7d7468'; rr(d.x-9,fy-9,18,18,5); ctx.fill(); if(lp>=20){ ctx.fillStyle='rgba(255,210,90,.8)'; ctx.beginPath(); ctx.arc(d.x,fy-14,6,0,7); ctx.fill(); }
+        ctx.strokeStyle='rgba(30,25,20,.8)'; ctx.lineWidth=1.5; rr(d.x-9,fy-9,18,18,5); ctx.stroke(); } });
+    ctx.restore(); }
+  if(lp>=3){ const px=player.x-camX, py=player.y-(camY||0)-24, dk=(K==='night'||K==='horror'||K==='cyber')?0.55:0.90;
+    const g=ctx.createRadialGradient(px,py,40,px,py,Math.max(160,Math.min(W,H)*0.46)); g.addColorStop(0,'rgba(6,8,26,0)'); g.addColorStop(0.55,'rgba(6,8,26,'+(dk*0.55).toFixed(2)+')'); g.addColorStop(1,'rgba(6,8,26,'+dk.toFixed(2)+')'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
 }
 // ---------- below-the-road detail: curb, grass verge, layered soil ----------
 
@@ -2135,7 +2476,7 @@ function bgTree(tx,base,K,i,T){
 // ---------- Platforms: each neighbourhood has its own look ----------
 function drawPlatformSkin(pf,K,T){
   const x=pf.x, y=pf.y, w=pf.w, h=pf.h;
-  if(pf.kind==='lid') return;   // top of a dumpster: drawn with the dumpster
+  if(pf.kind==='lid'||pf.kind==='awn') return;   // top of a dumpster / a building's awning: drawn with the building
   if(pf.kind==='deck'){   // a treehouse deck, braced back to the trunk
     const tx=x<500?TRUNK_X1+4:TRUNK_X2-4, far=x<500?x+24:x+w-24; ctx.strokeStyle='#5a3c20'; ctx.lineWidth=7; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(far,y+h); ctx.lineTo(tx,y+96); ctx.moveTo((far+tx)/2,y+h); ctx.lineTo(tx,y+52); ctx.stroke(); ctx.lineCap='butt';
     const g=ctx.createLinearGradient(0,y,0,y+h); g.addColorStop(0,'#b07a46'); g.addColorStop(1,'#7a5030'); rr(x,y,w,h,3); ctx.fillStyle=g; ctx.fill(); outline(3);
@@ -2180,8 +2521,12 @@ function drawPlatformSkin(pf,K,T){
     if(pf.broken){ const t=drawT-(pf.breakT||0); if(t<30){ ctx.globalAlpha=1-t/30; ctx.fillStyle='#cfe9ff'; for(let k=0;k<6;k++){ rr(x+k*w/6+2,y+t*t*0.12+k*3,w/6-4,8,2); ctx.fill(); } ctx.globalAlpha=1; } return; }
     ctx.save(); ctx.globalAlpha=0.85; const g=ctx.createLinearGradient(0,y,0,y+h); g.addColorStop(0,'#e6f6ff'); g.addColorStop(1,'#9fd0f0'); rr(x,y,w,h,3); ctx.fillStyle=g; ctx.fill(); ctx.restore(); outline(2.5);
     ctx.strokeStyle='rgba(255,255,255,.85)'; ctx.lineWidth=1.5; for(let px=x+18;px<x+w;px+=46){ ctx.beginPath(); ctx.moveTo(px,y+3); ctx.lineTo(px+10,y+h-3); ctx.stroke(); }
-    const c=Math.min(1,(pf.stand||0)/80); if(c>0.15){ ctx.strokeStyle='rgba(40,70,100,'+(0.4+c*0.5)+')'; ctx.lineWidth=1.2+c; ctx.beginPath(); const cx=Math.max(x+10,Math.min(x+w-10,player.x));
-      for(let k=0;k<Math.ceil(c*6);k++){ const a=k*1.05+0.3; ctx.moveTo(cx,y+h/2); ctx.lineTo(cx+Math.cos(a)*c*34,y+h/2+Math.sin(a)*c*6); } ctx.stroke(); }
+    const c=Math.min(1,(pf.stand||0)/80); if(c<0.05) pf.cx=null;
+    if(c>0.15){ if(pf.cx==null) pf.cx=Math.max(x+10,Math.min(x+w-10,player.x)); const cx=pf.cx;   // cracks are fixed in the ice where it first started to break
+      ctx.save(); ctx.beginPath(); ctx.rect(x,y,w,h); ctx.clip(); ctx.strokeStyle='rgba(40,70,100,'+(0.45+c*0.45)+')'; ctx.lineWidth=1.1+c*0.9; ctx.lineJoin='round'; ctx.beginPath();
+      for(let k=0;k<Math.ceil(c*7);k++){ const dir=(k%2?1:-1), len=(10+hash(cx+k*3.7)*16)*(0.4+c*1.4)*(1+Math.floor(k/2)*0.35); let px=cx, py=y+h/2;
+        ctx.moveTo(px,py); for(let sgm=1;sgm<=3;sgm++){ px+=dir*len/3; py=y+h/2+(hash(cx+k*9+sgm)-0.5)*h*0.9; ctx.lineTo(px,py); } }
+      ctx.stroke(); ctx.restore(); }
     return;
   }
   if(pf.kind==='bridge'){
@@ -2788,9 +3133,9 @@ function drawHouse(h){
     snow([[bx-10,baseY-190],[bx+15,baseY-222],[bx+40,baseY-190]]);
     ctx.strokeStyle='#5d6676'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(bx+36,baseY-180); ctx.lineTo(bx+36,baseY); ctx.stroke(); for(let yy=baseY-176;yy<baseY;yy+=10){ ctx.beginPath(); ctx.moveTo(bx+33,yy); ctx.lineTo(bx+39,yy); ctx.stroke(); }
     // beacon on top of the silo + a little shed window: both light up once the mail's in
-    const on=h.delivered; ctx.fillStyle='#5d6676'; ctx.fillRect(bx+13,baseY-232,4,10);
-    if(on){ const gl=ctx.createRadialGradient(bx+15,baseY-238,2,bx+15,baseY-238,34); gl.addColorStop(0,'rgba(255,220,90,'+(0.55+0.15*Math.sin(drawT*0.05))+')'); gl.addColorStop(1,'rgba(255,220,90,0)'); ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(bx+15,baseY-238,34,0,7); ctx.fill(); }
-    ctx.fillStyle=on?'#ffd54a':'#8a7a5a'; ctx.beginPath(); ctx.arc(bx+15,baseY-238,7,Math.PI,0); ctx.lineTo(bx+22,baseY-232); ctx.lineTo(bx+8,baseY-232); ctx.closePath(); ctx.fill(); outline(1.8);
+    const on=h.delivered; ctx.fillStyle='#5d6676'; ctx.fillRect(bx+13,baseY-217,4,12);
+    if(on){ const gl=ctx.createRadialGradient(bx+15,baseY-219,2,bx+15,baseY-219,34); gl.addColorStop(0,'rgba(255,220,90,'+(0.55+0.15*Math.sin(drawT*0.05))+')'); gl.addColorStop(1,'rgba(255,220,90,0)'); ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(bx+15,baseY-219,34,0,7); ctx.fill(); }
+    ctx.fillStyle=on?'#ffd54a':'#8a7a5a'; ctx.beginPath(); ctx.arc(bx+15,baseY-219,7,Math.PI,0); ctx.lineTo(bx+22,baseY-213); ctx.lineTo(bx+8,baseY-213); ctx.closePath(); ctx.fill(); outline(1.8);
     win(bx+60,by+14,20,18,{});
   } else if(st===14){ // adobe house with wooden roof beams
     const by=baseY-104;
@@ -3757,7 +4102,9 @@ const ENEMY_KINDS={
   goose:   ['goose','canada','mallard','swan'],
   neighbor:['grumpy','jogger','granny','skater']
 };
-const SKIN=['#ffdbac','#f1c27d','#e0ac69','#c68642','#8d5524','#6b4226'];
+const SKIN_GROUPS=[['#ffdbac','#f7d3b0'],['#f1c27d','#ecc88a'],['#e0ac69','#d9a066'],['#c68642','#b9773a'],['#8d5524','#6b4226']];   // five groups, each equally likely
+function pickSkin(){ const g=SKIN_GROUPS[Math.floor(Math.random()*SKIN_GROUPS.length)]; return g[Math.floor(Math.random()*g.length)]; }
+const SKIN=SKIN_GROUPS.map(function(g){ return g[0]; });
 // clothes and looks for people, with a different wardrobe in each neighbourhood
 const WARDROBE={
   suburbs:{shirts:['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e84393','#f1c40f','#ffffff','#34495e'], hats:['cap','sun',null,null,null]},
@@ -3888,7 +4235,7 @@ function pickVariant(type,lvl,existing){
 function makeEnemy(type,x,kind){
   kind=kind||(ENEMY_KINDS[type]||[type])[0];
   const e={type,kind,x,y:GROUND,alive:true,hitCd:0,t:Math.random()*6,dir:Math.random()<0.5?-1:1,turnT:2+Math.random()*2,
-           skin:pick(SKIN),shirt:pick(SHIRTS),hair:pick(HAIR),pants:pick(['#34495e','#2c3e50','#5d6d7e','#4a3b2a'])};
+           skin:pickSkin(),shirt:pick(SHIRTS),hair:pick(HAIR),pants:pick(['#34495e','#2c3e50','#5d6d7e','#4a3b2a'])};
   if(type==='neighbor') dressPerson(e);
   const S={
     mutt:     {w:46,h:30,hp:2,spd:2.0,range:240,sc:1},
@@ -3944,6 +4291,12 @@ function makeEnemy(type,x,kind){
   const lp=loopIndex(level); if(lp>=1 && !boss && (type==='dog'||type==='goose'||type==='neighbor') && kind!=='janitor' && Math.random()<(lp<=3?[0,0.2,0.3,0.4][lp]:Math.min(0.85,0.4+(lp-3)*0.03))){ e.hp+=1+(lp>=10?1:0)+(lp>=18?1:0); e.spd*=1+Math.min(0.25,lp*0.012);   // tougher from the second loop on
     if(type==='neighbor' || theme.kind==='city') e.helmet=true;   // hard hats: people anywhere, animals only in the city
     else e.gear=GEAR[theme.kind]||GEAR.suburbs; }   // elsewhere animals get a look that fits the neighbourhood
+  if(lfx(25) && kind!=='janitor') e.spd*=1+Math.min(1,rollerEndless()*0.05);
+  if(lfx(7) && kind!=='janitor'){ e.spd*=1.15; if(lfx(24)) e.spd*=1.1; } else if(lfx(24) && kind!=='janitor') e.spd*=1.1;
+  if(kind!=='janitor' && !boss){
+    if(lfx(12)){ e.w*=1.2; e.h*=1.2; e.sc=(e.sc||1)*1.2; e.hp+=1; }
+    if(lfx(16)) e.range*=1.25;
+    if(lfx(18)) e.hp+=1; }
   return e;
 }
 
@@ -4712,9 +5065,9 @@ function drawEnemy(e){
       const fs=Math.sin(e.t*9)*3; ctx.fillStyle=e.skin; ctx.beginPath(); ctx.arc(f*15,-40+fs,6,0,7); ctx.fill(); outline(2);
     }
   }
-  if(e.helmet){ const hp=e.type==='neighbor'?[0,-63]:(e.type==='dog'?[f*19,-31]:[f*12,-52]);   // hard hat
+  if(e.helmet){ const hp=e.type==='neighbor'?[0,-63]:(e.type==='dog'?[f*15,-36]:[f*12,-52]);   // hard hat
     ctx.fillStyle='#ffc61a'; ctx.beginPath(); ctx.arc(hp[0],hp[1],8,Math.PI,0); ctx.fill(); outline(2); rr(hp[0]-10,hp[1]-1,20,3,1.5); ctx.fill(); outline(1.2); ctx.fillStyle='#e0a800'; ctx.fillRect(hp[0]-1.5,hp[1]-8,3,7); }
-  if(e.gear){ const gp=e.type==='dog'?[f*19,-31]:[f*12,-52]; drawGear(e.gear,gp[0],gp[1]); }
+  if(e.gear){ const neck=['bandana','scarf','spiked'].indexOf(e.gear[0])>=0; const gp=e.type==='dog'?(neck?[f*19,-31]:[f*15,-37]):[f*12,-52]; drawGear(e.gear,gp[0],gp[1]); }
   ctx.restore();
   const TOP={cow:56,squirrel:34,raccoon:32,possum:24,snowkid:58,robodog:46,mutt:42,dalmatian:42,chihuahua:52,bulldog:38,goose:58,canada:58,mallard:46,swan:72,grumpy:66,jogger:66,granny:66,skater:66,janitor:68,rocketkid:58,goat:46,scorpion:40,biker:76,pickpocket:68,rowdy:68,alleycat:32,frog:28,zombie:66,ghost:62,goblin:50,slime:30,gummy:40,gumball:32,crab:28,buccaneer:72,bee:40,eyeball:66,snail:36}[e.kind]||e.h;
   if(!e.isBoss && !e.sleep) drawHealthBar(x,y-TOP*e.sc-14,e.hp,e.maxhp||e.hp);
@@ -4792,7 +5145,7 @@ function buildApartment(G,P){
   for(let i=0;i<nOut;i++){ const pk=spawnPick(P,false), type=pk[0]; const e=makeEnemy(type,spots[i],pk[1]||pickVariant(type,DL,outEnemies)); e.spd*=P.enemySpeedMul; e.maxhp=e.hp; e.y=G; outEnemies.push(e); }
   LEVEL_LEN=OUT;
   const outBirds = DL>=2 ? [makeBird(900,0)] : [];
-  apt.outside={segs:[{x1:0,x2:OUT,top:G}],gaps:[],platforms:[],swings:[],pickups:outPickups,houses:[],enemies:outEnemies,birds:outBirds,LEN:OUT,G:G};
+  apt.outside={segs:[{x1:0,x2:OUT,top:G}],gaps:[],platforms:[{x:830-58*1.3,y:G-92*1.3,w:116*1.3,h:8,kind:'awn',moving:false}],swings:[],pickups:outPickups,houses:[],enemies:outEnemies,birds:outBirds,LEN:OUT,G:G};
   // ---- inside: one hallway per floor ----
   let total=0; const doorColor=APT_DOOR_COLORS[Math.floor(rnd()*APT_DOOR_COLORS.length)];
   for(let f=0;f<floorsN;f++){
@@ -5327,11 +5680,11 @@ function drawInterior(){
     const et=FT-128*EK;
     rr(ex-24,et-24,48,18,3); ctx.fillStyle='#1e8449'; ctx.fill(); outline(2); ctx.fillStyle='#eafff0'; ctx.font='bold 12px Trebuchet MS'; ctx.textAlign='center'; ctx.fillText('EXIT',ex,et-10.5); ctx.textAlign='left';
     const mx=APT_MAILROOM_X;
-    scaledAt(mx,FT-50,0.8,function(){
-      ctx.fillStyle='#b8a074'; rr(mx-56,FT-150,112,84,3); ctx.fill(); outline(2.5);
-      for(let r=0;r<3;r++) for(let c=0;c<4;c++){ rr(mx-50+c*26,FT-144+r*26,22,22,2); ctx.fillStyle='#d4bf8f'; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=1.5; ctx.stroke(); ctx.fillStyle='#5a4a2a'; ctx.fillRect(mx-44+c*26,FT-136+r*26,10,2); }
+    scaledAt(mx,FT,0.8,function(){
+      ctx.fillStyle='#b8a074'; rr(mx-56,FT-88,112,84,3); ctx.fill(); outline(2.5);
+      for(let r=0;r<3;r++) for(let c=0;c<4;c++){ rr(mx-50+c*26,FT-82+r*26,22,22,2); ctx.fillStyle='#d4bf8f'; ctx.fill(); ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=1.5; ctx.stroke(); ctx.fillStyle='#5a4a2a'; ctx.fillRect(mx-44+c*26,FT-74+r*26,10,2); }
     });
-    ctx.fillStyle='#1f2a36'; ctx.font='bold 11px Trebuchet MS'; ctx.textAlign='center'; ctx.fillText('MAILROOM',mx,FT-136); ctx.textAlign='left';
+    ctx.fillStyle='#1f2a36'; ctx.font='bold 11px Trebuchet MS'; ctx.textAlign='center'; ctx.fillText('MAILROOM',mx,FT-76); ctx.textAlign='left';
   }
   // floor sign + elevator
   const ev=apt.elevX;
@@ -5356,7 +5709,7 @@ let boss=false, bossNext=false, bossWon=false, B=null, bossShots=[], waves=[], s
 const BOSSES=[
   {name:'Big Bruno', title:'the junkyard bulldog', type:'dog', kind:'bulldog', sc:2.7, hp:22, attacks:['charge','slam'], voice:'bulldog', body:[50,34], drawH:40},
   {name:'The Goose King', title:'ruler of the pond', type:'goose', kind:'goose', sc:2.4, hp:24, attacks:['charge','throw'], shot:'feather', crown:true, voice:'goose', body:[40,32], drawH:60},
-  {name:'HOA President Harriet', title:'enforcer of lawn rules', type:'neighbor', kind:'granny', sc:2.3, hp:26, attacks:['throw','slam'], shot:'gnome', voice:'granny', body:[30,44], drawH:66, look:{skin:'#f1c27d',shirt:'#8e44ad',hair:'#d9d9d9',pants:'#17171c'}},
+  {name:'HOA President Carol', title:'enforcer of lawn rules', type:'neighbor', kind:'granny', sc:2.3, hp:26, attacks:['throw','slam'], shot:'gnome', voice:'granny', body:[30,44], drawH:66, look:{skin:'#f1c27d',shirt:'#8e44ad',hair:'#d9d9d9',pants:'#17171c'}},
   {name:'Big Chill', title:'the giant snowman', type:'custom', kind:'snowman', sc:1, hp:28, attacks:['throw','roll','slam','roll'], shot:'carrot', voice:'', body:[84,150], drawH:210},
   {name:'Count Crowley', title:'lord of the night sky', type:'bird', kind:'crow', sc:3.0, hp:18, attacks:['rockrain','swoop'], voice:'crow', flying:true, body:[34,20], drawH:28},
   {name:'Sky Shark', title:'rogue cargo cruiser', type:'bird', kind:'hovercar', color:'#ff2e88', sc:2.6, hp:20, attacks:['rockrain','abduct','swoop'], voice:'', flying:true, body:[40,15], drawH:24},
@@ -5870,7 +6223,9 @@ function drawCustomBoss(D,T,angry){
     ctx.fillStyle='rgba(0,0,0,.2)'; ctx.beginPath(); ctx.ellipse(x,GROUND+6,46,8,0,0,7); ctx.fill();
     const nbite=(B.hp<=B.maxhp*0.75?1:0)+(B.hp<=B.maxhp*0.5?1:0)+(B.hp<=B.maxhp*0.25?1:0);
     ctx.save();
-    if(nbite){ ctx.beginPath(); ctx.rect(x-150,y-200,300,260); [[24,-62,20,0.2],[-16,-112,17,2.6],[-18,-24,19,4.4]].slice(0,nbite).forEach(function(q){ const cx=x+f*q[0], cy=y+q[1], r=q[2], n=9; for(let k=0;k<n;k++){ const an=q[3]+(k/n)*Math.PI*2, rr2=r*(k%2?0.55:1.05)*(0.85+0.3*hash(k*7+q[0])); const px=cx+Math.cos(an)*rr2, py=cy+Math.sin(an)*rr2; k?ctx.lineTo(px,py):ctx.moveTo(px,py); } ctx.closePath(); }); ctx.clip('evenodd'); }
+    const BITES=[[22,-44,13,0.3],[-16,-112,17,2.1],[-18,-24,19,4.0]].slice(0,nbite);
+    const bitePts=function(q,grow){ const cx=x+f*q[0], cy=y+q[1], R=q[2]*(grow||1), pts=[]; for(let k=0;k<=72;k++){ const th=k/72*Math.PI*2, r=R*(0.76+0.24*Math.abs(Math.sin(3*th+q[3]))); pts.push([cx+Math.cos(th)*r,cy+Math.sin(th)*r,th,r]); } return pts; };   // a ring of tooth-shaped scoops
+    if(nbite){ ctx.beginPath(); ctx.rect(x-150,y-200,300,260); BITES.forEach(function(q){ bitePts(q).forEach(function(p,k){ k?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); }); ctx.closePath(); }); ctx.clip('evenodd'); }
     const run=B.state==='charge', lg=bl(6), gb='#c07a3e', arm=(tele&&B.next==='throw')?-82:(run?-58:-46);
     const icing=function(x1,y1,x2,y2){ ctx.strokeStyle='#fdfdfd'; ctx.lineWidth=2.5; ctx.beginPath(); const n=6; for(let k=0;k<=n;k++){ const t=k/n; ctx.lineTo(x1+(x2-x1)*t+(k%2?0:0),y1+(y2-y1)*t+(k%2?3:-3)); } ctx.stroke(); };
     ctx.fillStyle=gb; { const L1=Math.max(0,lg)*1.8, L2=Math.max(0,-lg)*1.8; rr(x-20,y-38,17,38-L1,8); ctx.fill(); outline(2.5); rr(x+3,y-38,17,38-L2,8); ctx.fill(); outline(2.5); icing(x-18,y-8-L1,x-5,y-8-L1); icing(x+5,y-8-L2,x+18,y-8-L2); }
@@ -5886,6 +6241,17 @@ function drawCustomBoss(D,T,angry){
     ctx.fillStyle='#17171c'; rr(x-15,y-152,30,34,3); ctx.fill(); outline(2.4); ctx.beginPath(); ctx.ellipse(x,y-118,26,6,0,0,7); ctx.fill(); outline(2.4);
     ctx.fillStyle='#e8559a'; ctx.fillRect(x-15,y-129,30,6); ctx.fillStyle='rgba(255,255,255,.18)'; ctx.fillRect(x-11,y-148,4,18);
     ctx.restore();
+    if(nbite){   // the bitten edge: pale dough showing through, a darker crust line, plus a few crumbs
+      const lgA=Math.max(0,lg)*1.8, lgB=Math.max(0,-lg)*1.8;
+      const seg=function(px,py,x1,y1,x2,y2){ const vx=x2-x1, vy=y2-y1, t=Math.max(0,Math.min(1,((px-x1)*vx+(py-y1)*vy)/(vx*vx+vy*vy))); return Math.hypot(px-x1-vx*t,py-y1-vy*t); };
+      const inBody=function(px,py){ if(Math.hypot(px-x,py-(y-100))<21) return true; { const dx=Math.max(Math.abs(px-x)-5,0), dy=Math.max(Math.abs(py-(y-56))-4,0); if(Math.hypot(dx,dy)<20) return true; }
+        if(px>x-20&&px<x-3&&py>y-38&&py<y-lgA) return true; if(px>x+3&&px<x+20&&py>y-38&&py<y-lgB) return true;
+        return seg(px,py,x-f*18,y-66,x-f*36,y-48)<7.5 || seg(px,py,x+f*18,y-66,x+f*38,y+arm)<7.5; };
+      BITES.forEach(function(q,bi){ const P=bitePts(q);
+        ctx.lineCap='round'; [['#8a4f20',5.2],['#f0c88a',3.2],['#ffe3b4',1.2]].forEach(function(st){ ctx.strokeStyle=st[0]; ctx.lineWidth=st[1]; ctx.beginPath(); let pen=false;
+          for(let k=0;k<P.length;k++){ const p=P[k], ox=p[0]+Math.cos(p[2])*4, oy=p[1]+Math.sin(p[2])*4; if(inBody(ox,oy)){ pen?ctx.lineTo(p[0],p[1]):ctx.moveTo(p[0],p[1]); pen=true; } else pen=false; } ctx.stroke(); });
+        ctx.fillStyle='#c07a3e'; for(let k=0;k<5;k++){ const px=x+f*q[0]+(hash(bi*9+k)-0.5)*q[2]*3, py=y+q[1]+q[2]*0.9+hash(bi*5+k+3)*26+((drawT*0.3+k*7)%18)*0.15; ctx.beginPath(); ctx.arc(px,py,1.3+hash(k+bi)*1.3,0,7); ctx.fill(); } ctx.lineCap='butt'; });
+    }
     return;
   }
   if(D.kind==='captain'){
@@ -6205,7 +6571,7 @@ function loop(t){
 let simT=0;
 
 function startGame(){
-  resortMode=false; $('hud').classList.remove('resort');
+  resortMode=false; arcadeMode=false; setArcadeUI(false); $('hud').classList.remove('resort');
   fitCanvas(); reset(); running=true; paused=false; setSprintToggle(false);
   state.replay = !tutorial && !hidden && isReplay(level,boss); state.coinFrac=0;
   $('startScreen').classList.add('hidden'); $('howToScreen').classList.add('hidden');
@@ -6216,7 +6582,8 @@ function startGame(){
   if(boss && B){ showBanner('⚔ Boss fight', B.D.name+', '+B.D.title+'. Hit it with mail until its health runs out. Watch for the ! before each attack. Mail sacks drop in, and the truck restocks your ammo.',6000); setTimeout(function(){ if(boss) $('tutBox').classList.add('hidden'); },6000); }
   if(apt) showBanner((BUILDING_KINDS[theme.kind]?BUILDING_KINDS[theme.kind].icon+' '+BUILDING_KINDS[theme.kind].word:'🏢 Apartment')+' delivery','Go inside '+apt.name+' and deliver to every door. Take the elevator between floors, and restock your bag at the lobby mailroom.',6000);
   if(isRetLevel(level) && subLevel(level)===1) showBanner('🏖 Retirement Days','Welcome to '+retPlaceName()+'. No rush: a few friendly deliveries, hardly any trouble, and all the time in the world.',7000);
-  const mood=loopMood(); if(mood && !boss && !tutorial && biomeIndex(level)===0 && subLevel(level)===1) showBanner('🔁 Loop '+(loopIndex(level)+1)+': '+mood.name, mood.tip, 7000);
+  state.sack=(pendingSack && !boss && !tutorial && !apt && !hidden && !isRetLevel(level) && theme.kind!=='treehouse')?'armed':null; if(state.sack) pendingSack=false;
+  const mood=loopMood(); if(mood && !boss && !tutorial && biomeIndex(level)===0 && subLevel(level)===1) showBanner('🔁 Loop '+(loopIndex(level)+1)+': '+mood.name, 'New this loop: '+mood.tip+' Everything from earlier loops stays.', 8000);
   else if(!boss && !apt && !tutorial && !state.replay && subLevel(level)===1 && SIGNATURE[theme.kind]) showBanner('🆕 New in '+theme.name, SIGNATURE[theme.kind].tip, 6000);
   if(hidden) showBanner(HIDDEN_LEVELS[hidden.idx].icon+' '+HIDDEN_LEVELS[hidden.idx].name,HIDDEN_LEVELS[hidden.idx].tip,7000);
   if(state.replay){ if((apt||boss) && settings.hints) $('tutStep').textContent+=' · ↻ replay: 10% coins'; else showBanner('↻ Replay','You already beat this level, so coins pay 10% this time.',3500); }
@@ -6240,7 +6607,7 @@ function pauseGame(){
 function resumeGame(){ if(!paused) return; paused=false; running=true; $('pauseScreen').classList.add('hidden'); musicStart(musicFor()); cancelAnimationFrame(raf); lastFrameT=0; frameAcc=0; loop(); }
 function quitToMenu(){
   if(hidden){ if(hidSave) bankCoins=hidSave.bank; hidden=null; hidSave=null; $('hiddenScreen').classList.add('hidden'); }
-  menuMusic(50); resortMode=false; arcadeMode=false; AR=null; cv.style.cursor=''; ARSAVE=null; $('hud').classList.remove('resort');
+  menuMusic(50); resortMode=false; arcadeMode=false; setArcadeUI(false); AR=null; cv.style.cursor=''; ARSAVE=null; $('hud').classList.remove('resort');
   boss=false; bossNext=false; bossWon=false; $('bossBar').classList.add('hidden');
   elevOpen=false; $('elevPanel').classList.add('hidden'); $('fadeBox').classList.remove('on');
   tutorial=false;
@@ -6257,6 +6624,7 @@ function endGame(won,skipHid){
   state.over=true; running=false; paused=false; cancelAnimationFrame(raf); musicStop(); menuMusic(1600);   // let the win/lose jingle play first
   $('hud').classList.add('hidden'); $('controls').classList.add('hidden'); $('prompt').classList.add('hidden'); $('rotateHint').classList.remove('show'); $('tutBox').classList.add('hidden');
   $('endScreen').classList.remove('hidden');
+  if(!tutorial) lbRecordRun(won);
   const sub=subLevel(level);
   $('endDelivered').textContent=state.delivered; $('endTime').textContent=Math.floor(state.time);
   if(tutorial){
@@ -6266,7 +6634,7 @@ function endGame(won,skipHid){
     return;
   }
   if(boss){
-    if(won){ progress.bosses[level]=1; }
+    if(won){ const hi=biomeIndex(level), had=radioHoodUnlocked(hi); progress.bosses[level]=1; if(!had) setTimeout(function(){ showToast('📻 New songs on the Radio: '+THEMES[hi].name); },1200); }
     $('shopBtn').classList.remove('hidden'); pendingAdvance=false; if(won) bankCoins=state.coins; saveProgress(); $('endCoins').textContent=bankCoins; $('bossBar').classList.add('hidden');
     if(won && bossWon){ stat('bosses'); stat('boss_'+theme.kind); { let nk=0; THEMES.forEach(function(t){ if(ach.stats['boss_'+t.kind]) nk++; }); statMax('bossKinds',nk); } if(!state.hurt) stat('bossPerfect'); statMax('reached',frontier().level); statMax('maxCoins',bankCoins); }
     const D=bossDef();
@@ -6361,19 +6729,58 @@ const LIFE_EVENTS=[
   {i:'🧁',t:'Bake sale',x:'The kids on Maple Street sold you a cupcake. You overpaid on purpose.',k:1,pct:0.03,min:15},
   {i:'🏆',t:'Employee of the month',x:'The post office noticed your hustle and slipped you a bonus.',k:1,pct:0.1,min:70},
   {i:'🪙',t:'Coins in the couch',x:'You flipped the couch cushions and found a small fortune in change.',k:1,pct:0.04,min:25},
-  {i:'👵',t:'Grandma\'s card',x:'Grandma mailed you a card. There is a twenty folded inside.',k:1,pct:0.05,min:40},
+  {i:'👵',t:'Grandma\'s card',x:'Grandma mailed you a card. You find folded money inside.',k:1,pct:0.05,min:40},
   {i:'🎤',t:'Talent show prize',x:'You sang while delivering mail and a neighbor filmed it. The video paid off.',k:1,pct:0.08,min:55},
   {i:'♻️',t:'Recycling refund',x:'You turned in a bag of cans and bottles at the depot.',k:1,pct:0.03,min:20},
   {i:'🎁',t:'Overtime pay',x:'The holiday rush paid time and a half. Nice.',k:1,pct:0.09,min:60},
   {i:'🚀',t:'Tech stock rally',x:'A hot tech stock took off. Your retirement plan grew 15%.',k:0,ret:0.15,needRet:true},
   {i:'🏦',t:'Interest payment',x:'The bank paid a little interest on your retirement plan. Up 4%.',k:0,ret:0.04,needRet:true},
   {i:'🐻',t:'Bear market',x:'Investors panicked and the market fell hard. Your retirement plan dropped 12%.',k:0,ret:-0.12,needRet:true},
-  {i:'🧾',t:'Account fees',x:'The fund manager took a bigger cut than expected. Your plan dropped 3%.',k:0,ret:-0.03,needRet:true}
+  {i:'🧾',t:'Account fees',x:'The fund manager took a bigger cut than expected. Your plan dropped 3%.',k:0,ret:-0.03,needRet:true},
+  {i:'🎳',t:'Bowling league win',x:'Your team took the trophy and the prize pot.',k:1,pct:0.06,min:50},
+  {i:'🎣',t:'Fishing derby',x:'You reeled in the biggest catfish at the lake and won the derby.',k:1,pct:0.07,min:55},
+  {i:'🧸',t:'Garage sale',x:'You sold a box of old toys to a very serious collector.',k:1,pct:0.04,min:30},
+  {i:'🚲',t:'Old bike sold',x:'The shiny bike in your garage finally found a buyer.',k:1,pct:0.08,min:60},
+  {i:'🍀',t:'Lucky penny',x:'You picked up a penny face up and everything went right today.',k:1,pct:0.02,min:15},
+  {i:'🎻',t:'Street performer tips',x:'You played the kazoo at the bus stop and people actually paid.',k:1,pct:0.04,min:25},
+  {i:'👛',t:'Lost wallet reward',x:'You returned a lost wallet and the owner insisted on a reward.',k:1,pct:0.07,min:60},
+  {i:'🧑‍🔧',t:'Helped a neighbor move',x:'You carried a couch up three flights. The tip was generous.',k:1,pct:0.05,min:40},
+  {i:'🛡',t:'Safety award',x:'Zero preventable accidents this month, and the post office noticed.',k:1,pct:0.08,min:65},
+  {i:'🥧',t:'Pie contest',x:'Your blueberry pie won first prize at the county fair.',k:1,pct:0.07,min:55},
+  {i:'🎁',t:'Found a gift card',x:'A gift card was stuck behind a mailbox. It had some balance on it.',k:1,pct:0.04,min:30},
+  {i:'🍋',t:'Lemonade stand',x:'The kids on the corner loved your cheerful wave and paid you back double for your lemonade.',k:1,pct:0.03,min:20},
+  {i:'📻',t:'Radio quiz',x:'You called in at the right time and answered the trivia question.',k:1,pct:0.07,min:50},
+  {i:'🧾',t:'Coupon stack',x:'You stacked every coupon in the paper and got cash back.',k:1,pct:0.03,min:20},
+  {i:'💿',t:'Sold old records',x:'A collector wanted your dusty record pile.',k:1,pct:0.06,min:45},
+  {i:'📸',t:'Speed camera',x:'A camera caught the mail truck doing 40 in a 25.',k:-1,pct:0.05,min:35},
+  {i:'🔑',t:'Locked out',x:'You locked your keys in the truck. The locksmith charged extra for a Sunday.',k:-1,pct:0.06,min:40},
+  {i:'☂',t:'Broken umbrella',x:'A gust of wind turned it inside out, and a new one costs more than it should.',k:-1,pct:0.02,min:15},
+  {i:'🚿',t:'Busted water heater',x:'Cold showers for a week, then a bill for a new tank.',k:-1,pct:0.14,min:75},
+  {i:'🐈',t:'Vet bill',x:'You adopted a stray and the vet wanted a look at the stray.',k:-1,pct:0.09,min:55},
+  {i:'🏘',t:'Neighborhood dues',x:'The association raised the dues again.',k:-1,pct:0.05,min:30},
+  {i:'📚',t:'Library fine',x:'That book has been overdue since you were in school.',k:-1,pct:0.02,min:15},
+  {i:'🚗',t:'Insurance hike',x:'Your premium went up because of the goose incident.',k:-1,pct:0.1,min:60},
+  {i:'⛏',t:'Broken shovel',x:'The snow shovel snapped in half on the first big snow.',k:-1,pct:0.03,min:20},
+  {i:'🌧',t:'Gutter repair',x:'The gutters filled with leaves and a downspout fell off.',k:-1,pct:0.08,min:45},
+  {i:'⚾',t:'Broken window',x:'A foul ball met a window. Guess whose window and whose wallet.',k:-1,pct:0.09,min:55},
+  {i:'👓',t:'Lost glasses',x:'You sat on your glasses. They did not survive.',k:-1,pct:0.06,min:40},
+  {i:'🅿',t:'Parking meter',x:'You fed every meter on Main Street and still got a ticket.',k:-1,pct:0.03,min:20},
+  {i:'🥶',t:'Broken heater',x:'The truck heater quit in the middle of winter.',k:-1,pct:0.07,min:50},
+  {i:'🛒',t:'Grocery run',x:'You went in for milk and came out with a cart full of snacks.',k:-1,pct:0.04,min:25},
+  {i:'🪙',t:'Meme coin craze',x:'A silly meme coin took off and your plan rode the wave. Up 25%.',k:0,ret:0.25,needRet:true},
+  {i:'🏦',t:'Rate cut rally',x:'The central bank cut rates and stocks cheered. Your plan grew 8%.',k:0,ret:0.08,needRet:true},
+  {i:'🏚',t:'Housing slump',x:'Home prices dipped and took some of your plan with them. Down 8%.',k:0,ret:-0.08,needRet:true},
+  {i:'🛢',t:'Oil price spike',x:'Fuel costs jumped and the market sagged. Your plan dropped 6%.',k:0,ret:-0.06,needRet:true},
+  {i:'💵',t:'Dividend day',x:'Your funds paid a dividend. Your plan is up 3%.',k:0,ret:0.03,needRet:true},
+  {i:'⚡',t:'Flash crash',x:'The market fell off a cliff for an afternoon. Your plan dropped 20%.',k:0,ret:-0.2,needRet:true},
+  {i:'🎒',t:'Oops! You dropped your sack',x:'Your mail sack fell off the truck on the way out. On your next shift you will lose it partway along. Run back to the truck to pick it up, and the level starts over.',k:0,sack:true}
 ];
 let rotHintDone=false, rotTimer=null; try{ rotHintDone=localStorage.getItem('pp_rotseen')==='1'; }catch(e){}
 function showLifeEvent(){
   const pool=LIFE_EVENTS.filter(function(e){ return !e.needRet || retireBal()>0; });
-  const e=pool[Math.floor(Math.random()*pool.length)]; let line='';
+  const rec=(progress.evRecent||[]); let e=null; for(let t=0;t<12;t++){ const c=pool[Math.floor(Math.random()*pool.length)]; if(rec.indexOf(c.t)<0){ e=c; break; } } if(!e) e=pool[Math.floor(Math.random()*pool.length)];
+  progress.evRecent=rec.concat([e.t]).slice(-14); let line='';
+  if(e.sack){ pendingSack=true; line='🎒 Sack lost next shift'; } else
   if(e.ret){ const d=Math.round((progress.retire||0)*e.ret); progress.retire=Math.max(0,(progress.retire||0)+d); line=(d>=0?'+':'−')+'🪙 '+Math.abs(d)+' in retirement'; }
   else { let amt=Math.max(Math.round(e.min*(1+level/60)),Math.round(bankCoins*e.pct)); if(e.k<0){ const paid=Math.min(amt,bankCoins); bankCoins-=paid; line='−🪙 '+paid+(paid<amt?' (all you had)':''); } else { bankCoins+=amt; line='+🪙 '+amt; } }
   saveProgress(); $('endCoins').textContent=bankCoins;
@@ -6389,7 +6796,7 @@ function offerRetirement(){
   $('retKeep').classList.remove('hidden'); $('retireScreen').classList.remove('hidden');
 }
 function chooseRetirement(p){
-  progress.retiredTo=p.id; saveProgress(); SFX.win();
+  progress.retiredTo=p.id; if(!progress.retireSec) progress.retireSec=Math.round(progress.playSec||0); lbSubmit('retireTime',progress.retireSec); saveProgress(); SFX.win();
   $('retIcon').textContent=p.icon; $('retTitle').textContent='You retired to '+p.name+'!'; $('retText').textContent=p.text+' After '+RETIRE_LOOPS+' loops, '+retireBal()+' 🪙 saved and countless mailboxes, you earned it. Thanks for delivering!';
   const L=$('retList'); L.innerHTML=''; const b=document.createElement('button'); b.className='menu-btn green'; b.textContent='⛳  Drive around '+p.name; b.addEventListener('click',function(){ SFX.click(); $('retireScreen').classList.add('hidden'); $('endScreen').classList.add('hidden'); startResort(p); }); L.appendChild(b); const b2=document.createElement('button'); b2.className='menu-btn ghost'; b2.textContent='⌂  Main Menu'; b2.addEventListener('click',function(){ SFX.click(); $('retireScreen').classList.add('hidden'); $('endScreen').classList.add('hidden'); quitToMenu(); }); L.appendChild(b2);
   $('retKeep').textContent='Keep playing anyway';
@@ -6397,14 +6804,16 @@ function chooseRetirement(p){
 function afterRunMoney(wasBoss){
   if(tutorial || state.replay || isRetLevel(level)) return;
   if(wasBoss && level%(10*THEMES.length)===0 && level/(10*THEMES.length)>=RETIRE_LOOPS && !progress.retiredTo){ setTimeout(offerRetirement,800); return; }
-  if(level>=3 && Math.random()<0.3) setTimeout(showLifeEvent,900);
+  if(level>=3){ if(progress.evCd===undefined) progress.evCd=2+Math.floor(Math.random()*4);
+    progress.evCd--; const early=Math.random()<0.06;   // events arrive at random gaps of about 2 to 11 levels, sometimes back to back
+    if(progress.evCd<=0 || early){ progress.evCd=2+Math.floor(Math.random()*10); saveProgress(); setTimeout(showLifeEvent,900); } else saveProgress(); }
 }
 $('lifeOk').addEventListener('click',function(){ SFX.click(); $('lifeScreen').classList.add('hidden'); });
 $('retKeep').addEventListener('click',function(){ SFX.click(); $('retireScreen').classList.add('hidden'); $('retKeep').textContent='Keep going'; });
 function toggleMute(){
   muted=!muted; try{ localStorage.setItem('pp_muted',muted?'1':'0'); }catch(e){}
   const b=$('muteBtn'); if(b) b.textContent=muted?'🔇':'🔊';
-  if(!muted){ audioInit(); if(!musTimer) musicStart(screenTrack()); }
+  if(!muted){ audioInit(); if(!musTimer && !fm && !fmPending) musicStart(screenTrack()); }
   musicMute(muted); if(!muted) SFX.click();
 }
 
@@ -6439,6 +6848,7 @@ function renderShop(){
       '<div class="info"><div class="nm">'+u.name+'</div><div class="ds">'+u.desc+'</div><div class="pips">'+pips+'</div></div>'+
       (maxed
         ? '<button class="buy-btn" disabled>MAX</button>'
+        : (u.key==='tj' && upg.dj<4 && !devMode) ? '<button class="buy-btn" disabled>🔒 Max Spring Soles</button>'
         : '<button class="buy-btn" data-k="'+u.key+'" '+(bankCoins<cost?'disabled':'')+'>🪙 '+cost+'</button>');
     list.appendChild(row);
   });
@@ -6446,13 +6856,15 @@ function renderShop(){
     btn.addEventListener('click', function(){
       const key=btn.dataset.k, u=UPGRADES.find(function(x){return x.key===key;});
       const cost=upgCost(u);
+      if(key==='tj' && upg.dj<4 && !devMode){ SFX.empty(); return; }
       if(bankCoins>=cost && upg[key]<u.max){ bankCoins-=cost; upg[key]++; saveProgress(); SFX.ammo(); stat('spent',cost); statMax('maxUpg',UPGRADES.filter(function(x){ return upg[x.key]>=x.max; }).length); renderShop(); }
       else SFX.empty();
     });
   });
 }
 
-$('startBtn').addEventListener('click',function(){ audioInit(); SFX.click(); tryOn=null; $('startScreen').classList.add('hidden'); $('lookScreen').classList.remove('hidden'); renderLook('lookList','lookCanvas',false,null); });
+$('playerName').addEventListener('input',function(){ progress.playerName=this.value.slice(0,12); try{ localStorage.setItem('pp_progress',JSON.stringify(progress)); }catch(e){} });
+$('startBtn').addEventListener('click',function(){ audioInit(); SFX.click(); tryOn=null; $('playerName').value=progress.playerName||''; $('startScreen').classList.add('hidden'); $('lookScreen').classList.remove('hidden'); renderLook('lookList','lookCanvas',false,null); });
 $('lookGo').addEventListener('click',function(){ SFX.click(); tryOn=null; $('lookScreen').classList.add('hidden'); newGame(); });
 $('lookBack').addEventListener('click',function(){ SFX.click(); tryOn=null; $('lookScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); });
 function shopTab(which){ $('tabUpg').classList.toggle('on',which==='upg'); $('tabStyle').classList.toggle('on',which==='style'); $('tabArc').classList.toggle('on',which==='arc');
@@ -6714,15 +7126,17 @@ function rsHorn(){
 }
 const RS_HZ={basement:['block','ball'],studio:['cone','crate'],cabin:['log','rock'],bungalow:['crab','bucket'],chalet:['snowball','rock'],castle:['rock','barrel'],island:['crab','log'],trippy:['shroom','shroom']};
 function rsHzRnd(i,a){ const v=Math.sin(i*127.1+a*311.7)*43758.5453; return v-Math.floor(v); }
-function rsHzList(R,from,to){
-  const out=[], sd=R.id.length*7, lo=Math.floor((from-200)/540)-1, hi=Math.ceil((to-200)/540)+1;
-  for(let i=lo;i<=hi;i++){ if(rsHzRnd(i,sd)<0.2) continue; const hx=i*540+200+rsHzRnd(i,sd+1)*200, ks=RS_HZ[R.id]; out.push({i:i,x:hx,k:ks[rsHzRnd(i,sd+2)<0.5?0:1]}); }
-  return out;
+function rsHzList(R,from,to){   // obstacles are scattered at random distances (and sometimes in pairs), different every visit
+  if(!R.hzArr){ R.hzArr=[]; R.hzR=380; R.hzL=380; R.hzN=0; }
+  const ks=RS_HZ[R.id], mk=function(x){ R.hzArr.push({i:R.hzN++,x:x,k:ks[Math.random()<0.5?0:1]}); }, gap=function(){ return Math.random()<0.18?150+Math.random()*120:300+Math.random()*900; };
+  while(R.hzR<to+500){ R.hzR+=gap(); mk(R.hzR); }
+  while(R.hzL>from-500){ R.hzL-=gap(); mk(R.hzL); }
+  return R.hzArr.filter(function(h){ return h.x>=from && h.x<=to; });
 }
 function rsHazards(R){
   const hs=rsHzList(R,R.x-60,R.x+60);
   for(let a=0;a<hs.length;a++){ const h=hs[a]; if(R.hz[h.i]) continue;
-    if(Math.abs(h.x-R.x)<48 && R.y<22){ R.hz[h.i]=R.t; R.v*=0.25; R.vy=Math.max(R.vy,2.6); if(R.y===0) R.y=0.01; tone(150,0.12,'square',0.07,70); pop(W*0.42+(h.x-R.x),GROUND+6,'rgba(230,220,200,.8)',4); }
+    if(Math.abs(h.x-R.x)<48 && R.y<22){ R.hz[h.i]=R.t; R.v*=0.25; R.vy=Math.max(R.vy,2.6); if(R.y===0) R.y=0.01; tone(150,0.12,'square',0.07,70); pop(W*0.42+(h.x-R.x),GROUND+6,'rgba(230,220,200,.8)',4); if(h.k==='shroom'){ tripT=Math.max(tripT,260); showToast('🍄 Whoa... the colors!'); } }
   }
 }
 function rsDrawHazards(R,T){
@@ -6750,17 +7164,23 @@ function drawCart(R){
   ctx.save(); ctx.translate(x,y+bob); ctx.rotate(-f*R.vy*0.012); ctx.scale(f*1.2,1.2);
   // golf bag with clubs behind the seat
   ctx.fillStyle='#5a3a22'; rr(-60,-62,15,38,5); ctx.fill(); outline(1.8); ctx.strokeStyle='#c8c8d0'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-56,-62); ctx.lineTo(-60,-80); ctx.moveTo(-52,-62); ctx.lineTo(-52,-84); ctx.moveTo(-48,-62); ctx.lineTo(-44,-78); ctx.stroke();
-  // driver (behind the cart body)
-  ctx.fillStyle=O.pants; rr(-6,-42,34,10,4); ctx.fill(); outline(1.6); ctx.fillStyle='#fff'; rr(24,-42,12,10,4); ctx.fill(); outline(1.4);
-  ctx.fillStyle=O.a; rr(-24,-70,28,34,9); ctx.fill(); outline(2); ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(-8,-80,10,0,7); ctx.fill(); outline(1.8);
-  ctx.fillStyle='#222'; ctx.beginPath(); ctx.arc(-3,-81,1.8,0,7); ctx.fill(); ctx.fillStyle=H0.c; ctx.beginPath(); ctx.arc(-8,-83,10.5,Math.PI,0); ctx.fill(); outline(1.6); ctx.fillStyle=shade(H0.c,-25); rr(-3,-84,16,4,2); ctx.fill();
-  ctx.strokeStyle=O.a; ctx.lineWidth=6; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(-6,-62); ctx.lineTo(22,-60); ctx.stroke(); ctx.strokeStyle=skin; ctx.lineWidth=0.1; ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(24,-60,4,0,7); ctx.fill(); ctx.lineCap='butt';
+  // driver: the real carrier (your outfit, hair, hat, shades, bag), seated behind the cart body
+  ctx.save(); ctx.translate(-4,-14); drawCarrier(0,0,1,0,0,false,look); ctx.restore();
+  ctx.strokeStyle=O.a; ctx.lineWidth=6; ctx.lineCap='round'; ctx.beginPath(); ctx.moveTo(-2,-50); ctx.lineTo(26,-56); ctx.stroke(); ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(28,-56,4,0,7); ctx.fill(); ctx.lineCap='butt';   // hand on the wheel
   // seat + body
   ctx.fillStyle=shade(cc,-40); rr(-46,-48,30,26,6); ctx.fill(); outline(2);
   ctx.fillStyle=cc; rr(-50,-32,106,22,9); ctx.fill(); outline(2.4); ctx.fillStyle='rgba(255,255,255,.35)'; ctx.fillRect(-42,-26,86,4);
   ctx.fillStyle=cc; ctx.beginPath(); ctx.moveTo(24,-32); ctx.lineTo(30,-52); ctx.lineTo(54,-44); ctx.lineTo(56,-32); ctx.closePath(); ctx.fill(); outline(2.2);
   ctx.strokeStyle='#333'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(27,-50); ctx.lineTo(34,-66); ctx.stroke(); ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(30,-70); ctx.lineTo(38,-62); ctx.stroke();
   ctx.fillStyle='#ffe9a0'; ctx.beginPath(); ctx.arc(55,-38,4,0,7); ctx.fill();
+  { // seated legs: thighs forward from the seat, shins down to the floor, shoes pointing the way the cart drives
+    const SHc=findItem(SHOES,look.shoes||'black'), shorts=look.legs==='shorts', pc=O.pants||'#3a4a6a';
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle='rgba(30,25,40,.85)'; ctx.lineWidth=11.5; ctx.beginPath(); ctx.moveTo(-8,-35); ctx.lineTo(12,-37); ctx.stroke(); ctx.beginPath(); ctx.moveTo(12,-37); ctx.lineTo(17,-22); ctx.stroke();
+    ctx.strokeStyle=pc; ctx.lineWidth=8.5; ctx.beginPath(); ctx.moveTo(-8,-35); ctx.lineTo(12,-37); ctx.stroke();
+    ctx.strokeStyle=shorts?skin:pc; ctx.lineWidth=8.5; ctx.beginPath(); ctx.moveTo(12,-37); ctx.lineTo(17,-22); ctx.stroke();
+    ctx.lineCap='butt'; ctx.fillStyle=SHc.rainbow?'#ff5d8f':(SHc.c||'#222'); rr(11,-22,17,7,3); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.8)'; ctx.lineWidth=1.4; ctx.stroke();
+  }
   // roof
   ctx.fillStyle='#2a2a30'; ctx.fillRect(-44,-114,4,66); ctx.fillRect(36,-114,4,64); ctx.fillStyle='#f4f0e6'; rr(-56,-122,108,10,5); ctx.fill(); outline(2); ctx.fillStyle=cc; ctx.fillRect(-48,-116,92,3);
   // wheels
@@ -6804,7 +7224,7 @@ function resortDraw(){
   if(id==='studio'||id==='basement'){ const v=ctx.createRadialGradient(W/2,H/2,H*0.4,W/2,H/2,H*0.95); v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(10,5,30,.35)'); ctx.fillStyle=v; ctx.fillRect(0,0,W,H); }
   // resort name + hint
   ctx.font='bold 15px sans-serif'; const nm=R.p.icon+' '+R.p.name; const tw=ctx.measureText(nm).width; ctx.fillStyle='rgba(20,20,30,.55)'; rr(W/2-tw/2-14,52,tw+28,30,15); ctx.fill(); ctx.fillStyle='#fff'; ctx.textAlign='center'; ctx.fillText(nm,W/2,72);
-  if(T<600){ ctx.globalAlpha=Math.min(1,(600-T)/90); ctx.font='14px sans-serif'; ctx.fillStyle='rgba(20,20,30,.55)'; const ht='◀ ▶ drive  ·  ⇧ boost  ·  ⤒ jump over obstacles  ·  F honk'; const hw=ctx.measureText(ht).width; rr(W/2-hw/2-12,92,hw+24,26,13); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(ht,W/2,110); ctx.globalAlpha=1; }
+  if(T<600){ ctx.globalAlpha=Math.min(1,(600-T)/90); ctx.font='14px sans-serif'; ctx.fillStyle='rgba(20,20,30,.55)'; const ht='◀ ▶ drive  ·  💨 boost  ·  ⤒ jump over obstacles  ·  ✉ honk'; const hw=ctx.measureText(ht).width; rr(W/2-hw/2-12,92,hw+24,26,13); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(ht,W/2,110); ctx.globalAlpha=1; }
   ctx.textAlign='start';
 }
 function startResort(p){
@@ -6817,7 +7237,7 @@ function startResort(p){
   progress.visited=progress.visited||{}; if(!progress.visited[p.id]){ progress.visited[p.id]=1; saveProgress(); const nv=Object.keys(progress.visited).length; stat('retlevels'); if(nv>=RETIRE_PLACES.length) stat('retdays'); const got=[];
     [[OUTFITS,'outfit'],[HATS,'hat'],[TRUCKS,'truck'],[BAGS,'bag']].forEach(function(c){ c[0].forEach(function(it){ if(it.ret && Math.ceil(it.ret*RETIRE_PLACES.length/10)<=nv && owned[c[1]].indexOf(it.id)<0){ owned[c[1]].push(it.id); got.push(it.name); } }); });
     if(got.length){ saveLook(); setTimeout(function(){ showToast('🎁 Unlocked: '+got.join(', ')); },2500); } }
-  showBanner(p.icon+' '+p.name,'No deliveries, no dogs. Just cruise: ◀ ▶ to drive, ⇧ to go faster, Space to hop over obstacles, F to honk. Enjoy the scenery and the music.',7000);
+  showBanner(p.icon+' '+p.name,'No deliveries, no dogs. Just cruise: ◀ ▶ to drive, 💨 to go faster, ⤒ to hop over obstacles, ✉ to honk. Enjoy the scenery and the music.',7000);
   audioInit(); musicStop(); musicStart(); cancelAnimationFrame(raf); lastFrameT=0; frameAcc=0; loop();
 }
 
@@ -6836,24 +7256,40 @@ let arcadeMode=false, AR=null, ARSAVE=null;
 const AR_BETS=[25,50,100,250,500];
 function arcData(){ progress.arcade=progress.arcade||{name:'',board:[],plays:0,best:0,won:0}; return progress.arcade; }
 function arcSkill(){ let s=0; UPGRADES.forEach(function(u){ s+=upg[u.key]||0; }); return Math.min(14, s*0.45 + Object.keys(progress.done||{}).length/9); }   // gear + progress -> difficulty
-function arcGoal(d){ return Math.round(150+34*d); }                     // score that breaks even
-function arcPay(bet,score,goal){ return Math.round(bet*Math.max(0,Math.min(4,score/goal*1.6-0.6))); }
+function arcGoal(d){ return Math.round(90+22*d); }                      // Pete's score: beat it or lose the whole bet
+function arcPay(bet,score,goal){ if(score<=goal) return 0; return Math.round(bet*Math.min(4,1.5+(score-goal)/goal*1.5)); }
 // Leaderboard hook: every finished round goes through here. Swap the body for a server call when the app ships.
 function arcSubmitScore(entry){ const a=arcData(); a.board.push(entry); a.board.sort(function(x,y){ return y.score-x.score; }); a.board.length=Math.min(a.board.length,25); return a.board.indexOf(entry); }
 function arcCool(){ return Math.max(10,32-(upg.fire||0)*4.4); }
 function arcRender(){
   const box=$('arcWrap'), a=arcData(), d=arcSkill(), sel=a.bet!==undefined?a.bet:25;
   const can=function(b){ return devMode||bankCoins>=b; };
-  let chips=''; [0].concat(AR_BETS).forEach(function(b){ chips+='<button class="tab'+(sel===b?' on':'')+'" data-bet="'+b+'"'+(b&&!can(b)?' disabled style="opacity:.4"':'')+'>'+(b?'🪙 '+b:'Free play')+'</button>'; });
+  let chips=''; [0].concat(AR_BETS).forEach(function(b){ chips+='<button class="tab'+(sel===b?' on':'')+'" data-bet="'+b+'"'+(b&&!can(b)?' disabled style="opacity:.4"':'')+'>'+(b?'🪙 '+b:(arcFreeState()==='ad'?'📺 Free play':(arcFreeState()==='used'?'Free (tomorrow)':'🎁 Free play')))+'</button>'; });
   let rows=''; a.board.slice(0,10).forEach(function(e,i){ rows+='<div style="display:flex;gap:8px;font-size:13px;padding:3px 6px;border-radius:6px;'+(e.me?'background:rgba(255,225,77,.15)':'')+'"><b style="width:22px;text-align:right">'+(i+1)+'.</b><span style="flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+String(e.name||'Carrier').replace(/[<>&]/g,'')+'</span><b style="color:#ffe14d">'+e.score+'</b><span style="opacity:.6;width:62px;text-align:right">'+(e.bet?'🪙 '+e.bet:'free')+'</span></div>'; });
-  box.innerHTML='<div class="shop-row"><span class="ico">🧓</span><div class="info"><div class="nm">Old Pete · Seasoned Carrier</div><div class="ds">"Forty years on the route. Bet some coins, rookie. Hit the targets, leave the black bombs and red signs alone. Hit the break-even score to get your bet back, beat it to win more."</div></div></div>'+
-    '<div style="font-size:13px;opacity:.85">🔥 Fire rate Lv '+(upg.fire||0)+'/'+UPGRADES.find(function(u){return u.key==='fire';}).max+' · Difficulty '+(d+1).toFixed(1)+' · Break-even score <b>'+arcGoal(d)+'</b></div>'+
+  box.innerHTML='<div class="shop-row"><span class="ico">🧓</span><div class="info"><div class="nm">Old Pete · Seasoned Carrier</div><div class="ds">"Forty years on the route. Bet some coins, rookie. Hit the targets, leave the black bombs and red signs alone. Beat my score and I pay you 1.5x or more. Miss it and I keep your whole bet."</div></div></div>'+
+    '<div style="font-size:13px;opacity:.85">🔥 Fire rate Lv '+(upg.fire||0)+'/'+UPGRADES.find(function(u){return u.key==='fire';}).max+' · Difficulty '+(d+1).toFixed(1)+' · Pete\'s score <b>'+arcGoal(d)+'</b></div>'+
     '<div style="font-size:13px;font-weight:bold">Your bet</div><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">'+chips+'</div>'+
-    '<div style="display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:13px"><input id="arcName" maxlength="12" placeholder="Your name" value="'+String(a.name||'').replace(/"/g,'')+'" style="width:120px;padding:8px;border-radius:8px;border:none;font:inherit;background:rgba(255,255,255,.12);color:#fff"><button class="menu-btn green" id="arcPlay" style="width:170px;padding:10px 0">🎯 Play · 45s</button></div>'+
+    '<div style="display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;font-size:13px"><input id="arcName" maxlength="12" placeholder="Your name" value="'+String(a.name||progress.playerName||'').replace(/"/g,'')+'" style="width:120px;padding:8px;border-radius:8px;border:none;font:inherit;background:rgba(255,255,255,.12);color:#fff"><button class="menu-btn green" id="arcPlay" style="width:170px;padding:10px 0">🎯 Play · 45s</button></div>'+
     '<div style="width:100%"><div style="font-weight:bold;font-size:14px;margin-bottom:4px">🏅 Leaderboard</div>'+(rows||'<div style="font-size:12px;opacity:.6">No scores yet. Be the first.</div>')+'</div>';
   Array.prototype.forEach.call(box.querySelectorAll('[data-bet]'),function(b){ b.addEventListener('click',function(){ if(b.disabled) return; SFX.click(); a.bet=parseInt(b.dataset.bet,10); arcRender(); }); });
   $('arcName').addEventListener('input',function(){ a.name=this.value.slice(0,12); });
-  $('arcPlay').addEventListener('click',function(){ const bet=(a.bet!==undefined?a.bet:25); if(bet>0 && !can(bet)){ SFX.empty(); return; } a.name=$('arcName').value.slice(0,12); startArcade(bet); });
+  $('arcPlay').addEventListener('click',function(){ const bet=(a.bet!==undefined?a.bet:25); if(bet>0 && !can(bet)){ SFX.empty(); return; } a.name=$('arcName').value.slice(0,12); if(a.name) progress.playerName=a.name; arcTryStart(bet); });
+}
+// Free play is gated: watch an ad, or (paid app) one free round per day. Ad hook: replace arcShowAd with the real ad SDK later.
+function isPaidApp(){ try{ return localStorage.getItem('pp_paid')==='1'; }catch(e){ return false; } }
+function todayKey(){ const d=new Date(); return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function arcFreeState(){ const a=arcData(); if(devMode) return 'ok'; if(isPaidApp()) return a.freeDay===todayKey()?'used':'daily'; return 'ad'; }
+function arcShowAd(done){
+  const o=$('adScreen'); let n=5; o.classList.remove('hidden'); $('adCount').textContent=n;
+  const iv=setInterval(function(){ n--; $('adCount').textContent=n; if(n<=0){ clearInterval(iv); o.classList.add('hidden'); done(); } },1000);
+}
+function arcTryStart(bet){
+  if(bet>0){ startArcade(bet); return; }
+  const st=arcFreeState();
+  if(st==='ok'){ startArcade(0); }
+  else if(st==='daily'){ arcData().freeDay=todayKey(); saveProgress(); startArcade(0); }
+  else if(st==='used'){ showToast('Your daily free play is used up. Come back tomorrow, or bet some coins.'); SFX.empty(); if(!$('arcadeEnd').classList.contains('hidden')){ } }
+  else { arcShowAd(function(){ startArcade(0); }); }
 }
 function startArcade(bet){
   audioInit();
@@ -6862,21 +7298,26 @@ function startArcade(bet){
   if(!devMode && bet>0){ bankCoins-=bet; } saveProgress();
   const bi=Math.floor(Math.random()*THEMES.length); level=bi*10+1; boss=true; bossNext=false; bossWon=false;
   resortMode=false; arcadeMode=true;
-  fitCanvas(); reset(); B=null;
-  const G=GROUND; LEVEL_LEN=W; camX=0; camY=0; segs=[{x1:0,x2:W,top:G}]; platforms=[]; pickups=[]; truck.x=-9999;
-  platforms.push({x:Math.round(W/2-85),y:G-80,w:170,h:16,kind:'float',moving:false});
-  platforms.push({x:Math.round(W*0.05),y:G-34,w:120,h:16,kind:'float',moving:false});
-  platforms.push({x:Math.round(W*0.95-120),y:G-34,w:120,h:16,kind:'float',moving:false});
-  player.x=Math.round(W/2); player.y=G-80; player.vx=0; player.vy=0; player.onGround=true;
+  fitCanvas(); reset(); B=null; pickups=[]; player.vx=0; player.vy=0; player.onGround=true; camY=0;
   const d=arcSkill();
-  AR={bet:bet,d:d,goal:arcGoal(d),t:0,time:45*60,st:'ready',score:0,hits:0,shots:0,streak:0,best:0,tg:[],sh:[],pu:[],fl:[],pt:[],cd:0,spawn:50,side:0,puT:120,kx:0,ky:0,cx:W/2,cy:H*0.35,down:false,flash:[0,0],bad:0,fin:0,mouse:false};
-  state.hp=state.maxhp=99; state.ammo=99;
+  AR={bet:bet,d:d,goal:arcGoal(d),t:0,time:45*60,st:'ready',score:0,hits:0,shots:0,streak:0,best:0,tg:[],sh:[],pu:[],fl:[],pt:[],cd:0,spawn:50,side:0,puT:120,kx:0,ky:0,cx:W/2,cy:H*0.35,down:false,jx:0,jy:0,flash:[0,0],bad:0,fin:0,mouse:false};
+  state.hp=state.maxhp=99; state.ammo=99; arcLayout(); setArcadeUI(true);
   running=true; paused=false; setSprintToggle(false);
   ['startScreen','howToScreen','pauseScreen','endScreen','levelsScreen','retireScreen','shopScreen','arcadeEnd'].forEach(function(n){ const e=$(n); if(e) e.classList.add('hidden'); });
-  $('hud').classList.remove('hidden'); $('hud').classList.add('resort'); $('controls').classList.add('hidden'); $('tutBox').classList.add('hidden'); $('bossBar').classList.add('hidden'); $('prompt').classList.add('hidden');
+  $('hud').classList.remove('hidden'); $('hud').classList.add('resort'); $('controls').classList.remove('hidden'); $('tutBox').classList.add('hidden'); $('bossBar').classList.add('hidden'); $('prompt').classList.add('hidden');
   cv.style.cursor='none';
-  musicStop(); musicStart('boss:'+theme.kind);
+  musicStop(); musicStart('arcade');
   cancelAnimationFrame(raf); lastFrameT=0; frameAcc=0; simT=0; loop();
+}
+function setArcadeUI(on){ $('controls').classList.toggle('arcade',!!on); if(!on){ const k=$('aimKnob'); if(k) k.style.transform=''; } }
+function arcLayout(){   // (re)build the three platforms from the current screen size, so rotating the phone keeps the level correct
+  const A=AR, G=GROUND; LEVEL_LEN=W; camX=0; camY=0; segs=[{x1:0,x2:W,top:G}]; platforms=[]; truck.x=-9999;
+  const mw=Math.min(170,W*0.34), sw=Math.min(120,W*0.24);
+  platforms.push({x:Math.round(W/2-mw/2),y:G-80,w:Math.round(mw),h:16,kind:'float',moving:false});
+  platforms.push({x:Math.round(W*0.04),y:G-34,w:Math.round(sw),h:16,kind:'float',moving:false});
+  platforms.push({x:Math.round(W*0.96-sw),y:G-34,w:Math.round(sw),h:16,kind:'float',moving:false});
+  player.x=Math.round(W/2); player.y=G-80; player.vx=0; player.vy=0; player.onGround=true;
+  if(A){ A.lw=W; A.lh=H; A.lg=G; A.cx=Math.max(8,Math.min(W-8,A.cx)); A.cy=Math.max(8,Math.min(G-6,A.cy)); A.pu.forEach(function(p){ p.y=G+30; }); }
 }
 function arcSpawn(){
   const A=AR, d=A.d, prog=A.t/A.time;
@@ -6905,16 +7346,19 @@ function arcHit(A,tg){
   tg.dead=true; tone(520+Math.random()*200,0.1,'square',0.07,900); if(tg.ty==='gold') SFX.ammo();
 }
 function arcadeUpdate(){
-  const A=AR; if(!A) return; A.t++; 
+  const A=AR; if(!A) return; A.t++;
+  if(A.lw!==W||A.lh!==H||A.lg!==GROUND) arcLayout();
   if(A.cd>0) A.cd--; if(player.throwCd>0) player.throwCd--;
   // aim: keys nudge the crosshair, mouse/touch set it directly
   const sp=7; if(keys.left) A.cx-=sp; if(keys.right) A.cx+=sp; if(A.ku) A.cy-=sp; if(A.kd) A.cy+=sp;
+  { const ax=Math.abs(A.jx), ay=Math.abs(A.jy), m=Math.hypot(A.jx,A.jy);   // dead zone + curve: tiny tilts nudge precisely, a full tilt sweeps fast
+    if(m>0.08){ const k=Math.pow(Math.min(1,(m-0.08)/0.92),1.7)*13/m; A.cx+=A.jx*k; A.cy+=A.jy*k; } }
   A.cx=Math.max(8,Math.min(W-8,A.cx)); A.cy=Math.max(8,Math.min(GROUND-6,A.cy));
   player.face=A.cx<player.x?-1:1;
   const fireKey=consume('throw')||consume('jump'); consume('interact');
   if(A.st==='ready'){ if(A.t>=180){ A.st='play'; A.t=0; } if(fireKey||A.down) { } return; }
   if(A.st==='play'){
-    if(fireKey||A.down||A.tap) arcFire(); A.tap=false;
+    if(fireKey||A.down||A.tap||keys.throw) arcFire(); A.tap=false;
     const prog=A.t/A.time, d=A.d;
     if(--A.spawn<=0){ arcSpawn(); if(d>6 && Math.random()<0.25+0.02*d) arcSpawn(); A.spawn=Math.max(26,Math.round((84-d*3)*(1-0.25*prog)*(0.7+Math.random()*0.6))); }
     if(--A.puT<=0){ const x=W*(0.2+Math.random()*0.6); A.pu.push({x:x,y:GROUND+30,t:0,life:Math.max(70,120-d*3),r:17,dead:false}); A.puT=Math.max(60,Math.round((190-d*7)*(0.7+Math.random()*0.6))); }
@@ -6969,13 +7413,14 @@ function arcadeDraw(){
   const secs=Math.max(0,Math.ceil((A.st==='ready'?A.time:A.time-A.t)/60));
   ctx.font='bold 15px sans-serif'; const mult=Math.min(3,1+Math.floor(A.streak/5)*0.5);
   const line1='🎯 '+A.score, line2=secs+'s', line3=A.streak>1?'🔥 streak '+A.streak+(mult>1?'  ×'+mult:''):'';
-  ctx.fillStyle='rgba(20,20,30,.6)'; rr(W/2-120,52,240,34,17); ctx.fill();
-  ctx.fillStyle='#ffe14d'; ctx.font='bold 20px sans-serif'; ctx.fillText(line1,W/2-52,76); ctx.fillStyle=secs<=10?'#ff6a5a':'#fff'; ctx.fillText('⏱ '+line2,W/2+52,76);
-  const tw=240*(1-(A.st==='ready'?0:A.t/A.time)); ctx.fillStyle='rgba(255,255,255,.18)'; rr(W/2-120,90,240,6,3); ctx.fill(); ctx.fillStyle=secs<=10?'#ff6a5a':'#4cd964'; if(tw>6){ rr(W/2-120,90,tw,6,3); ctx.fill(); }
-  ctx.font='bold 14px sans-serif'; ctx.fillStyle='#fff'; if(line3){ ctx.strokeStyle='rgba(20,20,30,.8)'; ctx.lineWidth=4; ctx.strokeText(line3,W/2,118); ctx.fillText(line3,W/2,118); }
-  ctx.font='12px sans-serif'; ctx.fillStyle='rgba(255,255,255,.85)'; ctx.textAlign='left'; ctx.fillText('Bet 🪙 '+A.bet+' · break even '+A.goal,12,H-12); ctx.textAlign='center';
+  const pw=W<520?190:240, py=8;   // stats sit at the very top (narrow screens: a bit narrower so the sound/pause buttons stay clear)
+  ctx.fillStyle='rgba(20,20,30,.6)'; rr(W/2-pw/2,py,pw,34,17); ctx.fill();
+  ctx.fillStyle='#ffe14d'; ctx.font='bold 20px sans-serif'; ctx.fillText(line1,W/2-pw*0.22,py+25); ctx.fillStyle=secs<=10?'#ff6a5a':'#fff'; ctx.fillText('⏱ '+line2,W/2+pw*0.22,py+25);
+  const tw=pw*(1-(A.st==='ready'?0:A.t/A.time)); ctx.fillStyle='rgba(255,255,255,.18)'; rr(W/2-pw/2,py+38,pw,6,3); ctx.fill(); ctx.fillStyle=secs<=10?'#ff6a5a':'#4cd964'; if(tw>6){ rr(W/2-pw/2,py+38,tw,6,3); ctx.fill(); }
+  ctx.font='bold 14px sans-serif'; ctx.fillStyle='#fff'; if(line3){ ctx.strokeStyle='rgba(20,20,30,.8)'; ctx.lineWidth=4; ctx.strokeText(line3,W/2,py+68); ctx.fillText(line3,W/2,py+68); }
+  ctx.font='12px sans-serif'; ctx.fillStyle='rgba(255,255,255,.85)'; ctx.textAlign='left'; ctx.fillText('Bet 🪙 '+A.bet+' · beat '+A.goal+' to win',12,H-12); ctx.textAlign='center';
   if(A.st==='ready'){ const n=3-Math.floor(A.t/60); ctx.font='bold 64px sans-serif'; ctx.lineWidth=7; ctx.strokeStyle='rgba(20,20,30,.85)'; const tx=n>0?String(n):'GO!'; ctx.strokeText(tx,W/2,H*0.42); ctx.fillStyle='#ffe14d'; ctx.fillText(tx,W/2,H*0.42);
-    ctx.font='14px sans-serif'; ctx.fillStyle='rgba(20,20,30,.6)'; const ht='Aim with mouse / touch / arrows · click, tap or F to throw · don\'t shoot the black bombs or red signs'; const hw=ctx.measureText(ht).width; rr(W/2-hw/2-12,H*0.42+22,hw+24,26,13); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(ht,W/2,H*0.42+40); }
+    ctx.font='14px sans-serif'; ctx.fillStyle='rgba(20,20,30,.6)'; const ht='Aim with the stick / mouse / touch · click, tap or ✉ to throw · don\'t shoot the black bombs or red signs'; const hw=ctx.measureText(ht).width; rr(W/2-hw/2-12,H*0.42+22,hw+24,26,13); ctx.fill(); ctx.fillStyle='#fff'; ctx.fillText(ht,W/2,H*0.42+40); }
   if(A.st==='done'){ ctx.font='bold 48px sans-serif'; ctx.lineWidth=7; ctx.strokeStyle='rgba(20,20,30,.85)'; ctx.strokeText("TIME!",W/2,H*0.42); ctx.fillStyle='#fff'; ctx.fillText("TIME!",W/2,H*0.42); }
   // crosshair
   if(A.st!=='done'){ const c=A.cd>0?'#ff9a3c':'#fff'; ctx.strokeStyle='rgba(20,20,30,.8)'; ctx.lineWidth=5; ctx.beginPath(); ctx.arc(A.cx,A.cy,13,0,7); ctx.moveTo(A.cx-20,A.cy); ctx.lineTo(A.cx-6,A.cy); ctx.moveTo(A.cx+6,A.cy); ctx.lineTo(A.cx+20,A.cy); ctx.moveTo(A.cx,A.cy-20); ctx.lineTo(A.cx,A.cy-6); ctx.moveTo(A.cx,A.cy+6); ctx.lineTo(A.cx,A.cy+20); ctx.stroke();
@@ -6984,29 +7429,38 @@ function arcadeDraw(){
 }
 function arcadeFinish(){
   const A=AR, a=arcData(); running=false; cancelAnimationFrame(raf); musicStop(); cv.style.cursor=''; arcadeMode=false;
-  let pay=arcPay(A.bet,A.score,A.goal); bankCoins+=devMode?Math.max(0,pay-A.bet):pay; progress.arcade=a; a.plays++; if(A.score>a.best) a.best=A.score; if(pay>=A.bet && A.bet>0) a.won++;
+  let pay=arcPay(A.bet,A.score,A.goal); bankCoins+=devMode?Math.max(0,pay-A.bet):pay; progress.arcade=a; a.plays++; if(A.score>a.best) a.best=A.score; if(pay>=A.bet && A.bet>0){ a.won++; stat('arcWins'); } statMax('arcBest',A.score); stat('arcPlays');
   const idx=arcSubmitScore({name:a.name||'Carrier',score:A.score,bet:A.bet,diff:+A.d.toFixed(1),hits:A.hits,date:Date.now(),v:1,me:1});
   a.board.forEach(function(e,i){ if(i!==idx) delete e.me; });
   saveProgress(); const acc=A.shots?Math.round(A.hits/A.shots*100):0, net=pay-A.bet;
   restoreAfterArcade(); $('hud').classList.add('hidden'); $('hud').classList.remove('resort');
   const win=A.bet>0 && pay>A.bet, even=A.bet>0 && pay===A.bet;
   $('arcIcon').textContent=A.bet===0?'🎯':(win?'💰':(pay>0?'😬':'💸'));
-  $('arcTitle').textContent=A.bet===0?'Round over':(win?'Pete pays up!':(even?'You broke even':(pay>0?'Close, but no cigar':'The house wins')));
-  $('arcText').textContent=A.bet===0?'Free play: no coins on the line.':(win?'"Not bad, rookie. Not bad at all."':(pay>0?'"Get a few more hits in and you\'ll be rich."':'"Come back when your aim improves."'));
-  $('arcStats').innerHTML='<div>🎯 Score <b style="color:#ffe14d">'+A.score+'</b> <span style="opacity:.6">(break even '+A.goal+')</span></div><div>Hits <b>'+A.hits+'</b> · Accuracy <b>'+acc+'%</b> · Best streak <b>'+A.best+'</b></div>'+(A.bet>0?'<div>Bet 🪙 '+A.bet+' → payout 🪙 <b>'+pay+'</b> <span style="color:'+(net>=0?'#4cd964':'#ff6a5a')+'">('+(net>=0?'+':'')+net+')</span></div>':'')+(idx===0?'<div style="color:#ffe14d">🏅 New #1 on the leaderboard!</div>':(idx>=0&&idx<10?'<div style="color:#ffe14d">🏅 Leaderboard rank #'+(idx+1)+'</div>':''));
+  $('arcTitle').textContent=A.bet===0?'Round over':(win?'Pete pays up!':'Pete keeps your bet');
+  $('arcText').textContent=A.bet===0?'Free play: no coins on the line.':(win?'"You beat my score, rookie. Not bad at all."':'"You didn\'t beat my score, so the whole bet is mine. Come back when your aim improves."');
+  $('arcStats').innerHTML='<div>🎯 Score <b style="color:#ffe14d">'+A.score+'</b> <span style="opacity:.6">(Pete\'s score '+A.goal+')</span></div><div>Hits <b>'+A.hits+'</b> · Accuracy <b>'+acc+'%</b> · Best streak <b>'+A.best+'</b></div>'+(A.bet>0?'<div>Bet 🪙 '+A.bet+' → payout 🪙 <b>'+pay+'</b> <span style="color:'+(net>=0?'#4cd964':'#ff6a5a')+'">('+(net>=0?'+':'')+net+')</span></div>':'')+(idx===0?'<div style="color:#ffe14d">🏅 New #1 on the leaderboard!</div>':(idx>=0&&idx<10?'<div style="color:#ffe14d">🏅 Leaderboard rank #'+(idx+1)+'</div>':''));
   $('arcAgain').textContent='🎯 Play again'+(A.bet?' (🪙 '+A.bet+')':''); $('arcAgain').dataset.bet=A.bet; $('arcAgain').disabled=!(A.bet===0||devMode||bankCoins>=A.bet);
-  menuMusic(50); $('arcadeEnd').classList.remove('hidden'); (win||even)?SFX.ammo():SFX.damage(); AR=null;
+  setArcadeUI(false); $('controls').classList.add('hidden'); menuMusic(50); $('arcadeEnd').classList.remove('hidden'); (win||even)?SFX.ammo():SFX.damage(); AR=null;
 }
 function restoreAfterArcade(){ if(!ARSAVE) return; level=ARSAVE.level; boss=ARSAVE.boss; bossNext=ARSAVE.bossNext; bossWon=ARSAVE.bossWon; pendingAdvance=ARSAVE.pend; state=ARSAVE.state; theme=ARSAVE.theme; tutorial=ARSAVE.tut; hidden=ARSAVE.hid; ARSAVE=null; }
-function arcadeAbort(){ if(!arcadeMode) return; arcadeMode=false; AR=null; running=false; paused=false; cancelAnimationFrame(raf); musicStop(); cv.style.cursor=''; restoreAfterArcade(); $('pauseScreen').classList.add('hidden'); $('hud').classList.add('hidden'); $('hud').classList.remove('resort'); menuMusic(50); openShop(); shopTab('arc'); }
+function arcadeAbort(){ if(!arcadeMode) return; setArcadeUI(false); $('controls').classList.add('hidden'); arcadeMode=false; AR=null; running=false; paused=false; cancelAnimationFrame(raf); musicStop(); cv.style.cursor=''; restoreAfterArcade(); $('pauseScreen').classList.add('hidden'); $('hud').classList.add('hidden'); $('hud').classList.remove('resort'); menuMusic(50); openShop(); shopTab('arc'); }
 window.addEventListener('keydown',function(ev){ if(!arcadeMode||!AR) return; if(ev.key==='ArrowUp'||ev.key==='w'||ev.key==='W') AR.ku=true; if(ev.key==='ArrowDown'||ev.key==='s'||ev.key==='S') AR.kd=true; });
 window.addEventListener('keyup',function(ev){ if(!arcadeMode||!AR) return; if(ev.key==='ArrowUp'||ev.key==='w'||ev.key==='W') AR.ku=false; if(ev.key==='ArrowDown'||ev.key==='s'||ev.key==='S') AR.kd=false; });
 function arcPtr(ev){ if(!arcadeMode||!AR) return false; const r=cv.getBoundingClientRect(); AR.cx=(ev.clientX-r.left)*(W/r.width); AR.cy=(ev.clientY-r.top)*(H/r.height); return true; }
+(function(){ const j=$('aimJoy'), kn=$('aimKnob'); let id=null;
+  function set(dx,dy){ const R=Math.max(40,j.clientWidth*0.36), d=Math.hypot(dx,dy); if(d>R){ dx*=R/d; dy*=R/d; } kn.style.transform='translate('+dx+'px,'+dy+'px)'; if(AR){ AR.jx=dx/R; AR.jy=dy/R; kn.style.transition='none'; } }
+  function pos(e){ const t=e.changedTouches?Array.prototype.find.call(e.changedTouches,function(x){return x.identifier===id;}):e; if(!t) return null; const b=j.getBoundingClientRect(); return [t.clientX-(b.left+b.width/2),t.clientY-(b.top+b.height/2)]; }
+  function start(e){ e.preventDefault(); audioInit(); id=e.changedTouches?e.changedTouches[0].identifier:'m'; const d=pos(e); if(d) set(d[0],d[1]); }
+  function move(e){ if(id===null) return; e.preventDefault(); const d=pos(e); if(d) set(d[0],d[1]); }
+  function end(e){ if(id===null) return; if(e.changedTouches && !Array.prototype.some.call(e.changedTouches,function(x){return x.identifier===id;})) return; id=null; set(0,0); }
+  j.addEventListener('touchstart',start,{passive:false}); j.addEventListener('touchmove',move,{passive:false}); j.addEventListener('touchend',end); j.addEventListener('touchcancel',end);
+  j.addEventListener('mousedown',start); window.addEventListener('mousemove',function(e){ if(id==='m') move(e); }); window.addEventListener('mouseup',end);
+})();
 cv.addEventListener('pointermove',function(ev){ arcPtr(ev); });
 cv.addEventListener('pointerdown',function(ev){ if(arcPtr(ev)){ AR.down=true; AR.tap=true; ev.preventDefault(); } });
 window.addEventListener('pointerup',function(){ if(AR) AR.down=false; });
 window.addEventListener('pointercancel',function(){ if(AR) AR.down=false; });
-$('arcAgain').addEventListener('click',function(){ SFX.click(); const b=parseInt(this.dataset.bet,10)||0; $('arcadeEnd').classList.add('hidden'); startArcade(b); });
+$('arcAgain').addEventListener('click',function(){ SFX.click(); const b=parseInt(this.dataset.bet,10)||0; arcTryStart(b); });
 $('arcBack').addEventListener('click',function(){ SFX.click(); $('arcadeEnd').classList.add('hidden'); openShop(); shopTab('arc'); });
 
 function shouldHidden(){ return !hidden && !tutorial && !boss && !apt && !isRetLevel(level) && !isAptLevel(level) && theme.kind!=='treehouse' && !state.replay && state.delivered>=state.goal && level>=2 && (hidForce || Math.random()<0.04); }
@@ -7270,6 +7724,25 @@ function dpProp(K,x,y,T,i,r){
     break;
   }
 }
+// A hole in the ground: you look at the dirt cross-section (back wall), not a flat black cut-out.
+function drawPit(g,topY,K,T){
+  const x1=g.x1, x2=g.x2, w=x2-x1, hh=Math.max(40,H-topY);
+  ctx.save(); ctx.beginPath(); ctx.rect(x1,topY,w,hh+4); ctx.clip();
+  let bg=ctx.createLinearGradient(0,topY,0,H);
+  if(K==='trippy'){ const h0=(T*0.8)%360; bg.addColorStop(0,'hsl('+h0+',65%,34%)'); bg.addColorStop(0.5,'hsl('+((h0+60)%360)+',70%,26%)'); bg.addColorStop(1,'hsl('+((h0+130)%360)+',70%,16%)'); }
+  else { bg.addColorStop(0,shade(theme.dirtB,-8)); bg.addColorStop(0.45,shade(theme.dirtB,-32)); bg.addColorStop(1,shade(theme.dirtB,-58)); }
+  ctx.fillStyle=bg; ctx.fillRect(x1,topY,w,hh+4);
+  // soil layers
+  ctx.lineWidth=2; for(let k=0;k<7;k++){ const y0=topY+14+k*24; ctx.strokeStyle=(k%2)?'rgba(0,0,0,.2)':'rgba(255,255,255,.07)'; ctx.beginPath(); for(let x=x1;x<=x2;x+=10){ const yy=y0+Math.sin(x*0.045+k*1.7+(K==='trippy'?T*0.05:0))*3; if(x===x1) ctx.moveTo(x,yy); else ctx.lineTo(x,yy); } ctx.stroke(); }
+  // pebbles, roots
+  for(let i=0;i<Math.floor(w/16);i++){ const px=x1+8+hash(x1+i*7.1)*(w-16), py=topY+16+hash(x1+i*3.3+9)*(hh-24), pr=2+hash(x1+i)*3.5; ctx.fillStyle=(i%3===0)?'rgba(255,255,255,.14)':'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.ellipse(px,py,pr*1.3,pr,0,0,7); ctx.fill(); }
+  ctx.strokeStyle='rgba(60,35,15,.55)'; ctx.lineWidth=2.4; ctx.lineCap='round'; for(let i=0;i<2;i++){ const rx=(i?x2-10:x1+10), sg=i?-1:1; ctx.beginPath(); ctx.moveTo(rx,topY+4); ctx.quadraticCurveTo(rx+sg*14,topY+26,rx+sg*8,topY+46); ctx.stroke(); } ctx.lineCap='butt';
+  // depth: shadow under the lips, dark inner edges, and a fade toward the bottom
+  let sh=ctx.createLinearGradient(0,topY,0,topY+26); sh.addColorStop(0,'rgba(0,0,0,.5)'); sh.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=sh; ctx.fillRect(x1,topY,w,26);
+  [[x1,1],[x2,-1]].forEach(function(e){ const sg=ctx.createLinearGradient(e[0],0,e[0]+e[1]*26,0); sg.addColorStop(0,'rgba(0,0,0,.55)'); sg.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=sg; ctx.fillRect(e[1]>0?x1:x2-26,topY,26,hh+4); });
+  let dp=ctx.createLinearGradient(0,topY+hh*0.4,0,H); dp.addColorStop(0,'rgba(0,0,0,0)'); dp.addColorStop(1,'rgba(8,4,2,.6)'); ctx.fillStyle=dp; ctx.fillRect(x1,topY,w,hh+4);
+  ctx.restore();
+}
 function drawStreetProps(K,T){
   if(tutorial || (apt && apt.cur>=0) || (boss && (K==='treehouse'||K==='desert'))) return;
   const STEP=64, x0=Math.floor((camX-120)/STEP)*STEP, x1=camX+W+120;
@@ -7289,21 +7762,22 @@ function drawStreetProps(K,T){
   if(K==='river'){ gaps.forEach(function(g){ if(g.x2<camX-60||g.x1>camX+W+60) return; const wy=Math.max(g.leftTop,g.rightTop)+16; for(let x=g.x1+30,q=0;x<g.x2-30;x+=58,q++){ const px=x+(hash(q*3.1+g.x1)-0.5)*20, py=wy+3+Math.sin(T*0.04+q+px*0.02)*1.2; ctx.fillStyle='#3f9a3a'; ctx.beginPath(); ctx.ellipse(px,py,11,3.4,0,0.35,6.1); ctx.fill(); ctx.strokeStyle='rgba(20,60,20,.5)'; ctx.lineWidth=1; ctx.stroke(); if(q%2===0){ ctx.fillStyle='#ff9ac8'; for(let p=0;p<5;p++){ ctx.beginPath(); ctx.ellipse(px+Math.cos(p*1.26)*3,py-2+Math.sin(p*1.26)*1.2,2,3.4,p*1.26,0,7); ctx.fill(); } ctx.fillStyle='#ffe14d'; ctx.beginPath(); ctx.arc(px,py-2.4,1.6,0,7); ctx.fill(); } } }); }
 }
 // ambient life drifting through the scene (screen space, soft parallax)
-function drawAmbientLife(K,T){
+function drawAmbientLife(K,T,phase){   // phase 'bg' = distant birds and sky traffic (drawn behind houses); otherwise the foreground critters
   if(tutorial || (apt && apt.cur>=0)) return;
+  const bgp=(phase==='bg');
   const n=7, sx=function(i,sp,par){ return wrap(hash(i*5.1+bgSeed())*(W+400)+T*sp-camX*par,W+400)-200; };
   ctx.save();
-  if(K==='suburbs'||K==='farm'||K==='fantasy'||K==='river'||K==='patriot'){   // butterflies & dragonflies
+  if(!bgp && (K==='suburbs'||K==='farm'||K==='fantasy'||K==='river'||K==='patriot')){   // butterflies & dragonflies
     for(let i=0;i<n;i++){ const x=sx(i,0.35+hash(i)*0.3,0.55), y=GROUND-70-hash(i+30)*160+Math.sin(T*0.05+i*2)*16, fl=Math.sin(T*0.5+i)*4;
       const c=K==='river'?'#6af0e0':['#ffd54a','#ff8ac8','#8ac8ff','#fff'][i%4]; ctx.fillStyle=c; ctx.beginPath(); ctx.ellipse(x-3,y,4,3.4+fl*0.3,0.4,0,7); ctx.ellipse(x+3,y,4,3.4-fl*0.3,-0.4,0,7); ctx.fill(); ctx.fillStyle='#333'; ctx.fillRect(x-0.5,y-2,1,5); } }
-  if(K==='autumn'){ for(let i=0;i<22;i++){ const x=sx(i,0.7+hash(i)*0.5,0.8), y=wrap(hash(i+60)*(H+80)+T*(0.7+hash(i+1)*0.8),H+80)-40; ctx.fillStyle=AUTUMN_LEAVES[i%4]; ctx.save(); ctx.translate(x+Math.sin(T*0.04+i)*10,y); ctx.rotate(T*0.03+i); ctx.beginPath(); ctx.ellipse(0,0,5,2.8,0,0,7); ctx.fill(); ctx.restore(); } }
-  if(K==='dusk'||K==='night'||K==='horror'||K==='fantasy'){ for(let i=0;i<14;i++){ const x=sx(i,0.2+hash(i)*0.2,0.6), y=GROUND-30-hash(i+40)*190+Math.sin(T*0.03+i*3)*14, a=0.25+0.75*Math.max(0,Math.sin(T*0.06+i*1.7)); ctx.fillStyle=(K==='horror'?'rgba(150,255,200,':(K==='fantasy'?'rgba(255,190,255,':'rgba(220,255,120,'))+a.toFixed(2)+')'; ctx.beginPath(); ctx.arc(x,y,2,0,7); ctx.fill(); ctx.fillStyle=ctx.fillStyle.replace(/[\d.]+\)$/,(a*0.25).toFixed(2)+')'); ctx.beginPath(); ctx.arc(x,y,6,0,7); ctx.fill(); } }
-  if(K==='city'||K==='alley'||K==='pirate'){ for(let i=0;i<5;i++){ const x=sx(i,0.6+hash(i)*0.5,0.35), y=60+hash(i+50)*140+Math.sin(T*0.04+i)*10, fl=Math.sin(T*0.3+i*2)*4; ctx.strokeStyle=K==='pirate'?'#fff':'#59606e'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x-8,y-fl); ctx.quadraticCurveTo(x-3,y-fl-4,x,y); ctx.quadraticCurveTo(x+3,y-fl-4,x+8,y-fl); ctx.stroke(); } }
-  if(K==='candy'){ for(let i=0;i<24;i++){ const x=sx(i,0.3,0.7), y=wrap(hash(i+70)*(H+60)+T*(0.5+hash(i)*0.6),H+60)-30; ctx.fillStyle=['#ff5a8a','#5ad0ff','#ffd54a','#7aff9a'][i%4]; ctx.save(); ctx.translate(x,y); ctx.rotate(i+T*0.03); ctx.fillRect(-3,-1,6,2.2); ctx.restore(); } }
-  if(K==='trippy'){ for(let i=0;i<10;i++){ const x=sx(i,0.25,0.5), y=GROUND-40-hash(i+80)*230+Math.sin(T*0.04+i)*20; ctx.fillStyle='hsla('+((T*1.5+i*40)%360)+',90%,65%,.45)'; ctx.beginPath(); ctx.arc(x,y,5+hash(i+3)*8,0,7); ctx.fill(); } }
-  if(K==='desert'){ ctx.fillStyle='rgba(255,230,170,.1)'; for(let i=0;i<4;i++){ ctx.fillRect(0,GROUND-6-i*7+Math.sin(T*0.05+i)*2,W,3); } for(let i=0;i<3;i++){ const x=sx(i,0.4,0.2), y=70+i*28+Math.sin(T*0.02+i)*8; ctx.strokeStyle='#3a3028'; ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(x-11,y-3); ctx.quadraticCurveTo(x-5,y-8,x,y); ctx.quadraticCurveTo(x+5,y-8,x+11,y-3); ctx.stroke(); } }
-  if(K==='cyber'){ for(let i=0;i<6;i++){ const x=sx(i,0.9+hash(i)*0.6,0.3), y=70+hash(i+90)*150; ctx.fillStyle='rgba(0,229,255,.8)'; ctx.fillRect(x,y,8,2.4); ctx.fillStyle='rgba(0,229,255,.2)'; ctx.fillRect(x-16,y,16,2.4); } }
-  if(K==='snow'){ for(let i=0;i<3;i++){ const x=sx(i,0.5,0.3), y=70+hash(i+20)*100+Math.sin(T*0.03+i)*8, fl=Math.sin(T*0.25+i)*4; ctx.strokeStyle='#4a5468'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x-8,y-fl); ctx.quadraticCurveTo(x-3,y-fl-4,x,y); ctx.quadraticCurveTo(x+3,y-fl-4,x+8,y-fl); ctx.stroke(); } }
+  if(!bgp && K==='autumn'){ for(let i=0;i<22;i++){ const x=sx(i,0.7+hash(i)*0.5,0.8), y=wrap(hash(i+60)*(H+80)+T*(0.7+hash(i+1)*0.8),H+80)-40; ctx.fillStyle=AUTUMN_LEAVES[i%4]; ctx.save(); ctx.translate(x+Math.sin(T*0.04+i)*10,y); ctx.rotate(T*0.03+i); ctx.beginPath(); ctx.ellipse(0,0,5,2.8,0,0,7); ctx.fill(); ctx.restore(); } }
+  if(!bgp && (K==='dusk'||K==='night'||K==='horror'||K==='fantasy')){ for(let i=0;i<14;i++){ const x=sx(i,0.2+hash(i)*0.2,0.6), y=GROUND-30-hash(i+40)*190+Math.sin(T*0.03+i*3)*14, a=0.25+0.75*Math.max(0,Math.sin(T*0.06+i*1.7)); ctx.fillStyle=(K==='horror'?'rgba(150,255,200,':(K==='fantasy'?'rgba(255,190,255,':'rgba(220,255,120,'))+a.toFixed(2)+')'; ctx.beginPath(); ctx.arc(x,y,2,0,7); ctx.fill(); ctx.fillStyle=ctx.fillStyle.replace(/[\d.]+\)$/,(a*0.25).toFixed(2)+')'); ctx.beginPath(); ctx.arc(x,y,6,0,7); ctx.fill(); } }
+  if(bgp && (K==='city'||K==='alley'||K==='pirate')){ for(let i=0;i<5;i++){ const x=sx(i,0.6+hash(i)*0.5,0.35), y=60+hash(i+50)*140+Math.sin(T*0.04+i)*10, fl=Math.sin(T*0.3+i*2)*4; ctx.strokeStyle=K==='pirate'?'#fff':'#59606e'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x-8,y-fl); ctx.quadraticCurveTo(x-3,y-fl-4,x,y); ctx.quadraticCurveTo(x+3,y-fl-4,x+8,y-fl); ctx.stroke(); } }
+  if(!bgp && K==='candy'){ for(let i=0;i<24;i++){ const x=sx(i,0.3,0.7), y=wrap(hash(i+70)*(H+60)+T*(0.5+hash(i)*0.6),H+60)-30; ctx.fillStyle=['#ff5a8a','#5ad0ff','#ffd54a','#7aff9a'][i%4]; ctx.save(); ctx.translate(x,y); ctx.rotate(i+T*0.03); ctx.fillRect(-3,-1,6,2.2); ctx.restore(); } }
+  if(!bgp && K==='trippy'){ for(let i=0;i<10;i++){ const x=sx(i,0.25,0.5), y=GROUND-40-hash(i+80)*230+Math.sin(T*0.04+i)*20; ctx.fillStyle='hsla('+((T*1.5+i*40)%360)+',90%,65%,.45)'; ctx.beginPath(); ctx.arc(x,y,5+hash(i+3)*8,0,7); ctx.fill(); } }
+  if(K==='desert'){ if(!bgp){ ctx.fillStyle='rgba(255,230,170,.1)'; for(let i=0;i<4;i++){ ctx.fillRect(0,GROUND-6-i*7+Math.sin(T*0.05+i)*2,W,3); } } else for(let i=0;i<3;i++){ const x=sx(i,0.4,0.2), y=70+i*28+Math.sin(T*0.02+i)*8; ctx.strokeStyle='#3a3028'; ctx.lineWidth=2.4; ctx.beginPath(); ctx.moveTo(x-11,y-3); ctx.quadraticCurveTo(x-5,y-8,x,y); ctx.quadraticCurveTo(x+5,y-8,x+11,y-3); ctx.stroke(); } }
+  if(bgp && K==='cyber'){ for(let i=0;i<6;i++){ const x=sx(i,0.9+hash(i)*0.6,0.3), y=70+hash(i+90)*150; ctx.fillStyle='rgba(0,229,255,.8)'; ctx.fillRect(x,y,8,2.4); ctx.fillStyle='rgba(0,229,255,.2)'; ctx.fillRect(x-16,y,16,2.4); } }
+  if(bgp && K==='snow'){ for(let i=0;i<3;i++){ const x=sx(i,0.5,0.3), y=70+hash(i+20)*100+Math.sin(T*0.03+i)*8, fl=Math.sin(T*0.25+i)*4; ctx.strokeStyle='#4a5468'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x-8,y-fl); ctx.quadraticCurveTo(x-3,y-fl-4,x,y); ctx.quadraticCurveTo(x+3,y-fl-4,x+8,y-fl); ctx.stroke(); } }
   ctx.restore();
 }
 
@@ -7343,7 +7817,7 @@ const ACHS=[
   {id:'kt',cat:'ko',icon:'🗞',name:'Paper Cannon',desc:'Throw 500 pieces of junk mail',stat:'throws',goal:500,coins:20},
   {id:'b0',cat:'boss',icon:'🐶',name:'Bruno Busted',desc:'Defeat Big Bruno',stat:'boss0',goal:1,coins:25},
   {id:'b1',cat:'boss',icon:'🪿',name:'Goose Cooked',desc:'Defeat the Goose King',stat:'boss1',goal:1,coins:25},
-  {id:'b2',cat:'boss',icon:'📋',name:'Motion Denied',desc:'Defeat HOA President Harriet',stat:'boss2',goal:1,coins:25},
+  {id:'b2',cat:'boss',icon:'📋',name:'Motion Denied',desc:'Defeat HOA President Carol',stat:'boss2',goal:1,coins:25},
   {id:'b3',cat:'boss',icon:'⛄',name:'Snowball Melted',desc:'Defeat Big Chill, the giant snowman',stat:'boss3',goal:1,coins:25},
   {id:'b4',cat:'boss',icon:'🦇',name:'Crowley Grounded',desc:'Defeat Count Crowley',stat:'boss4',goal:1,coins:25},
   {id:'b5',cat:'boss',icon:'🦈',name:'Shark Sunk',desc:'Defeat the Sky Shark',stat:'boss5',goal:1,coins:25},
@@ -7388,7 +7862,7 @@ const ACHS=[
   {id:'bp2',cat:'boss',icon:'👑',name:'Untouchable Champion',desc:'Defeat 3 bosses without losing a heart',stat:'bossPerfect',goal:3,coins:100},
   {id:'m5',cat:'money',icon:'🏦',name:'Nest Egg',desc:'Have 2,000 coins saved up',stat:'maxCoins',goal:2000,coins:50},
   {id:'m6',cat:'money',icon:'💳',name:'Shopaholic',desc:'Spend 5,000 coins in the shop',stat:'spent',goal:5000,coins:100},
-  {id:'m7',cat:'money',icon:'🔋',name:'Fully Loaded',desc:'Max out all seven upgrades',stat:'maxUpg',goal:7,coins:250},
+  {id:'m7',cat:'money',icon:'🔋',name:'Fully Loaded',desc:'Max out all eight upgrades',stat:'maxUpg',goal:8,coins:250},
   {id:'m8',cat:'money',icon:'💅',name:'Trendsetter',desc:'Buy 25 style items',stat:'styles',goal:25,coins:100},
   {id:'m9',cat:'money',icon:'🧥',name:'Collector',desc:'Buy 50 style items',stat:'styles',goal:50,coins:200},
   {id:'f4',cat:'fun',icon:'🦘',name:'Double Trouble',desc:'Double jump 50 times',stat:'doublejumps',goal:50,coins:10},
@@ -7399,6 +7873,37 @@ const ACHS=[
   {id:'f9',cat:'fun',icon:'🌳',name:'Tree Hugger',desc:'Deliver to 20 treehouses',stat:'treehouses',goal:20,coins:25},
   {id:'f10',cat:'fun',icon:'🗑',name:'Dumpster Diver',desc:'Hop up onto 5 dumpsters in the Back Alleys',stat:'lids',goal:5,coins:10},
   {id:'f11',cat:'fun',icon:'⏳',name:'Sinking Feeling',desc:'Wade into quicksand or melted chocolate 10 times',stat:'pits',goal:10,coins:10}
+,
+  {id:'x1',cat:'deliver',icon:'🏦',name:'Mail Mogul',desc:'Deliver 5,000 packages',stat:'delivered',goal:5000,coins:400},
+  {id:'x2',cat:'deliver',icon:'🎩',name:'Postmaster General',desc:'Deliver 10,000 packages',stat:'delivered',goal:10000,coins:1000},
+  {id:'x3',cat:'deliver',icon:'🐎',name:'Pony Express',desc:'Deliver 25,000 packages',stat:'delivered',goal:25000,coins:3000},
+  {id:'x4',cat:'deliver',icon:'🏙',name:'Skyscraper King',desc:'Finish 100 apartment levels',stat:'apts',goal:100,coins:600},
+  {id:'x5',cat:'levels',icon:'🏛',name:'Lifer',desc:'Finish 500 levels',stat:'levels',goal:500,coins:400},
+  {id:'x6',cat:'levels',icon:'🗽',name:'Hall of Fame',desc:'Finish 1,000 levels',stat:'levels',goal:1000,coins:1200},
+  {id:'x7',cat:'levels',icon:'♾️',name:'Immortal Carrier',desc:'Finish 2,500 levels',stat:'levels',goal:2500,coins:4000},
+  {id:'x8',cat:'levels',icon:'🌩',name:'Storm Chaser',desc:'Reach the third loop through the neighborhoods',stat:'reached',goal:361,coins:400,noBar:true},
+  {id:'x9',cat:'levels',icon:'🦉',name:'Night Owl',desc:'Reach the fourth loop, where the streets go dark',stat:'reached',goal:541,coins:600,noBar:true},
+  {id:'x10',cat:'levels',icon:'🌬',name:'Windbreaker',desc:'Reach the sixth loop',stat:'reached',goal:901,coins:1000,noBar:true},
+  {id:'x11',cat:'levels',icon:'🔟',name:'Decade Carrier',desc:'Reach the eleventh loop',stat:'reached',goal:1801,coins:2500,noBar:true},
+  {id:'x12',cat:'levels',icon:'🏁',name:'Final Overtime',desc:'Reach the twenty-fifth loop',stat:'reached',goal:4321,coins:8000,noBar:true},
+  {id:'x13',cat:'levels',icon:'🧼',name:'Flawless Career',desc:'Finish 100 levels without losing a heart',stat:'perfect',goal:100,coins:600},
+  {id:'x14',cat:'levels',icon:'🚀',name:'Faster Than Light',desc:'Earn the full speed bonus 50 times',stat:'speed',goal:50,coins:400},
+  {id:'x15',cat:'levels',icon:'🎢',name:'Nerves of Steel',desc:'Finish 25 levels with only 1 heart left',stat:'closecall',goal:25,coins:400},
+  {id:'x16',cat:'ko',icon:'💪',name:'One-Man Army',desc:'Knock out 5,000 enemies',stat:'ko',goal:5000,coins:400},
+  {id:'x17',cat:'ko',icon:'🌋',name:'Bane of Bad Dogs',desc:'Knock out 15,000 enemies',stat:'ko',goal:15000,coins:1500},
+  {id:'x18',cat:'ko',icon:'🌪',name:'Paper Hurricane',desc:'Throw 10,000 pieces of junk mail',stat:'throws',goal:10000,coins:500},
+  {id:'x19',cat:'ko',icon:'📚',name:'Endless Stack',desc:'Throw 50,000 pieces of junk mail',stat:'throws',goal:50000,coins:2500},
+  {id:'x20',cat:'boss',icon:'🗡',name:'Boss Slayer',desc:'Beat 100 boss fights',stat:'bosses',goal:100,coins:1000},
+  {id:'x21',cat:'boss',icon:'🥇',name:'Boss Perfectionist',desc:'Beat 10 bosses without losing a heart',stat:'bossPerfect',goal:10,coins:800},
+  {id:'x22',cat:'money',icon:'💰',name:'Money Bags',desc:'Hold 25,000 coins at once',stat:'maxCoins',goal:25000,coins:500},
+  {id:'x23',cat:'money',icon:'🏰',name:'Six Figures',desc:'Hold 100,000 coins at once',stat:'maxCoins',goal:100000,coins:1500},
+  {id:'x24',cat:'money',icon:'🤑',name:'Millionaire',desc:'Hold 1,000,000 coins at once',stat:'maxCoins',goal:1000000,coins:5000},
+  {id:'x25',cat:'money',icon:'🛍',name:'Big Time Spender',desc:'Spend 25,000 coins',stat:'spent',goal:25000,coins:400},
+  {id:'x26',cat:'money',icon:'💳',name:'Shopping Spree',desc:'Spend 100,000 coins',stat:'spent',goal:100000,coins:1200},
+  {id:'x27',cat:'fun',icon:'🎰',name:'High Roller',desc:'Win 10 arcade bets',stat:'arcWins',goal:10,coins:300},
+  {id:'x28',cat:'fun',icon:'🕹',name:'Arcade Legend',desc:'Win 50 arcade bets',stat:'arcWins',goal:50,coins:1200},
+  {id:'x29',cat:'fun',icon:'🎯',name:'Sharpshooter',desc:'Score 500 points in one arcade round',stat:'arcBest',goal:500,coins:300},
+  {id:'x30',cat:'fun',icon:'🌴',name:'Full Pension',desc:'Finish 25 retirement levels',stat:'retlevels',goal:25,coins:500}
 ];
 (function(){ ACHS.forEach(function(a){ const m=/^boss(\d+)$/.exec(a.stat); if(m) a.stat='boss_'+OLD_KINDS[+m[1]]; });
   const bs=ACHS.filter(function(a){ return /^boss_/.test(a.stat); }).sort(function(a,b){ return hoodIndex(a.stat.slice(5))-hoodIndex(b.stat.slice(5)); });
@@ -7475,11 +7980,109 @@ function openAch(){
   $('startScreen').classList.add('hidden'); $('achScreen').classList.remove('hidden');
   $('achScreen').querySelector('.panel').scrollTop=0;
 }
+
+// ---------- Leaderboards ----------
+// Every record goes through lbSubmit(). Today it keeps a local copy and queues the entry; when the online service ships, send progress.lbQueue to it from here.
+function lbSubmit(board,value){ try{ progress.lbQueue=(progress.lbQueue||[]).concat([{b:board,v:value,n:progress.playerName||'',t:Date.now()}]).slice(-60); }catch(e){} }
+function lbRecordRun(won){
+  progress.playSec=(progress.playSec||0)+(state?state.time:0);
+  if(won && state && state.time>1 && !hidden){ progress.lvTimes=progress.lvTimes||{}; const k=(boss?'b':'')+level, t=Math.round(state.time*10)/10;
+    if(!progress.lvTimes[k] || t<progress.lvTimes[k]){ progress.lvTimes[k]=t; lbSubmit('level:'+k,t); } }
+  saveProgress();
+}
+function fmtSecs(t){ t=Math.round(t); const h=Math.floor(t/3600), m=Math.floor(t%3600/60), s=t%60; return h?h+'h '+m+'m':(m?m+'m '+s+'s':s+'s'); }
+function openLb(){
+  const S=ach.stats, a=progress.arcade||{}, rows=[
+    ['⏱','Fastest to retirement',progress.retireSec?fmtSecs(progress.retireSec):'Not retired yet'],
+    ['🕑','Total play time',fmtSecs(progress.playSec||0)],
+    ['📦','Packages delivered',(S.delivered||0).toLocaleString()],
+    ['🗞','Junk mail thrown',(S.throws||0).toLocaleString()],
+    ['✅','Levels completed',(S.levels||0).toLocaleString()],
+    ['🥊','Enemies knocked out',(S.ko||0).toLocaleString()],
+    ['⚔','Bosses beaten',(S.bosses||0).toLocaleString()],
+    ['🛡','Levels without a hit',(S.perfect||0).toLocaleString()],
+    ['⚡','Full speed bonuses',(S.speed||0).toLocaleString()],
+    ['🗺','Farthest level reached',(S.reached||0).toLocaleString()],
+    ['💰','Most coins held',(S.maxCoins||0).toLocaleString()],
+    ['🎯','Best arcade score',(a.best||0).toLocaleString()],
+    ['🎰','Arcade bets won',(a.won||0).toLocaleString()],
+    ['🏆','Achievements unlocked',Object.keys(ach.got).length+' / '+ACHS.length]];
+  $('lbWho').textContent='Player: '+(progress.playerName||'Postal Worker');
+  $('lbList').innerHTML=rows.map(function(r){ return '<div class="ach got"><span class="ai">'+r[0]+'</span><div class="info"><div class="nm">'+r[1]+'</div></div><span class="rw">'+r[2]+'</span></div>'; }).join('');
+  const L=progress.lvTimes||{}, keys=Object.keys(L).sort(function(x,y){ return (parseInt(x.replace('b',''))-parseInt(y.replace('b','')))||(x<y?-1:1); });
+  $('lbTimes').innerHTML=keys.length?keys.map(function(k){ const lv=parseInt(k.replace('b','')); return '<div>'+levelName(lv,k.charAt(0)==='b')+'<b>'+fmtSecs(L[k])+'</b></div>'; }).join(''):'<div>No finished levels yet</div>';
+  $('lbNote').textContent='These are your own records. Online rankings against other players will show up here once the global leaderboards open.';
+  $('startScreen').classList.add('hidden'); $('lbScreen').classList.remove('hidden'); $('lbScreen').querySelector('.panel').scrollTop=0;
+}
+$('lbBtn').addEventListener('click',function(){ audioInit(); SFX.click(); openLb(); });
+$('lbBack').addEventListener('click',function(){ SFX.click(); $('lbScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); });
 loadAch(); achBtnLabel();
 (function(){ achQuiet=true; const before=Object.keys(ach.got).length, c0=bankCoins; achSyncFromProgress(); achQuiet=false;
   const n=Object.keys(ach.got).length-before; if(n>0) setTimeout(function(){ showToast('🏆 '+n+' achievement'+(n>1?'s':'')+' unlocked from your progress so far (+'+(bankCoins-c0)+' coins)'); },600); })();
 $('achBtn').addEventListener('click',function(){ audioInit(); SFX.click(); openAch(); });
 $('achBack').addEventListener('click',function(){ SFX.click(); $('achScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); });
+
+// ---------- Radio: play the songs you've unlocked, any time ----------
+// A neighborhood's three songs unlock when you beat its boss. Resort songs unlock on your first visit, the arcade song after your first arcade round.
+const RADIO_SYN={};   // radio song key -> the area whose synth tune plays instead if the file can't load
+let radioNow=null;    // the song playing from the Radio screen (null = the menu music)
+function radioHoodUnlocked(i){
+  if(devMode) return true;
+  for(const L in progress.bosses){ if(progress.bosses[L] && biomeIndex(+L)===i) return true; }
+  return false;
+}
+function radioGroups(){
+  const G=[], fl=function(a){ return MUSIC_MANIFEST[a]||[]; };
+  G.push({icon:'🏠',title:'Main theme',open:true,songs:[{label:'Title screen',area:'menu',file:fl('menu')[0]}]});
+  THEMES.forEach(function(t,i){
+    const k=t.kind;
+    G.push({sec:i===0?'Neighborhoods':'',icon:'🏘',title:t.name,open:radioHoodUnlocked(i),hint:'Beat its boss to unlock',
+      songs:[{label:'Streets',area:k,file:fl(k)[0]},{label:'Special building',area:'apt:'+k,file:fl('apt:'+k)[0]},{label:'Boss fight',area:'boss:'+k,file:fl('boss:'+k)[0]}]});
+  });
+  RETIRE_PLACES.forEach(function(p,i){
+    G.push({sec:i===0?'Retirement worlds':'',icon:p.icon,title:p.name,open:devMode||!!(progress.visited&&progress.visited[p.id])||progress.retiredTo===p.id,hint:'Visit this resort to unlock',
+      songs:fl('resort:'+p.id).map(function(f,n){ return {label:'Song '+(n+1),area:'resort:'+p.id,file:f}; })});
+  });
+  G.push({sec:'Arcade',icon:'🎯',title:'Arcade',open:devMode||!!(progress.arcade&&progress.arcade.plays>0),hint:'Play the Arcade once to unlock',songs:[{label:'Target level',area:'arcade',file:fl('arcade')[0]}]});
+  G.forEach(function(g){ g.songs=g.songs.filter(function(s){ return !!s.file; }); g.songs.forEach(function(s){ s.grp=g.title; }); });
+  return G;
+}
+function radioFlat(){ const a=[]; radioGroups().forEach(function(g){ if(g.open) g.songs.forEach(function(s){ a.push(s); }); }); return a; }
+function radioRender(){
+  const list=$('radioList'); list.innerHTML='';
+  radioGroups().forEach(function(g){
+    if(g.sec){ const h=document.createElement('h3'); h.className='ach-cat'; h.textContent=g.sec; list.appendChild(h); }
+    if(!g.open){
+      const r=document.createElement('div'); r.className='ach rd-song locked';
+      r.innerHTML='<span class="ai">🔒</span><div class="info"><div class="nm"></div><div class="ds"></div></div>';
+      r.querySelector('.nm').textContent=g.title; r.querySelector('.ds').textContent=g.hint; list.appendChild(r); return;
+    }
+    g.songs.forEach(function(s){
+      const on=!!(radioNow&&radioNow.file===s.file), r=document.createElement('div'); r.className='ach rd-song'+(on?' on':'');
+      r.innerHTML='<span class="ai">'+(on?'🔊':g.icon)+'</span><div class="info"><div class="nm"></div><div class="ds"></div></div><span class="rw">'+(on?'⏹ Stop':'▶ Play')+'</span>';
+      r.querySelector('.nm').textContent=s.label; r.querySelector('.ds').textContent=g.title;
+      r.addEventListener('click',function(){ SFX.click(); if(on) radioStop(); else radioPlay(s); });
+      list.appendChild(r);
+    });
+  });
+  $('radioTitle').textContent=radioNow?'🔊 '+radioNow.grp+' · '+radioNow.label:'Pick a song to play';
+}
+function radioPlay(s){
+  if(!s||!s.file) return; audioInit();
+  const key='radio:'+s.file; MUSIC_MANIFEST[key]=[s.file]; RADIO_SYN[key]=s.area;
+  radioNow=s; musicStart(key); radioRender();
+}
+function radioStop(){ radioNow=null; musicStart('menu'); radioRender(); }
+function radioStep(d){
+  const a=radioFlat(); if(!a.length) return; let i=-1;
+  if(radioNow) a.forEach(function(s,n){ if(s.file===radioNow.file) i=n; });
+  radioPlay(a[i<0?(d>0?0:a.length-1):(i+d+a.length)%a.length]);
+}
+$('radioBtn').addEventListener('click',function(){ audioInit(); SFX.click(); radioRender(); $('startScreen').classList.add('hidden'); $('radioScreen').classList.remove('hidden'); $('radioScreen').querySelector('.panel').scrollTop=0; });
+$('radioBack').addEventListener('click',function(){ SFX.click(); $('radioScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); if(radioNow){ radioNow=null; musicStart('menu'); } });
+$('radioPrev').addEventListener('click',function(){ SFX.click(); radioStep(-1); });
+$('radioNext').addEventListener('click',function(){ SFX.click(); radioStep(1); });
+$('radioStop').addEventListener('click',function(){ SFX.click(); if(radioNow) radioStop(); });
 
 // ---------- Reset everything ----------
 function showToast(msg){ const t=$('toast'); t.textContent=msg; t.classList.remove('hidden'); clearTimeout(showToast.tm); showToast.tm=setTimeout(function(){ t.classList.add('hidden'); },3000); }
@@ -7501,6 +8104,7 @@ let settingsFrom='startScreen', sampleT=0;
 function openSettings(from){
   settingsFrom=from; audioInit();
   [['volMusic','music'],['volSfx','sfx'],['volVoices','voices']].forEach(function(p){ $(p[0]).value=Math.round(settings[p[1]]*100); $(p[0]+'Val').textContent=Math.round(settings[p[1]]*100)+'%'; });
+  $('ctlAlpha').value=Math.round((settings.ctlAlpha===undefined?1:settings.ctlAlpha)*100); $('ctlAlphaVal').textContent=$('ctlAlpha').value+'%';
   $('wipeBtn').classList.toggle('hidden', from!=='startScreen');
   syncToggles();
   $(from).classList.add('hidden'); $('settingsScreen').classList.remove('hidden');
@@ -7514,6 +8118,7 @@ function playSample(kind){
 [['volMusic','music'],['volSfx','sfx'],['volVoices','voices']].forEach(function(p){
   $(p[0]).addEventListener('input',function(){ settings[p[1]]=$(p[0]).value/100; $(p[0]+'Val').textContent=$(p[0]).value+'%'; applySettings(); playSample(p[1]); });
 });
+$('ctlAlpha').addEventListener('input',function(){ settings.ctlAlpha=$('ctlAlpha').value/100; $('ctlAlphaVal').textContent=$('ctlAlpha').value+'%'; applySettings(); });
 $('settingsBtn').addEventListener('click',function(){ SFX.click(); openSettings('startScreen'); });
 $('pauseSettingsBtn').addEventListener('click',function(){ SFX.click(); openSettings('pauseScreen'); });
 function syncToggles(){ { const b=$('togDev'); b.classList.toggle('on',devMode); b.setAttribute('aria-checked',devMode?'true':'false'); } [['togHints','hints'],['togPrompts','prompts']].forEach(function(p){ const b=$(p[0]); b.classList.toggle('on',!!settings[p[1]]); b.setAttribute('aria-checked',settings[p[1]]?'true':'false'); }); }
@@ -7522,9 +8127,9 @@ function syncToggles(){ { const b=$('togDev'); b.classList.toggle('on',devMode);
   if(!tutorial){ if(!settings.hints) $('tutBox').classList.add('hidden'); if(!settings.prompts) $('prompt').classList.add('hidden'); } }); });
 $('togDev').addEventListener('click',function(){ devMode=!devMode; try{ localStorage.setItem('pp_dev',devMode?'1':'0'); }catch(e){} syncToggles(); SFX.click(); showToast(devMode?'🛠 Developer mode ON: everything unlocked':'Developer mode off'); });
 $('settingsDone').addEventListener('click',function(){ SFX.click(); closeSettings(); });
-$('settingsReset').addEventListener('click',function(){ settings=Object.assign({},SETTINGS_DEFAULT,{hints:settings.hints,prompts:settings.prompts}); applySettings(); openSettings(settingsFrom); SFX.click(); });
+$('settingsReset').addEventListener('click',function(){ settings=Object.assign({},SETTINGS_DEFAULT,{hints:settings.hints,prompts:settings.prompts,ctlAlpha:settings.ctlAlpha}); applySettings(); openSettings(settingsFrom); SFX.click(); });
 $('elevCancel').addEventListener('click',function(){ SFX.click(); closeElevator(); });
-$('tutorialBtn').addEventListener('click',function(){ audioInit(); SFX.click(); tutorial=true; level=1; bankCoins=0; upg={bag:0,boots:0,armor:0,ammo:0,stam:0,dj:0,fire:0}; $('startScreen').classList.add('hidden'); startGame(); });
+$('tutorialBtn').addEventListener('click',function(){ audioInit(); SFX.click(); tutorial=true; level=1; bankCoins=0; upg={bag:0,boots:0,armor:0,ammo:0,stam:0,dj:0,fire:0,tj:0}; $('startScreen').classList.add('hidden'); startGame(); });
 $('howToBtn').addEventListener('click',function(){ SFX.click(); $('startScreen').classList.add('hidden'); $('howToScreen').classList.remove('hidden'); });
 $('howToBack').addEventListener('click',function(){ SFX.click(); $('howToScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); });
 $('pauseBtn').addEventListener('click',pauseGame);
@@ -7533,6 +8138,8 @@ try{ if(localStorage.getItem('pp_muted')==='1'){ muted=true; $('muteBtn').textCo
 $('resumeBtn').addEventListener('click',function(){ SFX.click(); resumeGame(); });
 $('restartBtn').addEventListener('click',function(){ SFX.click(); if(arcadeMode) arcadeAbort(); else if(resortMode&&RS) startResort(RS.p); else startGame(); });
 $('quitBtn').addEventListener('click',function(){ SFX.click(); quitToMenu(); });
+$('endMenuBtn').addEventListener('click',function(){ SFX.click(); quitToMenu(); });
+applyCtlAlpha();
 
 updateStartButton();
 // initial paint
