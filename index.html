@@ -968,7 +968,8 @@ const FM_SLOW_MENU=0.85, FM_SLOW_PAUSE=0.75;   // menu song and paused-game song
 const FM_SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 let fm=null, fmOld=[], fmPool=null, fmTimer=null, fmReq=0, fmFadeUntil=0, fmPending=false, fmMuF=1, fmMuTo=1, fmMuInit=false, fmOk=0, fmBad=0, fmOff=false;
 const fmFailed={}, fmLast={}, fmRouted=/^https?:$/.test(location.protocol);   // routed = through Web Audio (volume bus + iPhone fades); not possible from file://, which uses element volume instead
-function fmWanted(name){ if(fmOff) return false; const l=MUSIC_MANIFEST[name]; return !!(l && l.some(function(f){ return !fmFailed[f]; })); }
+function fmWanted(name){ if(fmOff||name==='menu') return false;   // the main menu uses the built-in chiptune
+  const l=MUSIC_MANIFEST[name]; return !!(l && l.some(function(f){ return !fmFailed[f]; })); }
 function fmPick(name){
   const all=(MUSIC_MANIFEST[name]||[]).filter(function(f){ return !fmFailed[f]; });
   if(!all.length) return null;
@@ -1040,7 +1041,7 @@ function fmStart(name,req,onFail){
 function fmMeta(t){
   if(t.dead) return; t.el.onloadedmetadata=null;
   const d=t.el.duration; let st=0;
-  if(isFinite(d) && d>FM_TAIL+10 && t.name.indexOf('radio:')!==0) st=Math.random()*(d-FM_TAIL);   // the Radio plays songs from the start
+     // the Radio plays songs from the start
   if(st>1){
     t.el.onseeked=function(){ t.el.onseeked=null; fmReady(t); };
     setTimeout(function(){ fmReady(t); },3500);
@@ -1079,7 +1080,7 @@ function fmResume(){
 function musicStart(name){
   if(!actx) return;
   name=name||musicFor();
-  if(name==='pause' && fmPauseNow()) return;
+  if(name==='pause') return;   // paused: the level music just keeps playing
   if((musTimer||fm||fmPending) && name===musName){ fmResume(); return; }
   musicStop();   // fades the old song out; the new one waits for that, then fades in
   musName=name; fmPending=true;
