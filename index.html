@@ -681,9 +681,9 @@ fitCanvas();
 // ---------- Audio (synthesized) ----------
 let actx=null, muted=false;
 // Volume settings (0..1), saved in this browser. Each channel has its own gain node ("bus").
-const SETTINGS_DEFAULT={music:0.3, musV:2, arrows:false, sfx:0.8, voices:0.7, hints:true, prompts:true, ctlAlpha:1};
+const SETTINGS_DEFAULT={music:0.25, musV:3, arrows:false, sfx:0.8, voices:0.7, hints:true, prompts:true, ctlAlpha:1};
 let settings=Object.assign({},SETTINGS_DEFAULT);
-try{ const sv=JSON.parse(localStorage.getItem('pp_settings')||'null'); if(sv){ settings=Object.assign({},SETTINGS_DEFAULT,sv); if(sv.musV!==2){ settings.music=SETTINGS_DEFAULT.music; } } settings.musV=2; }catch(e){}
+try{ const sv=JSON.parse(localStorage.getItem('pp_settings')||'null'); if(sv){ settings=Object.assign({},SETTINGS_DEFAULT,sv); if(sv.musV!==3){ settings.music=SETTINGS_DEFAULT.music; } } settings.musV=3; }catch(e){}
 const buses={};
 function bus(name){
   if(!actx) return null;
@@ -906,7 +906,7 @@ function musicTick(){
   if(!actx||!musGain||!musTrack) return;
   const T=musTrack, stepDur=60/T.bpm/4;
   // schedule slightly ahead so timing stays steady
-  while(musNext < actx.currentTime+0.12){
+  while(musNext < actx.currentTime+0.4){
     const i=musStep%128, s=i%16, bar=Math.floor(i/16), chord=T.prog[bar%T.prog.length];
     const t=musNext+((s%2===1)?T.swing*stepDur:0);
     if(T.kick[s]==='x') mKick(t,T.boss?0.5:0.38);
@@ -963,7 +963,7 @@ const MUSIC_MANIFEST={
   'resort:island':['Private island1.mp3','Private island2.mp3','Private island3.mp3','Private island4.mp3']
 };
 Object.keys(MUSIC_MANIFEST).forEach(function(k){ if(k.indexOf('resort:')===0) MUSIC_MANIFEST['ret:'+k.slice(7)]=MUSIC_MANIFEST[k]; });
-const FM_VOL=0.6, FM_IN=0, FM_OUT=0, FM_TAIL=20;   // song loudness vs the sound effects, fade-in / fade-out seconds, never start inside the last N seconds
+const FM_VOL=0.35, FM_IN=0, FM_OUT=0, FM_TAIL=20;   // song loudness vs the sound effects, fade-in / fade-out seconds, never start inside the last N seconds
 const FM_SLOW_MENU=0.85, FM_SLOW_PAUSE=0.75;   // menu song and paused-game song play slower
 const FM_SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 let fm=null, fmOld=[], fmPool=null, fmTimer=null, fmReq=0, fmFadeUntil=0, fmPending=false, fmMuF=1, fmMuTo=1, fmMuInit=false, fmOk=0, fmBad=0, fmOff=false;
@@ -1022,6 +1022,7 @@ function fmRelease(t){
   try{ e.pause(); e.removeAttribute('src'); e.load(); }catch(err){}
   t.ent.busy=false; const i=fmOld.indexOf(t); if(i>=0) fmOld.splice(i,1); if(fm===t) fm=null;
 }
+function fmSmooth(el){ try{ el.preservesPitch=false; el.webkitPreservesPitch=false; el.mozPreservesPitch=false; }catch(e){} }   // slowing by plain resampling is smooth; the pitch-keeping stretch sounds choppy
 function fmStart(name,req,onFail){
   if(!fmMuInit){ fmMuInit=true; fmMuF=fmMuTo=muted?0:1; }
   fmPoolInit();
@@ -1032,7 +1033,7 @@ function fmStart(name,req,onFail){
   el.onerror=function(){ fmFail(t); };
   el.onloadedmetadata=function(){ fmMeta(t); };
   t.wd=setTimeout(function(){ if(!t.ready) fmFail(t); },12000);   // never loaded: use the synth instead
-  try{ el.loop=true; el.defaultPlaybackRate=el.playbackRate=(name==='menu'?FM_SLOW_MENU:1); el.src=MUSIC_DIR+encodeURIComponent(file); }catch(err){ fmFail(t); return; }
+  try{ el.loop=true; el.defaultPlaybackRate=el.playbackRate=(name==='menu'?FM_SLOW_MENU:1); fmSmooth(el); el.src=MUSIC_DIR+encodeURIComponent(file); }catch(err){ fmFail(t); return; }
   fmPlay(t);   // plays silently (volume 0) while it loads, so phones count it as started by the tap
 }
 // Pick a random start point (never inside the last FM_TAIL seconds), then fade in once the seek has landed.
@@ -1117,6 +1118,8 @@ function menuMusic(delay){ setTimeout(function(){ if(!running && !paused && actx
 // browsers only allow sound after the first tap/click/key, so start the menu music then
 // (touchend and click are listed too: some phones only count those as a tap that unlocks audio)
 ['pointerdown','touchend','click','keydown'].forEach(function(evName){ window.addEventListener(evName,function first(){ audioInit(); fmUnlock(); if(!running && !paused) musicStart('menu'); window.removeEventListener(evName,first); }); });
+// try to start the menu music as soon as the game loads (browsers that block sound until a tap will start it on the first tap instead)
+setTimeout(function(){ try{ audioInit(); if(!running && !paused) musicStart('menu'); }catch(e){} },0);
 function musicSwitch(){ if((musTimer||fm||fmPending) && musicFor()!==musName) musicStart(musicFor()); }
 function musicMute(m){
   fmMuInit=true; fmMuTo=m?0:1; fmEnsureTick();
