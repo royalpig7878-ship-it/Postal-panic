@@ -31,6 +31,10 @@
   #aimKnob { position:absolute; left:50%; top:50%; width:52px; height:52px; margin:-26px 0 0 -26px; border-radius:50%; background:rgba(255,255,255,.55); border:2px solid rgba(255,255,255,.9); pointer-events:none; z-index:1; }
   #controls.arcade #joy, #controls.arcade [data-key=interact], #controls.arcade [data-key=jump], #controls.arcade #sprintBtn { display:none !important; }
   #controls.arcade #aimJoy { display:block; }
+  #arrowPad { display:none; gap:14px; pointer-events:auto; align-self:flex-end; }
+  #controls.arrows #joy { display:none; } #controls.arrows #arrowPad { display:flex; } #controls.arcade #arrowPad { display:none !important; }
+  .abtn { width:88px; height:72px; border-radius:36px; border:2.5px solid rgba(255,255,255,.7); background:rgba(18,28,42,.4); color:#fff; font-size:30px; touch-action:none; -webkit-user-select:none; user-select:none; cursor:pointer; padding:0; } .abtn.on { background:rgba(255,255,255,.55); color:#222; }
+  @media (max-width:480px) { .abtn { width:74px; } }
   #controls.arcade .rpad [data-key=throw] { right:30px !important; bottom:26px !important; width:96px; height:96px; border-radius:50%; font-size:34px; background:rgba(224,64,40,.62); border-color:rgba(255,200,190,.95); }
   @media (orientation:portrait) { #aimJoy { width:140px; height:140px; margin-bottom:14px; } #controls.arcade .rpad [data-key=throw] { right:22px !important; bottom:34px !important; width:108px; height:108px; } }
   @media (max-width:480px) { #joy { width:196px; } }
@@ -289,6 +293,7 @@
 
   <div id="controls" class="hidden">
     <div id="joy" aria-label="slide left or right"><div id="joyKnob"></div></div>
+    <div id="arrowPad"><button type="button" class="abtn" data-dir="left" aria-label="move left">◀</button><button type="button" class="abtn" data-dir="right" aria-label="move right">▶</button></div>
     <div id="aimJoy" aria-label="aim"><div id="aimKnob"></div></div>
     <div class="rpad">
       <button class="btn small" id="sprintBtn" data-toggle="sprint" style="right:104px;bottom:96px">💨</button>
@@ -472,6 +477,7 @@
       <div class="set-row"><label for="volSfx">🔔 Sound effects</label><input type="range" id="volSfx" min="0" max="100" step="5"><span class="set-val" id="volSfxVal"></span></div>
       <div class="set-row"><label for="volVoices">🐕 Animals &amp; people</label><input type="range" id="volVoices" min="0" max="100" step="5"><span class="set-val" id="volVoicesVal"></span></div>
       <div class="set-row"><label for="ctlAlpha">🎮 Button see-through</label><input type="range" id="ctlAlpha" min="10" max="100" step="5"><span class="set-val" id="ctlAlphaVal"></span></div>
+      <div class="set-tog"><span>◀ ▶ Arrow buttons to move<small>Replace the slide bar with two arrow buttons (hold to move)</small></span><button class="tog" id="togArrows" role="switch" aria-label="Arrow buttons to move"></button></div>
       <p class="tip">Drag a slider to hear a sample. The 🔊 button during play still mutes everything.</p>
       <div class="set-tog"><span>💡 Tip banners<small>Level intros, new-enemy tips, boss and replay notes</small></span><button class="tog" id="togHints" role="switch" aria-label="Tip banners"></button></div>
       <div class="set-tog"><span>👆 Button prompts<small>"Press 📦 — Deliver" and other action reminders</small></span><button class="tog" id="togPrompts" role="switch" aria-label="Button prompts"></button></div>
@@ -675,16 +681,16 @@ fitCanvas();
 // ---------- Audio (synthesized) ----------
 let actx=null, muted=false;
 // Volume settings (0..1), saved in this browser. Each channel has its own gain node ("bus").
-const SETTINGS_DEFAULT={music:0.8, sfx:0.8, voices:0.7, hints:true, prompts:true, ctlAlpha:1};
+const SETTINGS_DEFAULT={music:0.3, musV:2, arrows:false, sfx:0.8, voices:0.7, hints:true, prompts:true, ctlAlpha:1};
 let settings=Object.assign({},SETTINGS_DEFAULT);
-try{ const sv=JSON.parse(localStorage.getItem('pp_settings')||'null'); if(sv) settings=Object.assign({},SETTINGS_DEFAULT,sv); }catch(e){}
+try{ const sv=JSON.parse(localStorage.getItem('pp_settings')||'null'); if(sv){ settings=Object.assign({},SETTINGS_DEFAULT,sv); if(sv.musV!==2){ settings.music=SETTINGS_DEFAULT.music; } } settings.musV=2; }catch(e){}
 const buses={};
 function bus(name){
   if(!actx) return null;
   if(!buses[name]){ buses[name]=actx.createGain(); buses[name].gain.value=settings[name]; buses[name].connect(actx.destination); }
   return buses[name];
 }
-function applyCtlAlpha(){ const c=document.getElementById('controls'); if(c) c.style.opacity=String(Math.max(0.1,Math.min(1,settings.ctlAlpha===undefined?1:settings.ctlAlpha))); }
+function applyCtlAlpha(){ const cc=document.getElementById('controls'); if(cc) cc.classList.toggle('arrows',!!settings.arrows); const c=document.getElementById('controls'); if(c) c.style.opacity=String(Math.max(0.1,Math.min(1,settings.ctlAlpha===undefined?1:settings.ctlAlpha))); }
 function applySettings(){ applyCtlAlpha(); ['music','sfx','voices'].forEach(function(k){ if(buses[k]&&actx){ const g=buses[k].gain; g.cancelScheduledValues(actx.currentTime); g.value=settings[k]; g.setValueAtTime(settings[k],actx.currentTime); } }); try{ localStorage.setItem('pp_settings',JSON.stringify(settings)); }catch(e){} try{ fmApplyAll(); }catch(e){} }
 function audioInit(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(actx && typeof loadAnimalSounds==='function') loadAnimalSounds();
   if(actx && actx.state==='suspended') actx.resume();
@@ -806,8 +812,8 @@ const TRACKS={
   night:    {bpm:110, root:57, scale:MIN, prog:[[0,3,7],[8,12,15],[3,7,10],[10,14,17]], lead:'sawtooth', leadVol:0.035, bass:'sawtooth', bassPat:'x.x.x.x.x.x.x.x.', kick:'x...x...x...x...', snare:'....x.......x...', hat:'..x...x...x...x.', density:0.4, seed:53, swing:0, filter:900},
   apartment:{bpm:96,  root:65, scale:MAJ, prog:[[2,5,9,12],[7,11,14,17],[0,4,7,11],[9,12,16,19]], lead:'sine', leadVol:0.08, bass:'triangle', bassPat:'x...x...x...x...', walk:true, kick:'x.......x.......', snare:'', rim:'...x..x....x..x.', hat:'x.x.x.x.x.x.x.x.', density:0.4, seed:67, swing:0.18, pad:true},
   boss:     {bpm:150, root:52, scale:MIN, prog:[[0,3,7],[0,3,7],[8,12,15],[10,14,17]], lead:'sawtooth', leadVol:0.04, bass:'sawtooth', bassPat:'xxxxxxxxxxxxxxxx', kick:'x...x...x...x...', snare:'....x.......x..x', hat:'x.x.x.x.x.x.x.x.', density:0.6, seed:79, swing:0, filter:1400},
-  menu:     {bpm:118, root:62, scale:MAJ, prog:[[0,4,7],[9,12,16],[5,9,12],[7,11,14],[0,4,7],[4,7,11],[5,9,12],[7,11,14]], lead:'triangle', leadVol:0.08, bass:'triangle', bassPat:'x..x..x.x..x..x.', kick:'x..x....x..x....', snare:'....x.......x...', hat:'..x...x...x...x.', density:0.55, pad:true, seed:97, swing:0.1, bell:true},
-  pause:    {bpm:72,  root:65, scale:MAJ, prog:[[0,4,7,11],[9,12,16,19],[2,5,9,12],[7,11,14,17]], lead:'sine', leadVol:0.06, bass:'sine', bassPat:'x.......x.......', kick:'................', snare:'', hat:'........x.......', hatVol:0.01, density:0.25, pad:true, seed:101, swing:0.15, vol:0.6},
+  menu:     {bpm:96, root:62, scale:MAJ, prog:[[0,4,7],[9,12,16],[5,9,12],[7,11,14],[0,4,7],[4,7,11],[5,9,12],[7,11,14]], lead:'triangle', leadVol:0.08, bass:'triangle', bassPat:'x..x..x.x..x..x.', kick:'x..x....x..x....', snare:'....x.......x...', hat:'..x...x...x...x.', density:0.55, pad:true, seed:97, swing:0.1, bell:true},
+  pause:    {bpm:56,  root:65, scale:MAJ, prog:[[0,4,7,11],[9,12,16,19],[2,5,9,12],[7,11,14,17]], lead:'sine', leadVol:0.06, bass:'sine', bassPat:'x.......x.......', kick:'................', snare:'', hat:'........x.......', hatVol:0.01, density:0.25, pad:true, seed:101, swing:0.15, vol:0.6},
   cyber:    {bpm:100, root:57, scale:MIN, prog:[[0,3,7],[8,12,15],[3,7,10],[10,14,17]], lead:'sawtooth', leadVol:0.035, bass:'sawtooth', bassPat:'x.x.x.x.x.x.x.x.', kick:'x...x...x...x...', snare:'....x.......x...', hat:'xxxxxxxxxxxxxxxx', hatVol:0.012, density:0.5, arp:true, pad:true, seed:131, swing:0, filter:1800, delay:true},
   patriot:  {bpm:120, root:60, scale:MAJ, prog:[[0,4,7],[5,9,12],[7,11,14],[0,4,7],[0,4,7],[9,12,16],[2,5,9],[7,11,14]], lead:'square', leadVol:0.05, bass:'triangle', bassPat:'x...x...x...x...', kick:'x...x...x...x...', snare:'..x...x...x...xx', hat:'x.x.x.x.x.x.x.x.', density:0.6, seed:1776, swing:0},
   farm:     {bpm:108, root:62, scale:MAJ, prog:[[0,4,7],[0,4,7],[5,9,12],[7,11,14]], lead:'triangle', leadVol:0.08, bass:'triangle', bassPat:'x.x.x.x.x.x.x.x.', kick:'x.......x.......', snare:'....x.......x...', hat:'..x...x...x...x.', density:0.55, seed:303, swing:0.12},
@@ -957,7 +963,8 @@ const MUSIC_MANIFEST={
   'resort:island':['Private island1.mp3','Private island2.mp3','Private island3.mp3','Private island4.mp3']
 };
 Object.keys(MUSIC_MANIFEST).forEach(function(k){ if(k.indexOf('resort:')===0) MUSIC_MANIFEST['ret:'+k.slice(7)]=MUSIC_MANIFEST[k]; });
-const FM_VOL=0.6, FM_IN=2, FM_OUT=1, FM_TAIL=20;   // song loudness vs the sound effects, fade-in / fade-out seconds, never start inside the last N seconds
+const FM_VOL=0.6, FM_IN=0, FM_OUT=0, FM_TAIL=20;   // song loudness vs the sound effects, fade-in / fade-out seconds, never start inside the last N seconds
+const FM_SLOW_MENU=0.85, FM_SLOW_PAUSE=0.75;   // menu song and paused-game song play slower
 const FM_SILENT='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
 let fm=null, fmOld=[], fmPool=null, fmTimer=null, fmReq=0, fmFadeUntil=0, fmPending=false, fmMuF=1, fmMuTo=1, fmMuInit=false, fmOk=0, fmBad=0, fmOff=false;
 const fmFailed={}, fmLast={}, fmRouted=/^https?:$/.test(location.protocol);   // routed = through Web Audio (volume bus + iPhone fades); not possible from file://, which uses element volume instead
@@ -1025,7 +1032,7 @@ function fmStart(name,req,onFail){
   el.onerror=function(){ fmFail(t); };
   el.onloadedmetadata=function(){ fmMeta(t); };
   t.wd=setTimeout(function(){ if(!t.ready) fmFail(t); },12000);   // never loaded: use the synth instead
-  try{ el.loop=true; el.src=MUSIC_DIR+encodeURIComponent(file); }catch(err){ fmFail(t); return; }
+  try{ el.loop=true; el.defaultPlaybackRate=el.playbackRate=(name==='menu'?FM_SLOW_MENU:1); el.src=MUSIC_DIR+encodeURIComponent(file); }catch(err){ fmFail(t); return; }
   fmPlay(t);   // plays silently (volume 0) while it loads, so phones count it as started by the tap
 }
 // Pick a random start point (never inside the last FM_TAIL seconds), then fade in once the seek has landed.
@@ -1058,13 +1065,15 @@ function fmStopCur(){   // fade the current song out (about 1 second), then drop
   fmFadeUntil=performance.now()+FM_OUT*1000;
 }
 function fmPauseNow(){   // game paused: pause the song in place instead of switching to the synth pause tune
-  const t=fm; if(!t||t.dead) return false; if(t.paused) return true;
-  t.paused=true; fmRamp(t,0,0.3,function(){ if(t.paused&&!t.dead){ try{ t.el.pause(); }catch(e){} } });
+  const t=fm; if(!t||t.dead) return false; if(t.slow||t.paused) return true;
+  t.slow=true; try{ t.el.playbackRate=FM_SLOW_PAUSE; }catch(e){}   // keeps playing, just slowed
   return true;
 }
 function fmResume(){
-  const t=fm; if(!t||!t.paused) return; t.paused=false; fmPlay(t);
-  if(t.ready && !t.needPlay) fmRamp(t,1,0.6);
+  const t=fm; if(!t) return;
+  if(t.slow){ t.slow=false; try{ t.el.playbackRate=(t.name==='menu'?FM_SLOW_MENU:1); }catch(e){} }
+  if(!t.paused) return; t.paused=false; fmPlay(t);
+  if(t.ready && !t.needPlay) fmRamp(t,1,0);
 }
 function musicStart(name){
   if(!actx) return;
@@ -1092,15 +1101,15 @@ function synthStart(name){   // the built-in synthesized music (used when there 
   const sn=synthKey(name);
   musName=name; musTrack=Object.assign({name:sn},TRACKS[sn]||(sn.indexOf(':')>0?derivedTrack(sn):TRACKS.suburbs)); musPhrase=buildPhrase(musTrack);
   musGain=actx.createGain(); musGain.gain.value=0; musGain.connect(bus('music'));
-  if(!muted){ musGain.gain.setValueAtTime(0,actx.currentTime); musGain.gain.linearRampToValueAtTime(MUSIC_VOL*(musTrack.vol||1), actx.currentTime+0.8); }
+  if(!muted){ musGain.gain.setValueAtTime(0,actx.currentTime); musGain.gain.linearRampToValueAtTime(MUSIC_VOL*(musTrack.vol||1), actx.currentTime+0.02); }
   setupDelay();
   musStep=0; musNext=actx.currentTime+0.05;
   musTimer=setInterval(musicTick,40);
 }
 function musicStop(){
   fmReq++; fmPending=false; fmStopCur();
-  if(musTimer){ clearInterval(musTimer); musTimer=null; fmFadeUntil=Math.max(fmFadeUntil,performance.now()+300); }
-  if(musGain&&actx){ const g=musGain; try{ g.gain.cancelScheduledValues(actx.currentTime); g.gain.setValueAtTime(g.gain.value,actx.currentTime); g.gain.linearRampToValueAtTime(0,actx.currentTime+0.25); }catch(e){} setTimeout(function(){ try{ g.disconnect(); }catch(e){} },400); }
+  if(musTimer){ clearInterval(musTimer); musTimer=null; fmFadeUntil=Math.max(fmFadeUntil,performance.now()); }
+  if(musGain&&actx){ const g=musGain; try{ g.gain.cancelScheduledValues(actx.currentTime); g.gain.setValueAtTime(g.gain.value,actx.currentTime); g.gain.linearRampToValueAtTime(0,actx.currentTime+0.03); }catch(e){} setTimeout(function(){ try{ g.disconnect(); }catch(e){} },400); }
   musGain=null; musName='';
 }
 function screenTrack(){ return running ? musicFor() : (paused ? 'pause' : 'menu'); }
@@ -1151,6 +1160,15 @@ Array.prototype.forEach.call(document.querySelectorAll('.btn[data-key]'),functio
   function end(e){ if(id===null) return; if(e.changedTouches && !Array.prototype.some.call(e.changedTouches,function(x){return x.identifier===id;})) return; id=null; set(0); }
   j.addEventListener('touchstart',start,{passive:false}); j.addEventListener('touchmove',move,{passive:false}); j.addEventListener('touchend',end); j.addEventListener('touchcancel',end);
   j.addEventListener('mousedown',start); window.addEventListener('mousemove',function(e){ if(id==='m') move(e); }); window.addEventListener('mouseup',end);
+})();
+(function(){ // optional arrow buttons instead of the slide bar
+  Array.prototype.forEach.call(document.querySelectorAll('#arrowPad .abtn'),function(b){
+    const k=b.dataset.dir, o=k==='left'?'right':'left';
+    const on=function(e){ e.preventDefault(); audioInit(); if(!keys[k]) edge[k]=true; keys[k]=true; keys[o]=false; b.classList.add('on'); };
+    const off=function(e){ e.preventDefault(); keys[k]=false; b.classList.remove('on'); };
+    b.addEventListener('touchstart',on,{passive:false}); b.addEventListener('touchend',off,{passive:false}); b.addEventListener('touchcancel',off,{passive:false});
+    b.addEventListener('mousedown',on); b.addEventListener('mouseup',off); b.addEventListener('mouseleave',off);
+  });
 })();
 (function(){ // sprint is a tap-to-toggle on touch screens
   const b=document.getElementById('sprintBtn');
@@ -8106,8 +8124,7 @@ function openSettings(from){
   [['volMusic','music'],['volSfx','sfx'],['volVoices','voices']].forEach(function(p){ $(p[0]).value=Math.round(settings[p[1]]*100); $(p[0]+'Val').textContent=Math.round(settings[p[1]]*100)+'%'; });
   $('ctlAlpha').value=Math.round((settings.ctlAlpha===undefined?1:settings.ctlAlpha)*100); $('ctlAlphaVal').textContent=$('ctlAlpha').value+'%';
   $('wipeBtn').classList.toggle('hidden', from!=='startScreen');
-  syncToggles();
-  $(from).classList.add('hidden'); $('settingsScreen').classList.remove('hidden');
+  syncToggles(); $(from).classList.add('hidden'); $('settingsScreen').classList.remove('hidden');
 }
 function closeSettings(){ $('settingsScreen').classList.add('hidden'); $(settingsFrom).classList.remove('hidden'); }
 function playSample(kind){
@@ -8121,13 +8138,13 @@ function playSample(kind){
 $('ctlAlpha').addEventListener('input',function(){ settings.ctlAlpha=$('ctlAlpha').value/100; $('ctlAlphaVal').textContent=$('ctlAlpha').value+'%'; applySettings(); });
 $('settingsBtn').addEventListener('click',function(){ SFX.click(); openSettings('startScreen'); });
 $('pauseSettingsBtn').addEventListener('click',function(){ SFX.click(); openSettings('pauseScreen'); });
-function syncToggles(){ { const b=$('togDev'); b.classList.toggle('on',devMode); b.setAttribute('aria-checked',devMode?'true':'false'); } [['togHints','hints'],['togPrompts','prompts']].forEach(function(p){ const b=$(p[0]); b.classList.toggle('on',!!settings[p[1]]); b.setAttribute('aria-checked',settings[p[1]]?'true':'false'); }); }
-[['togHints','hints'],['togPrompts','prompts']].forEach(function(p){ $(p[0]).addEventListener('click',function(){
+function syncToggles(){ { const b=$('togDev'); b.classList.toggle('on',devMode); b.setAttribute('aria-checked',devMode?'true':'false'); } [['togHints','hints'],['togPrompts','prompts'],['togArrows','arrows']].forEach(function(p){ const b=$(p[0]); b.classList.toggle('on',!!settings[p[1]]); b.setAttribute('aria-checked',settings[p[1]]?'true':'false'); }); }
+[['togHints','hints'],['togPrompts','prompts'],['togArrows','arrows']].forEach(function(p){ $(p[0]).addEventListener('click',function(){
   settings[p[1]]=!settings[p[1]]; applySettings(); syncToggles(); SFX.click();
   if(!tutorial){ if(!settings.hints) $('tutBox').classList.add('hidden'); if(!settings.prompts) $('prompt').classList.add('hidden'); } }); });
 $('togDev').addEventListener('click',function(){ devMode=!devMode; try{ localStorage.setItem('pp_dev',devMode?'1':'0'); }catch(e){} syncToggles(); SFX.click(); showToast(devMode?'🛠 Developer mode ON: everything unlocked':'Developer mode off'); });
 $('settingsDone').addEventListener('click',function(){ SFX.click(); closeSettings(); });
-$('settingsReset').addEventListener('click',function(){ settings=Object.assign({},SETTINGS_DEFAULT,{hints:settings.hints,prompts:settings.prompts,ctlAlpha:settings.ctlAlpha}); applySettings(); openSettings(settingsFrom); SFX.click(); });
+$('settingsReset').addEventListener('click',function(){ settings=Object.assign({},SETTINGS_DEFAULT,{hints:settings.hints,prompts:settings.prompts,arrows:settings.arrows,ctlAlpha:settings.ctlAlpha}); applySettings(); openSettings(settingsFrom); SFX.click(); });
 $('elevCancel').addEventListener('click',function(){ SFX.click(); closeElevator(); });
 $('tutorialBtn').addEventListener('click',function(){ audioInit(); SFX.click(); tutorial=true; level=1; bankCoins=0; upg={bag:0,boots:0,armor:0,ammo:0,stam:0,dj:0,fire:0,tj:0}; $('startScreen').classList.add('hidden'); startGame(); });
 $('howToBtn').addEventListener('click',function(){ SFX.click(); $('startScreen').classList.add('hidden'); $('howToScreen').classList.remove('hidden'); });
