@@ -681,9 +681,9 @@ fitCanvas();
 // ---------- Audio (synthesized) ----------
 let actx=null, muted=false;
 // Volume settings (0..1), saved in this browser. Each channel has its own gain node ("bus").
-const SETTINGS_DEFAULT={music:0.25, musV:3, arrows:false, sfx:0.8, voices:0.7, hints:true, prompts:true, ctlAlpha:1};
+const SETTINGS_DEFAULT={music:0.45, musV:4, arrows:false, sfx:0.8, voices:0.7, hints:true, prompts:true, ctlAlpha:1};
 let settings=Object.assign({},SETTINGS_DEFAULT);
-try{ const sv=JSON.parse(localStorage.getItem('pp_settings')||'null'); if(sv){ settings=Object.assign({},SETTINGS_DEFAULT,sv); if(sv.musV!==3){ settings.music=SETTINGS_DEFAULT.music; } } settings.musV=3; }catch(e){}
+try{ const sv=JSON.parse(localStorage.getItem('pp_settings')||'null'); if(sv){ settings=Object.assign({},SETTINGS_DEFAULT,sv); if(sv.musV!==4){ settings.music=SETTINGS_DEFAULT.music; } } settings.musV=4; }catch(e){}
 const buses={};
 function bus(name){
   if(!actx) return null;
@@ -940,7 +940,7 @@ const MUSIC_MANIFEST={
   'farm':['Farm_ streets.mp3'],           'apt:farm':['Farm_ building.mp3'],           'boss:farm':['Farm_ boss.mp3'],
   'dusk':['Dusk_ streets.mp3'],           'apt:dusk':['Dusk_ building.mp3'],           'boss:dusk':['Dusk_ boss.mp3'],
   'snow':['Snow_ streets.mp3'],           'apt:snow':['Snow_ building.mp3'],           'boss:snow':['Snow_ boss.mp3'],
-  'river':['River _ street.mp3'],         'apt:river':['River _ building.mp3'],        'boss:river':['River _ boss.mp3'],
+  'river':['River _ building.mp3'],         'apt:river':['River _ street.mp3'],        'boss:river':['River _ boss.mp3'],
   'patriot':['Patriot_ street.mp3'],      'apt:patriot':['Patriot_ building.mp3'],     'boss:patriot':['Patriot_ boss.mp3'],
   'night':['Night_ streets.mp3'],         'apt:night':['Night_ building.mp3'],         'boss:night':['Night_ boss.mp3'],
   'desert':['Desert_ street.mp3'],        'apt:desert':['Desert_ building.mp3'],       'boss:desert':['Desert_ boss.mp3'],
@@ -1080,7 +1080,14 @@ function fmResume(){
 function musicStart(name){
   if(!actx) return;
   name=name||musicFor();
-  if(name==='pause') return;   // paused: the level music just keeps playing
+  if(pauseHold && name!==pauseHold.name && name!=='pause'){ const h=pauseHold; pauseHold=null; if(fm===h) fmStopCur(); }   // left the paused level (quit): drop the held song
+  if(name==='pause'){   // paused: the level song freezes where it is and the main-menu chiptune plays; resuming swaps back
+    if(pauseHold) return;
+    const t=fm;
+    if(t && !t.dead && t.ready){ pauseHold=t; t.paused=true; try{ t.el.pause(); }catch(e){} synthOnlyStop(); musName='menu'; synthStart('menu'); return; }
+    name='menu';
+  }
+  if(pauseHold && pauseHold===fm && name===pauseHold.name){ const t=pauseHold; pauseHold=null; synthOnlyStop(); musName=name; fmResume(); return; }
   if((musTimer||fm||fmPending) && name===musName){ fmResume(); return; }
   musicStop();   // fades the old song out; the new one waits for that, then fades in
   musName=name; fmPending=true;
@@ -1108,8 +1115,14 @@ function synthStart(name){   // the built-in synthesized music (used when there 
   musStep=0; musNext=actx.currentTime+0.05;
   musTimer=setInterval(musicTick,40);
 }
+let pauseHold=null;
+function synthOnlyStop(){
+  if(musTimer){ clearInterval(musTimer); musTimer=null; }
+  if(musGain&&actx){ const g=musGain; try{ g.gain.cancelScheduledValues(actx.currentTime); g.gain.setValueAtTime(g.gain.value,actx.currentTime); g.gain.linearRampToValueAtTime(0,actx.currentTime+0.03); }catch(e){} setTimeout(function(){ try{ g.disconnect(); }catch(e){} },400); }
+  musGain=null;
+}
 function musicStop(){
-  fmReq++; fmPending=false; fmStopCur();
+  pauseHold=null; fmReq++; fmPending=false; fmStopCur();
   if(musTimer){ clearInterval(musTimer); musTimer=null; fmFadeUntil=Math.max(fmFadeUntil,performance.now()); }
   if(musGain&&actx){ const g=musGain; try{ g.gain.cancelScheduledValues(actx.currentTime); g.gain.setValueAtTime(g.gain.value,actx.currentTime); g.gain.linearRampToValueAtTime(0,actx.currentTime+0.03); }catch(e){} setTimeout(function(){ try{ g.disconnect(); }catch(e){} },400); }
   musGain=null; musName='';
