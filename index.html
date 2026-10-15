@@ -54,6 +54,10 @@
   #controls { align-items:flex-end; }
   .overlay { position:absolute; inset:0; background:rgba(10,18,28,.92); color:#fff; display:flex; flex-direction:column;
              align-items:center; justify-content:center; text-align:center; padding:24px; gap:14px; z-index:10; }
+  #splash { z-index:60; cursor:pointer; background:radial-gradient(circle at 50% 40%,#1e3a5c,#0a121c 75%); -webkit-tap-highlight-color:transparent; }
+  #splash.gone { display:none; }
+  #splashTap { font-size:clamp(18px,4vw,26px); font-weight:bold; letter-spacing:2px; animation:splashPulse 1.4s ease-in-out infinite; }
+  @keyframes splashPulse { 50% { opacity:.35; } }
   .overlay h1 { font-size:clamp(32px,7vw,56px); color:#ffe14d; text-shadow:3px 3px 0 #c0392b; letter-spacing:1px; }
   .overlay h2 { font-size:clamp(24px,5vw,40px); color:#ffe14d; }
   .overlay p { font-size:16px; max-width:440px; line-height:1.5; opacity:.92; }
@@ -303,6 +307,11 @@
     </div>
   </div>
 
+  <div id="splash" class="overlay" role="button" tabindex="0" aria-label="Tap to start">
+    <div class="badge-art">📬</div>
+    <h1>POSTAL PANIC</h1>
+    <p id="splashTap">Tap to start</p>
+  </div>
   <div id="startScreen" class="overlay">
     <div class="badge-art">📬</div>
     <h1>POSTAL PANIC</h1>
@@ -1132,6 +1141,11 @@ function menuMusic(delay){ setTimeout(function(){ if(!running && !paused && actx
 // browsers only allow sound after the first tap/click/key, so start the menu music then
 // (touchend and click are listed too: some phones only count those as a tap that unlocks audio)
 ['pointerdown','touchend','click','keydown'].forEach(function(evName){ window.addEventListener(evName,function first(){ audioInit(); fmUnlock(); if(!running && !paused) musicStart('menu'); window.removeEventListener(evName,first); }); });
+(function(){ const sp=document.getElementById('splash'); if(!sp) return;
+  function go(){ if(sp.classList.contains('gone')) return; sp.classList.add('gone'); audioInit(); fmUnlock(); if(!running && !paused) musicStart('menu'); window.removeEventListener('keydown',key); }
+  function key(e){ if(e.key==='Shift'||e.key==='Control'||e.key==='Alt'||e.key==='Meta') return; go(); }
+  sp.addEventListener('click',go); window.addEventListener('keydown',key);
+})();
 // try to start the menu music as soon as the game loads (browsers that block sound until a tap will start it on the first tap instead)
 setTimeout(function(){ try{ audioInit(); if(!running && !paused) musicStart('menu'); }catch(e){} },0);
 function musicSwitch(){ if((musTimer||fm||fmPending) && musicFor()!==musName) musicStart(musicFor()); }
