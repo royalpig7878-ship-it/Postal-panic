@@ -1153,6 +1153,18 @@ function menuMusic(delay){ setTimeout(function(){ if(!running && !paused && actx
 })();
 // try to start the menu music as soon as the game loads (browsers that block sound until a tap will start it on the first tap instead)
 setTimeout(function(){ try{ audioInit(); if(!running && !paused) musicStart('menu'); }catch(e){} },0);
+// closing / leaving the app (or switching tabs) silences everything; coming back picks the music up again
+function bgHide(){
+  try{ if(actx && actx.state==='running') actx.suspend(); }catch(e){}
+  [fm].concat(fmOld).forEach(function(t){ if(t && !t.dead && !t.el.paused){ t.bgPaused=true; try{ t.el.pause(); }catch(e){} } });
+}
+function bgShow(){
+  try{ if(actx && actx.state!=='running') actx.resume(); }catch(e){}
+  [fm].concat(fmOld).forEach(function(t){ if(t && !t.dead && t.bgPaused){ t.bgPaused=false; if(!t.paused) fmPlay(t); } });
+}
+document.addEventListener('visibilitychange',function(){ if(document.hidden) bgHide(); else bgShow(); });
+window.addEventListener('pagehide',bgHide);
+window.addEventListener('pageshow',function(){ if(!document.hidden) bgShow(); });
 function musicSwitch(){ if((musTimer||fm||fmPending) && musicFor()!==musName) musicStart(musicFor()); }
 function musicMute(m){
   fmMuInit=true; fmMuTo=m?0:1; fmEnsureTick();
