@@ -1142,7 +1142,12 @@ function menuMusic(delay){ setTimeout(function(){ if(!running && !paused && actx
 // (touchend and click are listed too: some phones only count those as a tap that unlocks audio)
 ['pointerdown','touchend','click','keydown'].forEach(function(evName){ window.addEventListener(evName,function first(){ audioInit(); fmUnlock(); if(!running && !paused) musicStart('menu'); window.removeEventListener(evName,first); }); });
 (function(){ const sp=document.getElementById('splash'); if(!sp) return;
-  function go(){ if(sp.classList.contains('gone')) return; sp.classList.add('gone'); audioInit(); fmUnlock(); if(!running && !paused) musicStart('menu'); window.removeEventListener('keydown',key); }
+  function go(){ if(sp.classList.contains('gone')) return; sp.classList.add('gone'); window.removeEventListener('keydown',key);
+    const was=actx?actx.state:'none'; audioInit(); fmUnlock();
+    const fresh=function(){ if(!running && !paused){ musicStop(); musicStart('menu'); } };   // sound was blocked until now: start the menu music fresh inside this tap
+    if(was==='running'){ if(!running && !paused) musicStart('menu'); }
+    else if(actx){ let done=false; const once=function(){ if(done) return; done=true; fresh(); }; try{ const pr=actx.resume(); if(pr&&pr.then) pr.then(once,once); else once(); }catch(e){ once(); } setTimeout(once,400); }
+    else fresh(); }
   function key(e){ if(e.key==='Shift'||e.key==='Control'||e.key==='Alt'||e.key==='Meta') return; go(); }
   sp.addEventListener('click',go); window.addEventListener('keydown',key);
 })();
