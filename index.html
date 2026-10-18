@@ -849,7 +849,7 @@ const ANIMAL_VOICE={
   goose:{c:['honk1','honk2'],r:1.0,v:0.45}, canada:{c:['honk1','honk2'],r:0.9,v:0.45},
   mallard:{c:['quack1','quack2'],r:1.05,v:0.45}, swan:{c:['honk1','honk2'],r:0.72,v:0.5},
   crow:{c:['caw1','caw2'],r:1.0,v:0.4}, bat:{c:['screech'],r:2.4,v:0.14}, squirrel:{c:['yap1','yap2'],r:2.2,v:0.18}, raccoon:{c:['yap2'],r:1.5,v:0.22},
-  robodog:{c:['barkBig1','barkBig2'],r:0.72,v:0.35}, rocketkid:{c:['chuckle','laugh1'],r:1.5,v:0.18,h:['oof'],hr:1.6}, goat:{c:['honk2'],r:1.9,v:0.3}, cow:{c:['cow1'],r:1.0,v:0.95,h:['cow1'],hr:1.12}, sheep:{c:['sheep1'],r:1.0,v:0.5,h:['sheep1'],hr:1.25}, pig:{c:['pig1'],r:1.0,v:0.5,h:['pig1'],hr:1.2}, biker:{c:['laugh1'],r:1.1,v:0.15,h:['oof'],hr:1.2}, pickpocket:{c:['chuckle'],r:1.3,v:0.15,h:['oof'],hr:1.3}, rowdy:{c:['laugh1','grumble1'],r:0.9,v:0.2,h:['oof'],hr:0.9}, alleycat:{c:['screech'],r:3.2,v:0.1}, frog:{c:['quack2'],r:0.6,v:0.2}, zombie:{c:['grumble1','grumble2'],r:0.6,v:0.22,h:['oof'],hr:0.65}, ghost:{c:['sighA','sighB'],r:0.65,v:0.2}, goblin:{c:['chuckle'],r:1.8,v:0.16,h:['oof'],hr:1.9}, slime:{c:['quack2'],r:0.45,v:0.15}, gummy:{c:['chuckle'],r:2.3,v:0.12}, crab:{c:['yap2'],r:2.6,v:0.12}, buccaneer:{c:['laugh1','grumble1'],r:0.85,v:0.2,h:['oof'],hr:0.85}, eyeball:{c:['sighA'],r:1.7,v:0.12}, snail:{c:['sighB'],r:0.5,v:0.12}, snowkid:{c:['chuckle','laugh1'],r:1.45,v:0.18,h:['oof'],hr:1.6}, seagull:{c:['screech'],r:1.35,v:0.3}, pigeon:{c:['coo'],r:1.0,v:0.45},
+  robodog:{c:['barkBig1','barkBig2'],r:0.72,v:0.35}, rocketkid:{c:['chuckle','laugh1'],r:1.5,v:0.18,h:['oof'],hr:1.6}, goat:{c:['honk2'],r:1.9,v:0.3}, cow:{c:['cow1'],r:1.0,v:0.95,h:['cow1'],hr:1.12}, sheep:{c:['sheep1'],r:1.0,v:0.5,h:['sheep1'],hr:1.25}, pig:{c:['pig1'],r:1.0,v:0.5,h:['pig1'],hr:1.2}, biker:{c:['laugh1'],r:1.1,v:0.15,h:['oof'],hr:1.2}, pickpocket:{c:['chuckle'],r:1.3,v:0.15,h:['oof'],hr:1.3}, rowdy:{c:['laugh1','grumble1'],r:0.9,v:0.2,h:['oof'],hr:0.9}, alleycat:{c:['screech'],r:3.2,v:0.1}, frog:{c:['quack2'],r:0.6,v:0.2}, zombie:{c:['grumble1','grumble2'],r:0.6,v:0.22,h:['oof'],hr:0.65}, ghost:{c:['sighA','sighB'],r:0.65,v:0.2}, goblin:{c:['chuckle'],r:1.8,v:0.16,h:['oof'],hr:1.9}, slime:{c:['quack2'],r:0.45,v:0.15}, gummy:{c:['chuckle'],r:2.3,v:0.12}, crab:{c:['yap2'],r:2.6,v:0.12}, buccaneer:{c:['laugh1','grumble1'],r:0.85,v:0.2,h:['oof'],hr:0.85}, eyeball:{c:['sighA'],r:1.7,v:0.12}, snail:{c:['sighB'],r:0.5,v:0.12}, snowkid:{c:['chuckle','laugh1'],r:1.45,v:0.18,h:['oof'],hr:1.6}, seagull:{c:['screech'],r:1.35,v:0.3}, parrot:{c:['screech'],r:1.75,v:0.3}, pigeon:{c:['coo'],r:1.0,v:0.45},
   // people (clips from the Emote Pack Reactions & Feelings library); h = clips used when hit
   grumpy:{c:['grumble1','grumble2'],r:1.0,v:0.2,h:['oof'],hr:1.0},
   jogger:{c:['pant1','pant2'],r:1.05,v:0.15,h:['oof'],hr:1.1},
@@ -857,29 +857,68 @@ const ANIMAL_VOICE={
   skater:{c:['laugh1','chuckle'],r:1.2,v:0.22,h:['oof'],hr:1.3},
   janitor:{c:['grumble2','sighA'],r:0.9,v:0.18,h:['oof'],hr:0.95}
 };
+// ---------- synthesized boss voices (a buzzy "voice" shaped by vowel formants, plus noise for breath/roars) ----------
+const VOWEL={ah:[800,1200],aa:[700,1100],eh:[550,1800],ee:[300,2300],oh:[480,850],oo:[320,800],er:[500,1350],uh:[600,1100],mm:[250,700]};
+let voxNoiseBuf=null;
+function voxNoise(){ if(!voxNoiseBuf){ const n=actx.sampleRate*2; voxNoiseBuf=actx.createBuffer(1,n,actx.sampleRate); const d=voxNoiseBuf.getChannelData(0); for(let i=0;i<n;i++) d[i]=Math.random()*2-1; } return voxNoiseBuf; }
+function voxOut(vol,echo,fbk){ const g=actx.createGain(); g.gain.value=vol; g.connect(bus('voices'));
+  if(echo){ const dl=actx.createDelay(); dl.delayTime.value=echo; const fb=actx.createGain(); fb.gain.value=fbk||0.3; g.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(bus('voices')); } return g; }
+// one syllable: s=[start, length, pitch from, pitch to, vowel from, vowel to]
+function voxSyl(t0,s,o,out){
+  const t=t0+s[0], d=s[1], src=actx.createOscillator(), env=actx.createGain(), mix=actx.createGain(), lfo=actx.createOscillator(), lg=actx.createGain();
+  src.type=o.wave||'sawtooth'; src.frequency.setValueAtTime(s[2],t); src.frequency.exponentialRampToValueAtTime(Math.max(30,s[3]),t+d);
+  lfo.frequency.value=o.vib||5; lg.gain.value=o.vibD||s[2]*0.02; lfo.connect(lg); lg.connect(src.frequency);
+  const v1=VOWEL[s[4]], v2=VOWEL[s[5]||s[4]];
+  [0,1].forEach(function(k){ const bp=actx.createBiquadFilter(), bg=actx.createGain(); bp.type='bandpass'; bp.Q.value=k?9:5; bp.frequency.setValueAtTime(v1[k],t); bp.frequency.linearRampToValueAtTime(v2[k],t+d); bg.gain.value=k?1.4:2.4; src.connect(bp); bp.connect(bg); bg.connect(mix); });
+  const lp=actx.createBiquadFilter(), lpg=actx.createGain(); lp.type='lowpass'; lp.frequency.value=900; lpg.gain.value=0.25; src.connect(lp); lp.connect(lpg); lpg.connect(mix);
+  env.gain.setValueAtTime(0.0001,t); env.gain.linearRampToValueAtTime(1,t+Math.min(0.045,d*0.25)); env.gain.setValueAtTime(1,t+d*0.7); env.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  let node=env; mix.connect(env);
+  if(o.growl){ const am=actx.createGain(), al=actx.createOscillator(), alg=actx.createGain(); am.gain.value=1-o.growl*0.5; al.frequency.value=o.growlHz||30; alg.gain.value=o.growl*0.5; al.connect(alg); alg.connect(am.gain); env.connect(am); node=am; al.start(t); al.stop(t+d+0.05); }
+  node.connect(out); src.start(t); src.stop(t+d+0.05); lfo.start(t); lfo.stop(t+d+0.05);
+}
+// a filtered noise burst (breath, hiss, roar, clicks)
+function voxBurst(t,d,vol,type,f0,f1,q,out){ const n=actx.createBufferSource(), fl=actx.createBiquadFilter(), g=actx.createGain(); n.buffer=voxNoise();
+  fl.type=type; fl.Q.value=q||1; fl.frequency.setValueAtTime(f0,t); fl.frequency.exponentialRampToValueAtTime(Math.max(40,f1),t+d);
+  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(vol,t+Math.min(0.04,d*0.2)); g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+  n.connect(fl); fl.connect(g); g.connect(out); n.start(t,Math.random()); n.stop(t+d+0.05); }
+function voxTone(t,d,vol,type,f0,f1,out){ const o=actx.createOscillator(), g=actx.createGain(); o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(Math.max(30,f1),t+d);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g); g.connect(out); o.start(t); o.stop(t+d+0.05); }
+const BOSS_VOX={
+  carol:function(t,hurt){ const out=voxOut(0.5), o={vib:6.5,vibD:9};   // HOA Carol: a prim "Ah-HEM!" then "tsk, tsk" (a shocked "Oh, my!" when hit)
+    if(hurt){ voxSyl(t,[0,0.17,560,480,'oh','oh'],o,out); voxSyl(t,[0.19,0.26,500,390,'ah','ee'],o,out); return; }
+    voxSyl(t,[0,0.13,300,285,'ah','uh'],o,out); voxSyl(t,[0.16,0.34,440,330,'eh','mm'],o,out);
+    voxBurst(t+0.66,0.035,0.5,'highpass',3200,3000,1,out); voxBurst(t+0.84,0.035,0.5,'highpass',3200,3000,1,out); },
+  moan:function(t,hurt){ const out=voxOut(0.16,0.24,0.42), o={wave:'triangle',vib:4.2,vibD:14};   // Myrtle-Boo: a wailing "ooooOOOOooo... boo-hoo"
+    if(hurt){ voxSyl(t,[0,0.32,420,660,'oo','oh'],o,out); voxSyl(t,[0.28,0.34,660,380,'oh','oo'],o,out); voxBurst(t,0.55,0.05,'bandpass',600,900,2,out); return; }
+    voxSyl(t,[0,0.85,290,470,'oo','oh'],o,out); voxSyl(t,[0.75,0.95,470,260,'oh','oo'],o,out);
+    voxSyl(t,[1.78,0.2,360,330,'oo','oo'],o,out); voxSyl(t,[2.02,0.32,340,250,'oo','oo'],o,out);
+    voxBurst(t,1.7,0.05,'bandpass',500,850,2,out); },
+  roar:function(t,hurt){ const out=voxOut(0.75), d=hurt?0.5:1.05;   // Emberwing: a deep, rumbling dragon roar
+    voxSyl(t,[0,d,hurt?170:125,hurt?105:68,'aa','oh'],{growl:0.95,growlHz:36,vibD:5},out);
+    voxBurst(t,d,hurt?0.35:0.5,'lowpass',2200,450,1,out); voxBurst(t+0.05,d*0.8,0.12,'bandpass',1400,700,1.5,out); },
+  pirate:function(t,hurt){ const out=voxOut(0.6), o={growl:0.55,growlHz:28,vibD:4};   // Captain Barnacle: "ARRR!" or "Yo-HO!" (an "Argh!" when hit)
+    if(hurt){ voxSyl(t,[0,0.26,190,135,'ah','uh'],o,out); return; }
+    if(Math.random()<0.4){ voxSyl(t,[0,0.17,175,190,'oh','oh'],{vibD:3},out); voxSyl(t,[0.21,0.36,235,175,'oh','oh'],{vibD:4},out); return; }
+    voxSyl(t,[0,0.7,155,118,'ah','er'],o,out); },
+  shark:function(t,hurt){ const out=voxOut(1.3);   // Sky Shark: an engine "VWOOOM" with a laser chirp (a metal clang when hit)
+    if(hurt){ [640,1013,1480].forEach(function(f,i){ voxTone(t,0.35-i*0.07,0.16,'triangle',f,f*0.97,out); }); voxBurst(t,0.12,0.25,'highpass',3000,2000,1,out); return; }
+    const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.Q.value=6; lp.frequency.setValueAtTime(300,t); lp.frequency.exponentialRampToValueAtTime(2600,t+0.55); lp.frequency.exponentialRampToValueAtTime(500,t+0.9); lp.connect(out);
+    [0,7].forEach(function(dt){ voxTone(t,0.9,0.22,'sawtooth',70+dt,230+dt,lp); });
+    voxTone(t+0.55,0.22,0.12,'square',1900,320,out); voxTone(t+0.72,0.22,0.1,'square',1900,320,out); },
+  shroom:function(t,hurt){ const out=voxOut(1.4), o={wave:'triangle',vib:3,vibD:4};   // Morty: a goofy, booming "hoo-hoo-HOO!" (a squishy "bloop-oof" when hit)
+    if(hurt){ voxTone(t,0.2,0.3,'sine',620,150,out); voxBurst(t,0.12,0.15,'lowpass',900,300,1,out); voxSyl(t,[0.1,0.2,190,135,'uh','oo'],o,out); return; }
+    voxTone(t,0.18,0.25,'sine',180,520,out);
+    voxSyl(t,[0.05,0.16,140,150,'oo','oo'],o,out); voxSyl(t,[0.26,0.16,150,160,'oo','oo'],o,out); voxSyl(t,[0.47,0.38,195,120,'oh','oo'],o,out); }
+};
 function animalSound(kind,x,hurt){
   if(!actx||muted) return;
+  if(BOSS_VOX[kind]){ const now=actx.currentTime; if(now-lastAnimalSnd<(hurt?0.35:0.9)) return; lastAnimalSnd=now; try{ BOSS_VOX[kind](now+0.01,hurt); }catch(e){} return; }
   if(kind==='owl'){ const now=actx.currentTime; if(now-lastAnimalSnd<0.6) return; lastAnimalSnd=now;   // hoo... hoo-hoo
     (hurt?[[0,500,0.18]]:[[0,380,0.42],[0.55,360,0.2],[0.8,340,0.36]]).forEach(function(q){ const o=actx.createOscillator(), g=actx.createGain(), lfo=actx.createOscillator(), lg=actx.createGain();
       o.type='sine'; o.frequency.setValueAtTime(q[1]*1.08,now+q[0]); o.frequency.exponentialRampToValueAtTime(q[1],now+q[0]+0.08); o.frequency.exponentialRampToValueAtTime(q[1]*0.9,now+q[0]+q[2]);
       lfo.frequency.value=6; lg.gain.value=6; lfo.connect(lg); lg.connect(o.frequency);
       g.gain.setValueAtTime(0.0001,now+q[0]); g.gain.linearRampToValueAtTime(0.22,now+q[0]+0.06); g.gain.exponentialRampToValueAtTime(0.0001,now+q[0]+q[2]);
       o.connect(g); g.connect(bus('voices')); o.start(now+q[0]); o.stop(now+q[0]+q[2]+0.05); lfo.start(now+q[0]); lfo.stop(now+q[0]+q[2]+0.05); }); return; }
-  if(kind==='moan'){   // Moaning Myrtle-Boo: a long, wavering "ooooOOOOooo" (a shorter rising "oOOoh!" when hit)
-    const now=actx.currentTime; if(now-lastAnimalSnd<(hurt?0.4:1.2)) return; lastAnimalSnd=now;
-    const dur=hurt?0.7:1.9, o=actx.createOscillator(), o2=actx.createOscillator(), g=actx.createGain(), bp=actx.createBiquadFilter(), bp2=actx.createBiquadFilter(), mix=actx.createGain(), lfo=actx.createOscillator(), lg=actx.createGain();
-    o.type='sawtooth'; o2.type='sine';
-    const f0=hurt?230:170; [o,o2].forEach(function(os,i){ const m=i?2:1; os.frequency.setValueAtTime(f0*m,now); os.frequency.linearRampToValueAtTime(f0*1.45*m,now+dur*0.45); os.frequency.linearRampToValueAtTime(f0*(hurt?1.1:0.8)*m,now+dur); });
-    lfo.frequency.value=5; lg.gain.value=hurt?6:9; lfo.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
-    bp.type='bandpass'; bp.frequency.setValueAtTime(420,now); bp.frequency.linearRampToValueAtTime(700,now+dur*0.5); bp.frequency.linearRampToValueAtTime(380,now+dur); bp.Q.value=4;   // "oo" to "OH" to "oo"
-    bp2.type='bandpass'; bp2.frequency.value=950; bp2.Q.value=6;
-    o.connect(bp); o.connect(bp2); o2.connect(mix); bp.connect(mix); bp2.connect(mix);
-    g.gain.setValueAtTime(0.0001,now); g.gain.linearRampToValueAtTime(0.32,now+0.25); g.gain.setValueAtTime(0.32,now+dur*0.7); g.gain.exponentialRampToValueAtTime(0.0001,now+dur);
-    mix.gain.value=0.6; mix.connect(g);
-    const dl=actx.createDelay(); dl.delayTime.value=0.18; const fb=actx.createGain(); fb.gain.value=0.35; g.connect(dl); dl.connect(fb); fb.connect(dl); dl.connect(bus('voices'));   // spooky echo
-    g.connect(bus('voices'));
-    o.start(now); o2.start(now); lfo.start(now); o.stop(now+dur+0.05); o2.stop(now+dur+0.05); lfo.stop(now+dur+0.05);
-    return; }
   if(kind==='pigeon'){   // mourning dove: a soft rising "coo-AH", then "cooo... coo, coo"
     const now=actx.currentTime; if(now-lastAnimalSnd<0.5) return; const sx=x-camX; if(sx<-80||sx>W+80) return; lastAnimalSnd=now;
     const notes=hurt?[[0,0.22,720,820,640]]:[[0,0.42,520,690,600],[0.5,0.55,600,560,500],[1.15,0.28,500,490,470],[1.55,0.28,500,490,470]];
@@ -5182,6 +5221,22 @@ function drawBird(b){
 
 // Big Bruno, the first boss: a stocky brindle bulldog drawn by hand (local units, ground at y=0, scaled by the boss size)
 // how far a boss's mouth is open (0 = shut, 1 = wide): two quick snaps after each sound it makes, a little chatter while winding up
+function bossBeamHum(){ if(!actx||muted) return; const t=actx.currentTime, o=actx.createOscillator(), o2=actx.createOscillator(), g=actx.createGain(), l=actx.createOscillator(), lg=actx.createGain();   // Sky Shark's tractor beam
+  o.type='sine'; o2.type='triangle'; o.frequency.value=320; o2.frequency.value=482; l.frequency.value=7; lg.gain.value=45; l.connect(lg); lg.connect(o.frequency); lg.connect(o2.frequency);
+  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.07,t+0.25); g.gain.setValueAtTime(0.07,t+2.2); g.gain.exponentialRampToValueAtTime(0.0001,t+2.9);
+  o.connect(g); o2.connect(g); g.connect(bus('sfx')); [o,o2,l].forEach(function(n){ n.start(t); n.stop(t+3); }); }
+function bossWhoosh(){ if(!actx||muted) return; const t=actx.currentTime, n=actx.createBufferSource(), f=actx.createBiquadFilter(), g=actx.createGain(); n.buffer=voxNoise();   // a flying boss swooping past
+  f.type='bandpass'; f.Q.value=2; f.frequency.setValueAtTime(300,t); f.frequency.exponentialRampToValueAtTime(1800,t+0.5); f.frequency.exponentialRampToValueAtTime(400,t+1.1);
+  g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.28,t+0.45); g.gain.exponentialRampToValueAtTime(0.0001,t+1.15); n.connect(f); f.connect(g); g.connect(bus('sfx')); n.start(t); n.stop(t+1.2); }
+function bossThrowFrom(){ const D=B.D, f=Math.sign(player.x-B.x)||1;   // where a thrown volley leaves the boss
+  if(D.kind==='goose'){ const s=D.sc; return [B.x+f*20*s, B.y-46*s]; }        // the Goose King's scepter orb
+  if(D.kind==='flysq'){ const s=D.dsc||1; return [B.x+f*26*s, B.y-66*s]; }     // Sir Nutsworth's paw
+  return [B.x, B.y-B.hitH*0.75]; }
+function gooseWand(){ if(!B) return 0;   // scepter angle: gentle idle sway, raised back while winding up, swung forward on the throw
+  let a=Math.sin(drawT*0.05)*0.08;
+  if(B.state==='tele' && B.next==='throw') a=-0.8*Math.min(1,B.t/18)+Math.sin(drawT*0.6)*0.05;
+  if(B.wandT!=null){ const k=drawT-B.wandT; if(k>=0 && k<28) a=k<5? -0.8+k/5*1.45 : 0.65*(1-(k-5)/23); }
+  return a; }
 function bossMouth(){ if(!B) return 0; const bk=B.barkT!=null?drawT-B.barkT:999; let o=bk<36?Math.max(0,Math.sin(bk/36*Math.PI*2))*(bk<18?1:0.7):0; if(B.state==='tele') o=Math.max(o,0.15+0.15*Math.sin(drawT*0.33)); return o; }
 const MOUTH_IN='#2b1a19';   // inside of a mouth: a dark, barely-red shade
 function drawBruno(e,f,lw){
@@ -5365,8 +5420,11 @@ function drawEnemy(e){
       if(e.isBoss && e.mo>0.04){ const o=e.mo; 
         ctx.fillStyle=P.beak; ctx.beginPath(); ctx.moveTo(f*18,top-4); ctx.lineTo(f*30,top-3.5-o*3.5); ctx.lineTo(f*18,top-1.8); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(f*18,top-1); ctx.lineTo(f*28,top+o*5.5); ctx.lineTo(f*18,top+1.2); ctx.closePath(); ctx.fill(); }
       else { ctx.fillStyle=P.beak; ctx.beginPath(); ctx.moveTo(f*18,top-4); ctx.lineTo(f*(K==='mallard'?28:30),top-3); ctx.lineTo(f*18,top); ctx.fill(); }
-      if(K==='goose' && e.isBoss){ ctx.strokeStyle='#8a6d00'; ctx.lineWidth=3.4; ctx.beginPath(); ctx.moveTo(f*2,-6); ctx.lineTo(f*20,-44); ctx.stroke(); ctx.strokeStyle='#f1c40f'; ctx.lineWidth=2.2; ctx.stroke();
+      if(K==='goose' && e.isBoss){ ctx.save(); ctx.translate(f*2,-6); ctx.rotate(gooseWand()*f); ctx.translate(-f*2,6);
+        ctx.strokeStyle='#8a6d00'; ctx.lineWidth=3.4; ctx.beginPath(); ctx.moveTo(f*2,-6); ctx.lineTo(f*20,-44); ctx.stroke(); ctx.strokeStyle='#f1c40f'; ctx.lineWidth=2.2; ctx.stroke();
         const og=ctx.createRadialGradient(f*20-1,-47,0.5,f*20,-46,5); og.addColorStop(0,'#ffd0dc'); og.addColorStop(1,'#d6204a'); ctx.fillStyle=og; ctx.beginPath(); ctx.arc(f*20,-46,4.5,0,7); ctx.fill(); outline(1.4); ctx.fillStyle='#f1c40f'; ctx.fillRect(f*20-1,-54,2,4); ctx.fillRect(f*20-2.5,-53,5,1.6);
+        if(B && B.state==='tele' && B.next==='throw'){ const gl=0.35+0.3*Math.sin(drawT*0.5); ctx.fillStyle='rgba(255,220,235,'+gl+')'; ctx.beginPath(); ctx.arc(f*20,-46,8,0,7); ctx.fill(); }   // the orb glows before feathers fly
+        ctx.restore();
         ctx.fillStyle=P.wing; ctx.beginPath(); ctx.ellipse(f*4,-10,5,4,0,0,7); ctx.fill(); outline(1.5); }   // golden scepter held in the wing
     }
   }
@@ -6191,10 +6249,10 @@ let boss=false, bossNext=false, bossWon=false, B=null, bossShots=[], waves=[], s
 const BOSSES=[
   {name:'Big Bruno', title:'the junkyard bulldog', type:'dog', kind:'bulldog', sc:2.7, hp:22, attacks:['charge','slam'], voice:'bulldog', body:[50,34], drawH:40},
   {name:'The Goose King', title:'ruler of the pond', type:'goose', kind:'goose', sc:2.4, hp:24, attacks:['charge','throw'], shot:'feather', crown:true, voice:'goose', body:[40,32], drawH:60},
-  {name:'HOA President Carol', title:'enforcer of lawn rules', type:'neighbor', kind:'granny', sc:2.3, hp:26, attacks:['throw','slam'], shot:'gnome', voice:'granny', body:[30,44], drawH:66, look:{skin:'#f1c27d',shirt:'#8e44ad',hair:'#d9d9d9',pants:'#17171c'}},
+  {name:'HOA President Carol', title:'enforcer of lawn rules', type:'neighbor', kind:'granny', sc:2.3, hp:26, attacks:['throw','slam'], shot:'gnome', voice:'carol', body:[30,44], drawH:66, look:{skin:'#f1c27d',shirt:'#8e44ad',hair:'#d9d9d9',pants:'#17171c'}},
   {name:'Big Chill', title:'the giant snowman', type:'custom', kind:'snowman', sc:1, hp:28, attacks:['throw','roll','slam','roll'], shot:'carrot', voice:'', body:[84,150], drawH:210},
   {name:'Count Crowley', title:'lord of the night sky', type:'bird', kind:'crow', sc:3.0, hp:18, attacks:['rockrain','swoop'], voice:'crow', flying:true, body:[34,20], drawH:28},
-  {name:'Sky Shark', title:'rogue cargo cruiser', type:'bird', kind:'hovercar', color:'#ff2e88', sc:2.6, hp:20, attacks:['rockrain','abduct','swoop'], voice:'', flying:true, body:[40,15], drawH:24},
+  {name:'Sky Shark', title:'rogue cargo cruiser', type:'bird', kind:'hovercar', color:'#ff2e88', sc:2.6, hp:20, attacks:['rockrain','abduct','swoop'], voice:'shark', flying:true, body:[40,15], drawH:24},
   {name:'America Hawk', title:'land of the free, home of the brave', type:'custom', kind:'hawk', sc:1, dsc:1.3, hp:30, attacks:['charge','candles','slam'], shot:'candle', voice:'seagull', body:[140,62], drawH:154},
   {name:'Lord Llama', title:'spitter of the south pasture', type:'custom', kind:'llama', sc:1, dsc:1.3, hp:32, attacks:['throw','charge','slam'], shot:'spit', voice:'goat', body:[94,70], drawH:172},
   {name:'The Dune Devourer', title:'sand worm of the deep desert', type:'custom', kind:'worm', sc:1, hp:28, attacks:['burrow','spikes','skydive','spikes'], voice:'', body:[56,110], drawH:120},
@@ -6202,11 +6260,11 @@ const BOSSES=[
   {name:'Jimothy the Raccoon', title:'scrappy king of the dumpsters', type:'custom', kind:'jimothy', sc:1, dsc:1.25, hp:30, attacks:['charge','throw','trashfan','slam'], shot:'trash', voice:'raccoon', body:[84,118], drawH:158},
   {name:'Big Bayou Bertha', title:'queen of the river', type:'custom', kind:'gator', sc:1, dsc:1.3, hp:32, attacks:['charge','throw','slam'], shot:'splash', voice:'frog', body:[160,40], drawH:70},
   {name:'Moaning Myrtle-Boo', title:'the giant ghost of Hollow Manor', type:'custom', kind:'ghost', sc:1, dsc:1.3, hp:32, attacks:['charge','vanish','slam','throw'], shot:'wisp', voice:'moan', body:[84,120], drawH:150},
-  {name:'Emberwing', title:'dragon of Castle Glimmerstone', type:'custom', kind:'dragon', sc:1, dsc:1.2, hp:34, attacks:['aerial','candles','charge','aerial'], volley:'fireball', voice:'', body:[130,80], drawH:120},
+  {name:'Emberwing', title:'dragon of Castle Glimmerstone', type:'custom', kind:'dragon', sc:1, dsc:1.2, hp:34, attacks:['aerial','candles','charge','aerial'], volley:'fireball', voice:'roar', body:[130,80], drawH:120},
   {name:'The Gingerbread Giant', title:'run, run, as fast as you can', type:'custom', kind:'ginger', sc:1, dsc:1.3, hp:32, attacks:['throw','charge','slam'], shot:'gumdrop', voice:'', body:[70,112], drawH:160},
-  {name:'Captain Barnacle', title:'terror of the seven seas', type:'custom', kind:'captain', sc:1, dsc:1.3, hp:34, attacks:['charge','parrot','beams','throw'], shot:'cutlass', drop:'cannonball', voice:'', body:[60,104], drawH:158},
+  {name:'Captain Barnacle', title:'terror of the seven seas', type:'custom', kind:'captain', sc:1, dsc:1.3, hp:34, attacks:['charge','parrot','beams','throw'], shot:'cutlass', drop:'cannonball', voice:'pirate', body:[60,104], drawH:158},
   {name:'Sir Nutsworth', title:'the gliding acorn baron', type:'custom', kind:'flysq', sc:1, dsc:1.25, hp:20, attacks:['charge','glide','throw','glide'], shot:'acorn', drop:'pinecone', voice:'squirrel', body:[64,100], drawH:112},
-  {name:'Morty the Mega Mushroom', title:'the giant mushroom', type:'custom', kind:'shroom', sc:1, dsc:1.3, hp:30, attacks:['slam','gas','candles','charge'], volley:'spore', voice:'', body:[110,132], drawH:154},
+  {name:'Morty the Mega Mushroom', title:'the giant mushroom', type:'custom', kind:'shroom', sc:1, dsc:1.3, hp:30, attacks:['slam','gas','candles','charge'], volley:'spore', voice:'shroom', body:[110,132], drawH:154},
 ];
 (function(){ const by={}; OLD_KINDS.forEach(function(k,i){ by[k]=BOSSES[i]; }); BOSSES.length=0; HOOD_ORDER.forEach(function(k){ BOSSES.push(by[k]); }); })();
 function bossDef(){ return BOSSES[biomeIndex(level)]; }
@@ -6303,13 +6361,13 @@ function updateBoss(){
       break;
     case 'rain':
       B.x+=B.dir*3.2*spd; B.y+=((G-240)-B.y)*0.1;
-      if(B.t>20 && B.t%(angry?24:32)===0) rocks.push({x:B.x,y:B.y+14,vx:B.dir*1.2,vy:0,rot:0,kind:D.drop});
+      if(B.t>20 && B.t%(angry?24:32)===0){ rocks.push({x:B.x,y:B.y+14,vx:B.dir*1.2,vy:0,rot:0,kind:D.drop}); if(D.kind==='hovercar'){ tone(1500,0.14,'square',0.05,380); noise(0.08,0.08,3000); } }
       if(B.x<Math.max(100,bossLo())||B.x>Math.min(LEVEL_LEN-100,bossHi())){ B.x=Math.max(Math.max(100,bossLo()),Math.min(Math.min(LEVEL_LEN-100,bossHi()),B.x)); bossGo('recover'); }
       break;
     case 'candles':   // America Hawk fires a string of Roman candle balls at you
       B.face=Math.sign(dx)||B.face;
       if(B.t%(D.kind==='dragon'?(angry?30:40):(angry?10:14))===0){ const dr=D.kind==='dragon', hk=D.kind==='hawk', sx=B.x+B.face*(dr?118:(hk?47:40)), sy=dr?B.y-103:(hk?B.y-132:B.y-B.hitH*0.72), T=40, tx=player.x+(Math.random()-0.5)*70, ty=player.y-24;
-        bossShots.push({x:sx,y:sy,vx:(tx-sx)/T,vy:(ty-sy-0.35*T*(T+1)/2)/T,rot:0,kind:D.volley||'candle',col:['#ff4d4d','#ffffff','#5b8cff','#ffd54a'][B.cn%4]}); B.cn++; noise(0.12,0.1,2500); tone(900,0.12,'sine',0.05,1500); }
+        bossShots.push({x:sx,y:sy,vx:(tx-sx)/T,vy:(ty-sy-0.35*T*(T+1)/2)/T,rot:0,kind:D.volley||'candle',col:['#ff4d4d','#ffffff','#5b8cff','#ffd54a'][B.cn%4]}); B.cn++; if(D.kind==='dragon'){ B.fireT=drawT; noise(0.3,0.14,1500); } else if(D.kind==='shroom'){ tone(260,0.12,'sine',0.09,640); noise(0.1,0.06,1200); } else { noise(0.12,0.1,2500); tone(900,0.12,'sine',0.05,1500); } }
       if(B.cn>=(D.kind==='dragon'?(angry?5:4):(angry?7:5))) bossGo('recover');
       break;
     case 'wreck': {   // Demolition Dan swings the wrecking ball through the low air: jump it!
@@ -6347,7 +6405,8 @@ function updateBoss(){
       if(B.t%8===0){ shake=4; noise(0.1,0.06,300); } if(B.t>24){ B.under=false; B.wormH=0; B.afterEmerge='stun'; bossGo('emerge'); SFX.thud(); } break;
     case 'abduct': {   // tractor beam: hover over you; stay in it and you get sucked up, then dropped from high
       B.y+=((G-250)-B.y)*0.06; B.x+=(player.x-B.x)*(B.t<90?0.05:0.025);
-      if(B.t>30){ const inB=Math.abs(player.x-B.x)<(28+Math.min(1,(player.y-B.y)/260)*40) && player.y>B.y; B.cap=inB?(B.cap||0)+1:Math.max(0,(B.cap||0)-2); if(B.cap>=20){ player.abd=1; player.abdT=0; B.cap=0; SFX.jump(); bossGo('lift'); break; } }
+      if(B.t===30) bossBeamHum();
+      if(B.t>30){ const inB=Math.abs(player.x-B.x)<(28+Math.min(1,(player.y-B.y)/260)*40) && player.y>B.y; B.cap=inB?(B.cap||0)+1:Math.max(0,(B.cap||0)-2); if(B.cap>=20){ player.abd=1; player.abdT=0; B.cap=0; SFX.jump(); tone(220,0.7,'sine',0.08,1100); bossGo('lift'); break; } }
       if(B.t>170){ B.cap=0; bossGo('recover'); }
       break; }
     case 'lift': {
@@ -6362,8 +6421,9 @@ function updateBoss(){
       if(B.t>160) bossGo('recover'); break;
     case 'parrot': {   // the parrot flaps off his shoulder, dives at you, then flies back
       const pa=B.pa||(B.pa={t:0}), ds=D.dsc||1, fs=Math.sign(player.x-B.x)||1, sx=B.x-fs*20*ds, sy=B.y-80*ds, t=++pa.t, prev=B.pp?B.pp.x:sx;
+      if(t===1){ lastAnimalSnd=0; animalSound('parrot',sx,false); }
       if(t<30){ const k=t/30; B.pp={x:sx-fs*40*k,y:sy-90*ds*k}; }
-      else if(t<75){ if(t===30){ pa.x0=B.pp.x; pa.y0=B.pp.y; pa.tx=player.x; pa.ty=player.y-26; SFX.hiss&&SFX.hiss(); } const k=(t-30)/45; B.pp={x:pa.x0+(pa.tx-pa.x0)*k, y:pa.y0+(pa.ty-pa.y0)*k*k}; }
+      else if(t<75){ if(t===30){ pa.x0=B.pp.x; pa.y0=B.pp.y; pa.tx=player.x; pa.ty=player.y-26; lastAnimalSnd=0; animalSound('parrot',B.pp.x,true); } const k=(t-30)/45; B.pp={x:pa.x0+(pa.tx-pa.x0)*k, y:pa.y0+(pa.ty-pa.y0)*k*k}; }
       else if(t<115){ const k=(t-75)/40; B.pp={x:pa.tx+(sx-pa.tx)*k, y:pa.ty+(sy-90*ds-pa.ty)*k-Math.sin(k*Math.PI)*36}; }
       else if(t<130){ const k=(t-115)/15; B.pp={x:sx-fs*40*(1-k)+0, y:sy-90*ds*(1-k)}; }
       else { B.pp=null; bossGo('recover'); break; }
@@ -6381,7 +6441,7 @@ function updateBoss(){
         const cap=Math.min(3.2,2.0*spd), mv=(tx-B.x)*0.03; B.x+=Math.max(-cap,Math.min(cap,mv)); }   // always slower than you can run, so you can get away
       B.x=Math.max(bossLo(),Math.min(bossHi(),B.x));
       if(B.t>60 && B.t%(angry?58:80)===0){ const sx=B.x+B.face*118, sy=B.y-103, T2=34+Math.floor(Math.random()*12), tx2=player.x+(Math.random()-0.5)*90, ty2=player.y-24;
-        bossShots.push({x:sx,y:sy,vx:(tx2-sx)/T2,vy:(ty2-sy-0.35*T2*(T2+1)/2)/T2,rot:0,kind:D.volley||'fireball',col:'#ff7a2a'}); ae.n++; noise(0.15,0.1,1800); tone(500,0.15,'sawtooth',0.05,900); }
+        bossShots.push({x:sx,y:sy,vx:(tx2-sx)/T2,vy:(ty2-sy-0.35*T2*(T2+1)/2)/T2,rot:0,kind:D.volley||'fireball',col:'#ff7a2a'}); ae.n++; noise(0.15,0.1,1800); tone(500,0.15,'sawtooth',0.05,900); B.fireT=drawT; lastAnimalSnd=0; animalSound('roar',B.x,true); }
       if(B.t>(angry?260:230)) bossGo('land'); break; }
     case 'land':
       B.y+=7; if(B.y>=groundY){ B.y=groundY; shake=14; SFX.thud(); waves.push({x:B.x,dir:-1,spd:4.5*spd,life:130,k:D.kind},{x:B.x,dir:1,spd:4.5*spd,life:130,k:D.kind}); bossGo('stun'); } break;
@@ -6392,7 +6452,7 @@ function updateBoss(){
       B.x+=B.vx; B.y+=B.vy;
       if(B.gp===0){ B.vy+=0.7; if(B.vy>=0){ B.gp=1; B.gt=0; B.vy=0; } }
       else { B.gt++; B.vx+=(Math.sign(dx)*3.2*spd-B.vx)*0.05; B.vy=B.gt<(angry?70:55)?0.25:Math.min(2.4,B.vy+0.07);
-        if(B.gt%(angry?20:28)===0) rocks.push({x:B.x,y:B.y-10,vx:0,vy:0,rot:0,kind:D.drop});
+        if(B.gt%(angry?20:28)===0){ const ds=D.dsc||1, sd=(B.gs=-(B.gs||1)); rocks.push({x:B.x+sd*72*ds,y:B.y-66*ds,vx:sd*0.9+B.vx*0.3,vy:-1.6,rot:0,kind:D.drop}); tone(800,0.08,'triangle',0.05,1200); }
         if(B.y>=groundY){ B.y=groundY; shake=Math.max(shake,5); SFX.thud(); bossGo('stun'); } }
       if(B.y>groundY){ B.y=groundY; }
       break; }
@@ -6421,13 +6481,14 @@ function startAttack(a,spd,dx){
   else if(a==='slam'){ const jv=13+Math.random()*4.5, tt=2*jv/0.7, off=(Math.random()-0.5)*190; B.vy=-jv; B.vx=Math.max(-10,Math.min(10,(dx+off)/tt)); B.landX=Math.max(60,Math.min(LEVEL_LEN-60,B.x+B.vx*tt)); bossGo('jump'); }
   else if(a==='throw'){
     const n=(B.hp<=B.maxhp/2?5:3)+(Math.random()<0.3?(Math.random()<0.5?-1:2):0), T=44+Math.floor(Math.random()*24);
-    const y0=B.y-B.hitH*0.75, ty=player.y-24;
-    for(let i=0;i<n;i++){ const tx=player.x+(i-(n-1)/2)*(55+Math.random()*50)+(Math.random()-0.5)*40; bossShots.push({x:B.x,y:y0,vx:(tx-B.x)/T,vy:(ty-y0-0.35*T*(T+1)/2)/T,rot:0,kind:D.shot}); }
+    const o0=bossThrowFrom(), x0=o0[0], y0=o0[1], ty=player.y-24; if(D.kind==='goose') B.wandT=drawT;
+    for(let i=0;i<n;i++){ const tx=player.x+(i-(n-1)/2)*(55+Math.random()*50)+(Math.random()-0.5)*40; bossShots.push({x:x0,y:y0,vx:(tx-x0)/T,vy:(ty-y0-0.35*T*(T+1)/2)/T,rot:0,kind:D.shot}); }
+    if(D.kind==='goose'){ pop(x0,y0,'#ffffff',10); pop(x0,y0,'#ffd0dc',6); tone(1400,0.25,'sine',0.06,2400); }
     SFX.throw(); bossGo('recover');
   }
   else if(a==='vanish'){ B.fade=1; pop(B.x,B.y-70,'#cfe8ff',12); bossGo('vanish'); }
   else if(a==='abduct'){ B.cap=0; bossGo('abduct'); }
-  else if(a==='gas'){ bossGo('gas'); noise(0.5,0.1,1800); }
+  else if(a==='gas'){ bossGo('gas'); noise(0.9,0.16,1400); tone(140,0.5,'sine',0.08,90); }
   else if(a==='aerial'){ B.ae={side:Math.random()<0.5?-1:1,n:0}; bossGo('aerial'); }
   else if(a==='parrot'){ B.pa={t:0}; bossGo('parrot'); }
   else if(a==='candles'){ B.cn=0; bossGo('candles'); }
@@ -6439,7 +6500,7 @@ function startAttack(a,spd,dx){
   else if(a==='spikes'||a==='trashfan'){ B.sn=0; B.face=Math.sign(dx)||B.face; bossGo('spikes'); }
   else if(a==='skydive'){ B.air=0; B.wormH=0; B.under=true; bossGo('launch'); SFX.jump(); }
   else if(a==='rockrain'){ B.dir=dx>0?1:-1; if((B.dir>0&&B.x>LEVEL_LEN-200)||(B.dir<0&&B.x<200)) B.dir*=-1; bossGo('rain'); }
-  else if(a==='swoop'){ B.sx=B.x; B.tx=Math.max(80,Math.min(LEVEL_LEN-80,player.x+Math.sign(dx||1)*220)); B.face=Math.sign(dx)||B.face; bossGo('swoop'); }
+  else if(a==='swoop'){ bossWhoosh(); B.sx=B.x; B.tx=Math.max(80,Math.min(LEVEL_LEN-80,player.x+Math.sign(dx||1)*220)); B.face=Math.sign(dx)||B.face; bossGo('swoop'); }
 }
 
 
@@ -6647,9 +6708,7 @@ function drawCustomBoss(D,T,angry){
     ctx.fillStyle=sk; ctx.beginPath(); ctx.ellipse(hx,hy,18,14,0,0,7); ctx.fill(); outline(2.5);
     // snout with a proper hinged jaw: teeth, dark mouth, tongue and a glow when it breathes fire
     ctx.save(); ctx.translate(hx,hy); ctx.scale(f,1);
-    { const ang=firing?0.55:0.07, px=8, py=5, Lj=26;
-      if(firing){ const ex2=px+Math.cos(ang)*Lj, ey2=py+Math.sin(ang)*Lj; ctx.fillStyle='#6a1c1c'; ctx.beginPath(); ctx.moveTo(px-2,py-2); ctx.lineTo(33,2); ctx.lineTo(ex2,ey2-1); ctx.closePath(); ctx.fill();
-        ctx.fillStyle='#e0707f'; ctx.beginPath(); ctx.ellipse(px+12,py+5,9,3,ang*0.6,0,7); ctx.fill(); }
+    { const fk=B.fireT!=null?drawT-B.fireT:999, ang=Math.max(firing?0.55:0.07, 0.07+bossMouth()*0.6, fk<16?0.55*(1-fk/16):0), px=8, py=5, Lj=26;
       ctx.save(); ctx.translate(px,py); ctx.rotate(ang);
       ctx.fillStyle=sk2; ctx.beginPath(); ctx.moveTo(-6,-1); ctx.lineTo(Lj-2,-1); ctx.quadraticCurveTo(Lj+3,0,Lj,4); ctx.lineTo(-4,7); ctx.closePath(); ctx.fill(); outline(1.8);
       ctx.fillStyle='#f4efe2'; for(let k=0;k<4;k++){ ctx.beginPath(); ctx.moveTo(4+k*5.5,-1); ctx.lineTo(6.5+k*5.5,-6); ctx.lineTo(9+k*5.5,-1); ctx.closePath(); ctx.fill(); }
