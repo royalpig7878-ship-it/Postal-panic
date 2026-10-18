@@ -5172,7 +5172,7 @@ function drawBird(b){
     ctx.fillStyle=C.body; ctx.beginPath(); ctx.moveTo(x-f*14,y-2); ctx.lineTo(x-f*24,y-6); ctx.lineTo(x-f*24,y+4); ctx.closePath(); ctx.fill(); outline(2);
     ctx.fillStyle=C.body; ctx.beginPath(); ctx.arc(x+f*14,y-5,7,0,7); ctx.fill(); outline(2);
     if(b.kind==='pigeon'){ ctx.fillStyle='rgba(80,180,140,.6)'; ctx.beginPath(); ctx.arc(x+f*10,y-1,4,0,7); ctx.fill(); }
-    if(b.mo>0.04){ const o=b.mo; ctx.fillStyle=MOUTH_IN; ctx.beginPath(); ctx.moveTo(x+f*20,y-5); ctx.lineTo(x+f*28,y-6-o*2.5); ctx.lineTo(x+f*27,y-2+o*3); ctx.closePath(); ctx.fill();
+    if(b.mo>0.04){ const o=b.mo; 
       ctx.fillStyle=C.beak; ctx.beginPath(); ctx.moveTo(x+f*20,y-7); ctx.lineTo(x+f*28.5,y-5-o*3); ctx.lineTo(x+f*20,y-4.6); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(x+f*20,y-4); ctx.lineTo(x+f*27,y-1.5+o*3.2); ctx.lineTo(x+f*20,y-2); ctx.closePath(); ctx.fill(); }
     else { ctx.fillStyle=C.beak; ctx.beginPath(); ctx.moveTo(x+f*20,y-7); ctx.lineTo(x+f*28,y-4); ctx.lineTo(x+f*20,y-2); ctx.closePath(); ctx.fill(); }
     ctx.fillStyle=b.kind==='crow'?'#f1c40f':'#000'; ctx.beginPath(); ctx.arc(x+f*16,y-7,1.8,0,7); ctx.fill();
@@ -5362,7 +5362,7 @@ function drawEnemy(e){
       if(K==='mallard'){ ctx.fillStyle='#fff'; ctx.fillRect(f*8-(f<0?8:0),top+nl-6,8,2.5); }
       ctx.fillStyle=K==='canada'?'#fff':'#000'; ctx.beginPath(); ctx.arc(f*13,top-4,1.8,0,7); ctx.fill();
       if(K==='goose'){ ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(f*9,top-8); ctx.lineTo(f*16,top-5); ctx.stroke(); }
-      if(e.isBoss && e.mo>0.04){ const o=e.mo; ctx.fillStyle=MOUTH_IN; ctx.beginPath(); ctx.moveTo(f*18,top-2.5); ctx.lineTo(f*29,top-3-o*3); ctx.lineTo(f*27,top+o*5); ctx.closePath(); ctx.fill();
+      if(e.isBoss && e.mo>0.04){ const o=e.mo; 
         ctx.fillStyle=P.beak; ctx.beginPath(); ctx.moveTo(f*18,top-4); ctx.lineTo(f*30,top-3.5-o*3.5); ctx.lineTo(f*18,top-1.8); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(f*18,top-1); ctx.lineTo(f*28,top+o*5.5); ctx.lineTo(f*18,top+1.2); ctx.closePath(); ctx.fill(); }
       else { ctx.fillStyle=P.beak; ctx.beginPath(); ctx.moveTo(f*18,top-4); ctx.lineTo(f*(K==='mallard'?28:30),top-3); ctx.lineTo(f*18,top); ctx.fill(); }
       if(K==='goose' && e.isBoss){ ctx.strokeStyle='#8a6d00'; ctx.lineWidth=3.4; ctx.beginPath(); ctx.moveTo(f*2,-6); ctx.lineTo(f*20,-44); ctx.stroke(); ctx.strokeStyle='#f1c40f'; ctx.lineWidth=2.2; ctx.stroke();
@@ -6858,7 +6858,7 @@ function drawCustomBoss(D,T,angry){
     for(let k=0;k<8;k++){ const a2=0.25+k*0.2, px=46+Math.cos(a2)*-14, py=-38+Math.sin(a2)*16; ctx.fillStyle='#fbf8f0'; ctx.beginPath(); ctx.arc(px+10,py,2.6,0,7); ctx.fill(); ctx.strokeStyle='rgba(150,140,120,.8)'; ctx.lineWidth=0.8; ctx.stroke(); ctx.fillStyle='rgba(255,255,255,.9)'; ctx.beginPath(); ctx.arc(px+9.2,py-0.8,0.8,0,7); ctx.fill(); }
     // lower jaw (hinged at the back of the mouth), drawn first so the upper jaw sits on top
     const hx=50, hy=-34;
-    if(open>0.03){ ctx.fillStyle=MOUTH_IN; ctx.beginPath(); ctx.moveTo(hx,hy); ctx.lineTo(132,hy-2); ctx.lineTo(hx+Math.cos(open)*84,hy+Math.sin(open)*84); ctx.closePath(); ctx.fill(); }
+    
     ctx.save(); ctx.translate(hx,hy); ctx.rotate(open);
     ctx.fillStyle=G2; ctx.beginPath(); ctx.moveTo(-4,0); ctx.lineTo(70,1); ctx.quadraticCurveTo(84,2,82,9); ctx.quadraticCurveTo(78,15,66,15); ctx.lineTo(4,16); ctx.quadraticCurveTo(-6,12,-4,0); ctx.closePath(); ctx.fill(); ln(2.4);
     ctx.fillStyle=BEL; ctx.beginPath(); ctx.moveTo(4,11); ctx.lineTo(70,10); ctx.quadraticCurveTo(76,12,66,15); ctx.lineTo(4,16); ctx.closePath(); ctx.fill();
