@@ -1753,7 +1753,7 @@ function buildTreehouse(G,P,D){
 
 // ---------- Update ----------
 function update(){
-  state.time+=1/60; loopFxUpdate(); dtSprintPoll();
+  state.time+=1/60; loopFxUpdate(); dtSprintPoll(); heartTick();
   if(state.invuln>0) state.invuln--;
 
   platforms.forEach(function(pf){
@@ -1988,7 +1988,7 @@ function handleInteract(){
   for(let i=0;i<houses.length;i++){
     const h=houses[i];
     if(!h.delivered && atMailbox(h)){
-      if(state.bag>0){ state.bag--; h.delivered=true; state.delivered++; addCoins(7); if(state.delivered>=state.goal) setTimeout(spawnReturnWave,400); stat('delivered'); if(tree) stat('treehouses'); pop(h.mailX,h.mailTop-58,'#27ae60',10); SFX.deliver(); }
+      if(state.bag>0){ state.bag--; h.delivered=true; state.delivered++; addCoins(7); if(state.delivered===state.goal && !tutorial){ setTimeout(spawnReturnWave,400); showBanner('🏁 Route complete!','All '+state.goal+' packages delivered. Head back to the truck to finish your shift.',4500,true); } stat('delivered'); if(tree) stat('treehouses'); pop(h.mailX,h.mailTop-58,'#27ae60',10); SFX.deliver(); }
       return;
     }
   }
@@ -4477,6 +4477,15 @@ function pickVariant(type,lvl,existing){
   let r=rnd()*total; for(let i=0;i<opts.length;i++){ r-=opts[i][1]; if(r<=0) return opts[i][0]; }
   return opts[opts.length-1][0];
 }
+function heartTick(){   // every 15 seconds a heart appears somewhere on the street (it fades after 20 s, at most 2 at a time)
+  if(!state || state.over || tutorial || boss || arcadeMode || resortMode || isRetLevel(level)) return;
+  state.heartT=(state.heartT||0)+1; if(state.heartT<900) return; state.heartT=0;
+  if(pickups.filter(function(k){ return !k.taken && k.kind==='heart' && k.rnd; }).length>=2) return;
+  for(let i=0;i<40;i++){ const x=200+Math.random()*Math.max(100,LEVEL_LEN-400), gt=groundTopAt(x);
+    if(gt===null || inSand(x,40)) continue;
+    if(vents.some(function(v){ return Math.abs(v.x-x)<110; }) || obstacles.some(function(o){ return Math.abs(o.x-x)<110; })) continue;
+    pickups.push({x:x,y:gt-26,bob:Math.random()*6,taken:false,kind:'heart',life:1200,rnd:true}); return; }
+}
 function spawnReturnWave(){   // last package delivered: a few new troublemakers appear between you and the truck
   if(!state || state.returnWave || boss || tutorial || apt || hidden || isRetLevel(level) || theme.kind==='treehouse' || !LVL_P || !running) return;
   state.returnWave=true;
@@ -4491,7 +4500,7 @@ function spawnReturnWave(){   // last package delivered: a few new troublemakers
     const pk=spawnPick(P,false), type=pk[0], e=makeEnemy(type,ex,pk[1]||pickVariant(type,D,enemies));
     e.spd*=P.enemySpeedMul; e.hp+=(P.enemyHpBonus||0); e.maxhp=e.hp; e.y=et; e.late=true; enemies.push(e); made++;
   }
-  if(made) showBanner('↩ The way back','Everything is delivered, but '+made+' new troublemaker'+(made>1?'s':'')+' showed up between you and the truck. Watch out on the way back!',5000);
+  // no warning about the new enemies: they're a surprise on the way back
 }
 function makeEnemy(type,x,kind){
   kind=kind||(ENEMY_KINDS[type]||[type])[0];
