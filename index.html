@@ -884,10 +884,13 @@ function voxBurst(t,d,vol,type,f0,f1,q,out){ const n=actx.createBufferSource(), 
 function voxTone(t,d,vol,type,f0,f1,out){ const o=actx.createOscillator(), g=actx.createGain(); o.type=type; o.frequency.setValueAtTime(f0,t); o.frequency.exponentialRampToValueAtTime(Math.max(30,f1),t+d);
   g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(0.0001,t+d); o.connect(g); g.connect(out); o.start(t); o.stop(t+d+0.05); }
 const BOSS_VOX={
-  carol:function(t,hurt){ const out=voxOut(0.5), o={vib:6.5,vibD:9};   // HOA Carol: a prim "Ah-HEM!" then "tsk, tsk" (a shocked "Oh, my!" when hit)
-    if(hurt){ voxSyl(t,[0,0.17,560,480,'oh','oh'],o,out); voxSyl(t,[0.19,0.26,500,390,'ah','ee'],o,out); return; }
-    voxSyl(t,[0,0.13,300,285,'ah','uh'],o,out); voxSyl(t,[0.16,0.34,440,330,'eh','mm'],o,out);
-    voxBurst(t+0.66,0.035,0.5,'highpass',3200,3000,1,out); voxBurst(t+0.84,0.035,0.5,'highpass',3200,3000,1,out); },
+  carol:function(t,hurt){ const out=voxOut(0.5), o={vib:6.5,vibD:8};   // HOA Carol: a sharp whistle "TWEET!", a huffy "Hmph!" and "tsk, tsk" (a startled "Ooh!" when hit)
+    if(hurt){ voxSyl(t,[0,0.24,600,470,'oo','oo'],o,voxOut(1.0)); return; }
+    { const w=actx.createOscillator(), wg=actx.createGain(), wl=actx.createOscillator(), wlg=actx.createGain(); w.type='sine'; w.frequency.value=2900; wl.frequency.value=38; wlg.gain.value=180; wl.connect(wlg); wlg.connect(w.frequency);   // referee-style whistle with a pea trill
+      wg.gain.setValueAtTime(0.0001,t); wg.gain.linearRampToValueAtTime(0.16,t+0.02); wg.gain.setValueAtTime(0.16,t+0.3); wg.gain.exponentialRampToValueAtTime(0.0001,t+0.38); w.connect(wg); wg.connect(out); w.start(t); w.stop(t+0.4); wl.start(t); wl.stop(t+0.4);
+      voxBurst(t,0.36,0.05,'bandpass',3000,3000,3,out); }
+    voxBurst(t+0.5,0.09,0.18,'lowpass',900,500,1,out); voxSyl(t+0.5,[0,0.2,330,240,'mm','mm'],o,out);   // "Hmph!" through the nose
+    voxBurst(t+0.85,0.035,0.5,'highpass',3200,3000,1,out); voxBurst(t+1.02,0.035,0.5,'highpass',3200,3000,1,out); },
   moan:function(t,hurt){ const out=voxOut(0.16,0.24,0.42), o={wave:'triangle',vib:4.2,vibD:14};   // Myrtle-Boo: a wailing "ooooOOOOooo... boo-hoo"
     if(hurt){ voxSyl(t,[0,0.32,420,660,'oo','oh'],o,out); voxSyl(t,[0.28,0.34,660,380,'oh','oo'],o,out); voxBurst(t,0.55,0.05,'bandpass',600,900,2,out); return; }
     voxSyl(t,[0,0.85,290,470,'oo','oh'],o,out); voxSyl(t,[0.75,0.95,470,260,'oh','oo'],o,out);
