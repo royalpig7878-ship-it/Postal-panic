@@ -2591,7 +2591,7 @@ function drawLoopMood(K,T){
     if(K==='snow'){ ctx.fillStyle='rgba(255,255,255,.85)'; for(let i=0;i<90;i++){ const y=wrap(hash(i)*H+T*2.2,H+20)-10, x=wrap(hash(i+300)*W-T*0.8+Math.sin(T*0.02+i)*14-camX*0.3,W); ctx.beginPath(); ctx.arc(x,y,1.2+hash(i+50)*1.8,0,7); ctx.fill(); } }
     else { ctx.strokeStyle='rgba(210,222,245,.7)'; ctx.lineWidth=1.5; ctx.beginPath(); for(let i=0;i<140;i++){ const y=wrap(hash(i)*H+T*12,H+40)-20, x=wrap(hash(i+300)*W-T*3-camX*0.3,W); ctx.moveTo(x,y); ctx.lineTo(x-3,y+14); } ctx.stroke(); }
     ctx.fillStyle='rgba(28,36,58,.36)'; ctx.fillRect(0,0,W,H);
-    if(--lightT<=0){ lightT=320+Math.floor(Math.random()*480); lightFlash=1; if(!state.over && !rainSnd) setTimeout(function(){ noise(0.9,0.28,260); tone(70,0.8,'sawtooth',0.12,40); },220); }
+    if(!rainSnd && --lightT<=0){ lightT=320+Math.floor(Math.random()*480); lightFlash=1; if(!state.over) setTimeout(function(){ noise(0.9,0.28,260); tone(70,0.8,'sawtooth',0.12,40); },220); }
     if(lightFlash>0){ ctx.fillStyle='rgba(235,240,255,'+(lightFlash*0.55).toFixed(3)+')'; ctx.fillRect(0,0,W,H); lightFlash=Math.max(0,lightFlash-0.045); } }
   if(sp==='wind'){ const w=windNow(); ctx.strokeStyle='rgba(235,240,250,.35)'; ctx.lineWidth=1.4; ctx.beginPath();
     for(let i=0;i<16;i++){ const y=hash(i*7.7)*H*0.8+20, x=wrap(hash(i*3.1)*W+T*(60+w*90),W+80)-40, L=26+Math.abs(w)*40; ctx.moveTo(x,y); ctx.lineTo(x+(w>=0?L:-L),y+2); } ctx.stroke(); }
