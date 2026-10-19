@@ -1576,7 +1576,7 @@ function buildTutorial(G){
   const d=makeEnemy('dog',1020,'mutt'); d.y=G; d.spd=1.6; d.maxhp=d.hp; enemies.push(d);
 }
 
-function reset(){ tripT=0; tripAge=0; cv.style.filter=''; cv.style.transform='';
+function reset(){ rollSpecial(); tripT=0; tripAge=0; cv.style.filter=''; cv.style.transform='';
   const G=GROUND;
   srand(level*2654435761 + 12345 + (hidden?hidden.idx*7919+17:0));
   theme=themeFor(level);
@@ -2499,10 +2499,14 @@ for(let k=14;k<=24;k++) LOOP_FX.push({name:'Rush Hour '+(k-13), tip:'A few more 
 
 function lfx(n){ return n===4 && !boss && !tutorial && !hidden && !isRetLevel(level) && loopIndex(level)>=n; }   // only loop feature left: hearts on the street (loop 5+)
 const SPECIAL_INFO={night:{t:'🌙 Night Shift',d:'It is dark out: you can only see around your lantern.'}, storm:{t:'⛈ Storm',d:'Heavy rain (or snow) with lightning and thunder.'}, fog:{t:'🌫 Thick Fog',d:'Fog hides what is ahead.'}, wind:{t:'💨 Windy Day',d:'Gusts push you left and right.'}};
-function specialLevel(){   // about 1 street in 6, from loop 2 on: a random Night Shift / Storm / Fog / Windy street that pays double
+let curSpecial=null, curSpecialLvl=-1;
+function rollSpecial(){   // rolled fresh every time a street starts: about 1 in 6, from loop 2 on, is a Night Shift / Storm / Fog / Windy street that pays double
+  curSpecialLvl=level; curSpecial=null;
+  if(boss||tutorial||hidden||level>RL_BASE||isRetLevel(level)||isAptLevel(level)||loopIndex(level)<1) return;
+  if(Math.random()<1/6) curSpecial=['night','storm','fog','wind'][Math.floor(Math.random()*4)]; }
+function specialLevel(){
   if(boss||tutorial||hidden||level>RL_BASE||isRetLevel(level)||isAptLevel(level)||loopIndex(level)<1) return null;
-  if(hash(level*1.618+0.37)>=1/6) return null;
-  return ['night','storm','fog','wind'][Math.min(3,Math.floor(hash(level*7.13+2.9)*4))]; }
+  return curSpecialLvl===level ? curSpecial : null; }
 function lfxAny(n){ return !tutorial && loopIndex(level)>=n; }
 function loopMood(){ const lp=loopIndex(level); if(lp<=0) return null; if(lp<LOOP_FX.length) return LOOP_FX[lp];
   const k=lp-(LOOP_FX.length-1); return {name:'Endless Overtime '+k, tip:'Same busy streets as the final loop. Keep delivering!'}; }
