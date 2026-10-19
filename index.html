@@ -1586,6 +1586,7 @@ function reset(){ rollSpecial(); tripT=0; tripAge=0; cv.style.filter=''; cv.styl
   if(isRetLevel(level)){ P.enemyCount=Math.min(P.enemyCount,2); P.numGaps=Math.min(P.numGaps,1); P.enemySpeedMul=1; }   // a relaxed stroll
   if(hidden){ P.houses=3; P.length=2700; P.numGaps=0; P.enemyCount=8; P.numFloats=Math.min(P.numFloats,3); }   // a single short street
   if(theme.kind==='river') P.numGaps=Math.min(4,P.numGaps+1);   // more river to cross
+  if(!boss && !hidden && !isRetLevel(level)) P.pickups=Math.min(9,P.pickups+Math.floor(loopIndex(level)/3));   // more mail sacks as the loops get busier (+1 every 3 loops, up to 9 a street)
   if(theme.kind==='desert'||theme.kind==='candy') P.numGaps=Math.min(3,Math.max(P.numGaps,1+Math.floor(D/3)));   // quicksand / chocolate pits instead of gaps
   // Gaps keep their classic size the first time through all six neighbourhoods; every later loop they grow (x2, x2.75, x3.5, then x4 max)
   const LP=loopIndex(level), GAP_K = LP===0 ? 1 : Math.min(4, 2+0.75*(LP-1));
