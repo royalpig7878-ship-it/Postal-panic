@@ -1448,6 +1448,7 @@ let pickups, gaps, platforms, swings, segs, obstacles=[], hazards=[], sands=[], 
 let running=false, paused=false, raf=null;
 let level=1, LEVEL_LEN=3400, pendingAdvance=false;
 const PICKUP_AMMO=6;
+function sackAmt(pk){ if(pk.amt==null){ const r=Math.random(); pk.amt=r<0.2?3:r<0.4?4:r<0.6?5:r<0.8?6:r<0.93?8:10; } return pk.amt; }   // mail sacks hold 3 to 10 letters (bigger ones are rarer)
 
 // ---------- Upgrades (bought with coins, persist across a run) ----------
 const UPGRADES=[
@@ -2025,7 +2026,7 @@ function update(){
     if(pk.kind==='heart'){ if(--pk.life<=0){ pk.taken=true; return; }
       if(Math.abs(player.x-pk.x)<34 && Math.abs(player.y-pk.y)<80){ pk.taken=true; if(state.hp<state.maxhp) state.hp++; pop(pk.x,pk.y-10,'#ff5d8f',12); SFX.restock(); } return; }
     if(Math.abs(player.x-pk.x)<34 && Math.abs(player.y-pk.y)<80 && state.ammo<ammoCap()){
-      pk.taken=true; stat('sacks'); state.ammo=Math.min(ammoCap(),state.ammo+PICKUP_AMMO); pop(pk.x,pk.y-10,'#f1c40f',8); SFX.ammo();
+      pk.taken=true; stat('sacks'); state.ammo=Math.min(ammoCap(),state.ammo+sackAmt(pk)); pop(pk.x,pk.y-10,'#f1c40f',8); SFX.ammo();
     }
   });
 
@@ -2490,15 +2491,13 @@ function drawObstacles(){
 const ROLL_NAMES=['Runaway Barrels','Loose Tires','Bowling Alley','Rockslide','Snowball Roll','Watermelon Run','Pumpkin Patch','Cannon Fire','Disco Fever','Donut Disaster','Soccer Practice','Spike Balls','Beach Party'];
 const ROLL_WHAT=['barrels','big tires','fast bowling balls','huge slow boulders','giant snowballs','bouncing watermelons','pumpkins','fast cannonballs','disco balls','giant donuts','soccer balls','spiked balls','beach balls'];
 const LOOP_FX=[null].concat(ROLL_NAMES.map(function(n,i){ const lp=i+1;
-  let tip='A few more enemies and road obstacles (cones, boxes, barriers, trash cans, potholes) to hop over. Now and then '+ROLL_WHAT[i]+' roll by too.';
-  if(lp===1) tip='Hard-hat enemies take an extra hit, barrels roll across the bridges, gaps get wider, and potholes appear: jump them or get stung! Now and then a barrel rolls down the street. Watch for surprise Night Shift and bad-weather streets: they pay double!';
-  if(lp===4) tip+=' Hearts now sit on the streets too.';
-  if(lp===8) tip+=' One more heart on each street.';
+  let tip=lp===1?'Hard hats, potholes and the odd rolling barrel.':'More enemies and obstacles. '+ROLL_WHAT[i].charAt(0).toUpperCase()+ROLL_WHAT[i].slice(1)+' roll by now and then.';
+  if(lp===4) tip+=' Hearts on the street.'; if(lp===8) tip+=' +1 heart.';
   return {name:n, tip:tip}; }));
-for(let k=14;k<=24;k++) LOOP_FX.push({name:'Rush Hour '+(k-13), tip:'A few more enemies and road obstacles'+(k===16?', and one more heart on each street':'')+'.'});
+for(let k=14;k<=24;k++) LOOP_FX.push({name:'Rush Hour '+(k-13), tip:'More enemies and obstacles.'+(k===16?' +1 heart.':'')});
 
 function lfx(n){ return n===4 && !boss && !tutorial && !hidden && !isRetLevel(level) && loopIndex(level)>=n; }   // only loop feature left: hearts on the street (loop 5+)
-const SPECIAL_INFO={night:{t:'🌙 Night Shift',d:'It is dark out: you can only see around your lantern.'}, storm:{t:'⛈ Storm',d:'Heavy rain (or snow) with lightning and thunder.'}, fog:{t:'🌫 Thick Fog',d:'Fog hides what is ahead.'}, wind:{t:'💨 Windy Day',d:'Gusts push you left and right.'}};
+const SPECIAL_INFO={night:{t:'🌙 Night Shift',d:'Lantern light only.'}, storm:{t:'⛈ Storm',d:'Rain and lightning.'}, fog:{t:'🌫 Thick Fog',d:'Hard to see ahead.'}, wind:{t:'💨 Windy Day',d:'Gusts push you around.'}};
 let curSpecial=null, curSpecialLvl=-1;
 function rollSpecial(){   // rolled fresh every time a street starts: about 1 in 6, from loop 2 on, is a Night Shift / Storm / Fog / Windy street that pays double
   curSpecialLvl=level; curSpecial=null;
@@ -2509,7 +2508,7 @@ function specialLevel(){
   return curSpecialLvl===level ? curSpecial : null; }
 function lfxAny(n){ return !tutorial && loopIndex(level)>=n; }
 function loopMood(){ const lp=loopIndex(level); if(lp<=0) return null; if(lp<LOOP_FX.length) return LOOP_FX[lp];
-  const k=lp-(LOOP_FX.length-1); return {name:'Endless Overtime '+k, tip:'Same busy streets as the final loop. Keep delivering!'}; }
+  const k=lp-(LOOP_FX.length-1); return {name:'Endless Overtime '+k, tip:'Same busy streets. Keep delivering!'}; }
 // rolling hazards (from loop 12): each loop adds a new kind that rolls along the ground toward you. Jump over them!
 const ROLL_KINDS=[ {k:'barrel',r:16,spd:2.0},{k:'tire',r:18,spd:2.6},{k:'bowling',r:11,spd:4.5},{k:'boulder',r:24,spd:1.4},{k:'snowball',r:20,spd:2.2},{k:'melon',r:15,spd:3.2},{k:'pumpkin',r:17,spd:2.8},{k:'cannon',r:10,spd:6.5},{k:'disco',r:16,spd:3.5},{k:'donut',r:20,spd:2.4},{k:'soccer',r:14,spd:4.0},{k:'spiked',r:16,spd:3.0},{k:'beach',r:16,spd:3.0} ];
 function rollerEndless(){ return Math.max(0,loopIndex(level)-24); }
@@ -3174,11 +3173,13 @@ function drawPickups(){
       ctx.save(); ctx.translate(pk.x,yy-6); ctx.fillStyle='#ff3b6b'; ctx.beginPath(); ctx.moveTo(0,10); ctx.bezierCurveTo(-18,-2,-12,-16,0,-6); ctx.bezierCurveTo(12,-16,18,-2,0,10); ctx.fill(); outline(2.5); ctx.restore(); return; }
     const gl=ctx.createRadialGradient(pk.x,yy-6,2,pk.x,yy-6,22); gl.addColorStop(0,'rgba(255,225,80,.5)'); gl.addColorStop(1,'rgba(255,225,80,0)');
     ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(pk.x,yy-6,22,0,7); ctx.fill();
-    ctx.save(); ctx.translate(pk.x,yy);
+    const am=sackAmt(pk), sz=am<=4?0.8:(am>=8?1.3:1);
+    ctx.save(); ctx.translate(pk.x,yy); ctx.scale(sz,sz);
     rr(-12,-4,24,14,3); ctx.fillStyle='#e8a13a'; ctx.fill(); outline(2.5);
     rr(-9,-12,18,12,2); ctx.fillStyle='#fff'; ctx.fill(); outline(2);
     ctx.strokeStyle='#c0392b'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(-9,-12); ctx.lineTo(0,-6); ctx.lineTo(9,-12); ctx.stroke();
     ctx.restore();
+    ctx.font='bold 11px sans-serif'; ctx.textAlign='center'; ctx.lineWidth=3; ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.strokeText('+'+am,pk.x,yy-16*sz-4); ctx.fillStyle=am>=8?'#ffe14d':'#fff'; ctx.fillText('+'+am,pk.x,yy-16*sz-4); ctx.textAlign='left';   // how many letters it holds
   });
 }
 
@@ -7210,8 +7211,8 @@ function startGame(){
   if(apt) showBanner((BUILDING_KINDS[theme.kind]?BUILDING_KINDS[theme.kind].icon+' '+BUILDING_KINDS[theme.kind].word:'🏢 Apartment')+' delivery','Go inside '+apt.name+' and deliver to every door. Take the elevator between floors, and restock your bag at the lobby mailroom.',6000);
   if(isRetLevel(level) && subLevel(level)===1) showBanner('🏖 Retirement Days','Welcome to '+retPlaceName()+'. No rush: a few friendly deliveries, hardly any trouble, and all the time in the world.',7000);
   state.sack=(pendingSack && !boss && !tutorial && !apt && !hidden && !isRetLevel(level) && theme.kind!=='treehouse')?'armed':null; if(state.sack) pendingSack=false;
-  const mood=loopMood(); if(mood && !boss && !tutorial && biomeIndex(level)===0 && subLevel(level)===1) showBanner('🔁 Loop '+(loopIndex(level)+1)+': '+mood.name, 'New this loop: '+mood.tip+' Everything from earlier loops stays.', 8000);
-  else if(specialLevel() && !boss && !tutorial){ const si=SPECIAL_INFO[specialLevel()]; showBanner(si.t+' · 💰 Double pay!', si.d+' Every coin on this street counts double.', 6000); }
+  const mood=loopMood(); if(mood && !boss && !tutorial && biomeIndex(level)===0 && subLevel(level)===1) showBanner('🔁 Loop '+(loopIndex(level)+1)+': '+mood.name, mood.tip, 4500);
+  else if(specialLevel() && !boss && !tutorial){ const si=SPECIAL_INFO[specialLevel()]; showBanner(si.t+' · 💰 Double pay!', si.d, 3500); }
   else if(!boss && !apt && !tutorial && !state.replay && subLevel(level)===1 && SIGNATURE[theme.kind]) showBanner('🆕 New in '+theme.name, SIGNATURE[theme.kind].tip, 6000);
   if(hidden) showBanner(HIDDEN_LEVELS[hidden.idx].icon+' '+HIDDEN_LEVELS[hidden.idx].name,HIDDEN_LEVELS[hidden.idx].tip,7000);
   if(state.replay){ if((apt||boss) && settings.hints) $('tutStep').textContent+=' · ↻ replay: 10% coins'; else showBanner('↻ Replay','You already beat this level, so coins pay 10% this time.',3500); }
