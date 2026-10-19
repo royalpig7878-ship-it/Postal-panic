@@ -1693,6 +1693,17 @@ function reset(){ tripT=0; tripAge=0; cv.style.filter=''; cv.style.transform='';
     while(obstacles.filter(function(o){ return o.kind==='dumpster'; }).length<want && guard<200){ guard++; const x=rndInt(600,LEVEL_LEN-420), top=groundTopAt(x);
       if(top===null || !solidUnder(x-50,x+50,top) || nearHouse(x,60) || vents.some(function(v){ return Math.abs(v.x-x)<160; }) || obstacles.some(function(o){ return Math.abs(o.x-x)<500; })) continue;
       obstacles.push({kind:'dumpster',x:x,w:78,h:44,base:top}); platforms.push({x:x-39,y:top-44,w:78,h:8,kind:'lid',moving:false}); } }
+  // Road obstacles to hop over: cones, boxes, barriers, trash cans and potholes. A couple early on, slowly up to 5 a street in the late loops.
+  if(!boss && !tutorial && !hidden && !isRetLevel(level) && !isAptLevel(level)){
+    const lpR=loopIndex(level), sub=subLevel(level), want=Math.min(5, Math.floor(lpR*0.18)+(sub>=4?1:0)+(sub>=8?1:0)), RK=['cone','boxes','barrier','trashcan','pothole'];
+    let made=0, guard=0;
+    while(made<want && guard<300){ guard++; const x=rndInt(640,LEVEL_LEN-440), top=groundTopAt(x);
+      if(top===null || !solidUnder(x-60,x+60,top) || nearHouse(x,70) || vents.some(function(v){ return Math.abs(v.x-x)<200; }) || obstacles.some(function(o){ return Math.abs(o.x-x)<380; }) || sands.some(function(q){ return x>q.x1-120 && x<q.x2+120; })) continue;
+      const k=RK[Math.floor(rnd()*(lpR>=1?5:4))];   // potholes (they sting) only from loop 2
+      const SZ={cone:[26,30],boxes:[44,40],barrier:[58,34],trashcan:[30,40],pothole:[56,-1]}[k];
+      obstacles.push({kind:k,x:x,w:SZ[0],h:SZ[1],base:top,road:true});
+      if(SZ[1]>32) platforms.push({x:x-SZ[0]/2,y:top-SZ[1],w:SZ[0],h:8,kind:'lid',moving:false});   // the taller ones you can stand on
+      made++; } }
   // floating platforms — heights kept within jump reach (~116px peak jump)
   let fmade=0, fx=520, fguard=0;
   const floatStep=Math.max(280,(LEVEL_LEN-700)/(P.numFloats+1));
@@ -2455,6 +2466,19 @@ function drawObstacles(){
     if(ob.kind==='dumpster'){ ctx.fillStyle='#2e5d3a'; rr(x-39,G-40,78,40,4); ctx.fill(); outline(2.5); ctx.fillStyle='#244a2e'; ctx.beginPath(); ctx.moveTo(x-43,G-40); ctx.lineTo(x+43,G-40); ctx.lineTo(x+39,G-46); ctx.lineTo(x-39,G-46); ctx.closePath(); ctx.fill(); outline(2);
       ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=2; for(let k=-26;k<=26;k+=13){ ctx.beginPath(); ctx.moveTo(x+k,G-36); ctx.lineTo(x+k,G-4); ctx.stroke(); } ctx.fillStyle='#1c1c1c'; [x-30,x+30].forEach(function(wx){ ctx.beginPath(); ctx.arc(wx,G-1,4,0,7); ctx.fill(); });
       ctx.fillStyle='#3a3a3a'; ctx.beginPath(); ctx.arc(x-16,G-48,6,0,7); ctx.arc(x+2,G-49,7,0,7); ctx.fill(); ctx.fillStyle='#5a4a2a'; rr(x+12,G-54,12,10,2); ctx.fill(); return; }
+    if(ob.kind==='cone'){ ctx.fillStyle='#1d1d1d'; rr(x-15,G-5,30,5,2); ctx.fill(); ctx.fillStyle='#ff7a1a'; ctx.beginPath(); ctx.moveTo(x-11,G-5); ctx.lineTo(x-3,G-30); ctx.lineTo(x+3,G-30); ctx.lineTo(x+11,G-5); ctx.closePath(); ctx.fill(); outline(2);
+      ctx.fillStyle='#fff'; ctx.beginPath(); ctx.moveTo(x-8,G-13); ctx.lineTo(x-6,G-19); ctx.lineTo(x+6,G-19); ctx.lineTo(x+8,G-13); ctx.closePath(); ctx.fill(); return; }
+    if(ob.kind==='boxes'){ [[-22,-20,24,20,'#c8955a'],[-1,-20,22,20,'#b8844c'],[-14,-40,24,20,'#d4a266']].forEach(function(q){ ctx.fillStyle=q[4]; rr(x+q[0],G+q[1],q[2],q[3],2); ctx.fill(); outline(2);
+        ctx.strokeStyle='rgba(120,80,40,.6)'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x+q[0]+q[2]/2,G+q[1]+1); ctx.lineTo(x+q[0]+q[2]/2,G+q[1]+q[3]-1); ctx.stroke(); }); return; }
+    if(ob.kind==='barrier'){ ctx.fillStyle='#6b6f78'; [[-24],[20]].forEach(function(q){ ctx.fillRect(x+q[0],G-30,4,30); }); ctx.strokeStyle='#1b1b1b'; ctx.lineWidth=1.5; [[-24],[20]].forEach(function(q){ ctx.strokeRect(x+q[0],G-30,4,30); });
+      ctx.save(); rr(x-29,G-34,58,12,3); ctx.clip(); ctx.fillStyle='#fff'; ctx.fillRect(x-29,G-34,58,12); ctx.fillStyle='#ff6a00'; for(let k=-40;k<40;k+=14){ ctx.beginPath(); ctx.moveTo(x+k,G-22); ctx.lineTo(x+k+7,G-34); ctx.lineTo(x+k+14,G-34); ctx.lineTo(x+k+7,G-22); ctx.closePath(); ctx.fill(); } ctx.restore();
+      rr(x-29,G-34,58,12,3); outline(2); ctx.fillStyle='#ffd23f'; ctx.beginPath(); ctx.arc(x-22,G-37,3,0,7); ctx.fill(); outline(1); return; }
+    if(ob.kind==='trashcan'){ ctx.fillStyle='#8c939c'; ctx.beginPath(); ctx.moveTo(x-13,G-34); ctx.lineTo(x+13,G-34); ctx.lineTo(x+11,G); ctx.lineTo(x-11,G); ctx.closePath(); ctx.fill(); outline(2);
+      ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=1.5; for(let k=-7;k<=7;k+=7){ ctx.beginPath(); ctx.moveTo(x+k,G-30); ctx.lineTo(x+k*0.9,G-3); ctx.stroke(); }
+      ctx.fillStyle='#a7aeb6'; rr(x-15,G-40,30,6,3); ctx.fill(); outline(2); ctx.fillStyle='#6d737b'; rr(x-4,G-43,8,3,1.5); ctx.fill(); return; }
+    if(ob.kind==='pothole'){ ctx.fillStyle='#1a1a1e'; ctx.beginPath(); ctx.ellipse(x,G+2,28,6,0,0,7); ctx.fill(); ctx.fillStyle='rgba(255,255,255,.08)'; ctx.beginPath(); ctx.ellipse(x,G+3,20,3,0,0,7); ctx.fill();
+      ctx.strokeStyle='#3a3a40'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(x-28,G+1); ctx.lineTo(x-36,G-1); ctx.moveTo(x+27,G+2); ctx.lineTo(x+35,G+4); ctx.lineTo(x+40,G+2); ctx.stroke();
+      ctx.fillStyle='#ff7a1a'; ctx.beginPath(); ctx.moveTo(x-40,G); ctx.lineTo(x-36,G-12); ctx.lineTo(x-34,G-12); ctx.lineTo(x-30,G); ctx.closePath(); ctx.fill(); outline(1.2); return; }   // a tiny warning cone beside it
     if(ob.kind==='wetsign'){ ctx.fillStyle='#ffd400'; ctx.beginPath(); ctx.moveTo(x-12,G); ctx.lineTo(x-4,G-ob.h); ctx.lineTo(x+4,G-ob.h); ctx.lineTo(x+12,G); ctx.closePath(); ctx.fill(); outline(2);
       ctx.fillStyle='#1a1a1a'; ctx.font='bold 9px sans-serif'; ctx.textAlign='center'; ctx.fillText('⚠',x,G-ob.h+13); ctx.font='bold 5.5px sans-serif'; ctx.fillText('WET',x,G-ob.h+20); ctx.fillText('FLOOR',x,G-ob.h+26); ctx.textAlign='left';
       ctx.fillStyle='rgba(120,190,255,.35)'; ctx.beginPath(); ctx.ellipse(x+18,G-1,22,3,0,0,7); ctx.fill(); }
@@ -2466,13 +2490,12 @@ function drawObstacles(){
 const ROLL_NAMES=['Runaway Barrels','Loose Tires','Bowling Alley','Rockslide','Snowball Roll','Watermelon Run','Pumpkin Patch','Cannon Fire','Disco Fever','Donut Disaster','Soccer Practice','Spike Balls','Beach Party'];
 const ROLL_WHAT=['barrels','big tires','fast bowling balls','huge slow boulders','giant snowballs','bouncing watermelons','pumpkins','fast cannonballs','disco balls','giant donuts','soccer balls','spiked balls','beach balls'];
 const LOOP_FX=[null].concat(ROLL_NAMES.map(function(n,i){ const lp=i+1;
-  let tip=ROLL_WHAT[i].charAt(0).toUpperCase()+ROLL_WHAT[i].slice(1)+' now roll down the street: jump over them!';
-  if(lp===1) tip='Hard-hat enemies take an extra hit, barrels roll across the bridges, the gaps get wider, and barrels roll down the street. Watch for surprise Night Shift and bad-weather streets: they pay double!';
+  let tip='A few more enemies and road obstacles (cones, boxes, barriers, trash cans, potholes) to hop over. Now and then '+ROLL_WHAT[i]+' roll by too.';
+  if(lp===1) tip='Hard-hat enemies take an extra hit, barrels roll across the bridges, gaps get wider, and potholes appear: jump them or get stung! Now and then a barrel rolls down the street. Watch for surprise Night Shift and bad-weather streets: they pay double!';
   if(lp===4) tip+=' Hearts now sit on the streets too.';
   if(lp===8) tip+=' One more heart on each street.';
-  if(lp>=2) tip+=' A few more enemies, too.';
   return {name:n, tip:tip}; }));
-for(let k=14;k<=24;k++) LOOP_FX.push({name:'Rush Hour '+(k-13), tip:'Rolling hazards come a little more often'+(k===14?' and up to 3 roll at once':'')+(k===16?', one more heart on each street':'')+', and a few more enemies.'});
+for(let k=14;k<=24;k++) LOOP_FX.push({name:'Rush Hour '+(k-13), tip:'A few more enemies and road obstacles'+(k===16?', and one more heart on each street':'')+'.'});
 
 function lfx(n){ return n===4 && !boss && !tutorial && !hidden && !isRetLevel(level) && loopIndex(level)>=n; }   // only loop feature left: hearts on the street (loop 5+)
 const SPECIAL_INFO={night:{t:'🌙 Night Shift',d:'It is dark out: you can only see around your lantern.'}, storm:{t:'⛈ Storm',d:'Heavy rain (or snow) with lightning and thunder.'}, fog:{t:'🌫 Thick Fog',d:'Fog hides what is ahead.'}, wind:{t:'💨 Windy Day',d:'Gusts push you left and right.'}};
@@ -2482,7 +2505,7 @@ function specialLevel(){   // about 1 street in 6, from loop 2 on: a random Nigh
   return ['night','storm','fog','wind'][Math.min(3,Math.floor(hash(level*7.13+2.9)*4))]; }
 function lfxAny(n){ return !tutorial && loopIndex(level)>=n; }
 function loopMood(){ const lp=loopIndex(level); if(lp<=0) return null; if(lp<LOOP_FX.length) return LOOP_FX[lp];
-  const k=lp-(LOOP_FX.length-1); return {name:'Endless Overtime '+k, tip:'Rolling hazards come a bit more often and roll a little faster than in the final loop.'}; }
+  const k=lp-(LOOP_FX.length-1); return {name:'Endless Overtime '+k, tip:'Same busy streets as the final loop. Keep delivering!'}; }
 // rolling hazards (from loop 12): each loop adds a new kind that rolls along the ground toward you. Jump over them!
 const ROLL_KINDS=[ {k:'barrel',r:16,spd:2.0},{k:'tire',r:18,spd:2.6},{k:'bowling',r:11,spd:4.5},{k:'boulder',r:24,spd:1.4},{k:'snowball',r:20,spd:2.2},{k:'melon',r:15,spd:3.2},{k:'pumpkin',r:17,spd:2.8},{k:'cannon',r:10,spd:6.5},{k:'disco',r:16,spd:3.5},{k:'donut',r:20,spd:2.4},{k:'soccer',r:14,spd:4.0},{k:'spiked',r:16,spd:3.0},{k:'beach',r:16,spd:3.0} ];
 function rollerEndless(){ return Math.max(0,loopIndex(level)-24); }
@@ -2506,13 +2529,17 @@ function drawRoller(o){
   }
   ctx.restore();
 }
+function potholeTick(){ if(!player || !player.onGround || state.invuln>0 || state.over) return;
+  for(let i=0;i<obstacles.length;i++){ const o=obstacles[i]; if(o.kind!=='pothole') continue;
+    if(Math.abs(player.x-o.x)<o.w/2-8 && Math.abs(player.y-(o.base||GROUND))<6){ damage(); player.vy=-7; player.onGround=false; pop(player.x,(o.base||GROUND)-4,'#555',6); SFX.thud(); return; } } }
 function rollersUpdate(){
+  potholeTick();
   const lp=loopIndex(level);
   if(lp<1 || boss || tutorial || hidden || apt || isRetLevel(level)){ rollers.length=0; return; }
   const kinds=ROLL_KINDS.slice(0,Math.min(ROLL_KINDS.length,lp)), end=rollerEndless();
-  if(!state.rlT) state.rlT=240;
-  if(--state.rlT<=0 && rollers.length<1+(lp>=5?1:0)+(lp>=14?1:0)){
-    state.rlT=Math.max(230,Math.round((560-(lp-1)*13)*(1-Math.min(0.3,end*0.04))*(0.75+Math.random()*0.6)));
+  if(!state.rlT) state.rlT=600;
+  if(--state.rlT<=0 && rollers.length<1){
+    state.rlT=Math.round(Math.max(780,1500-(lp-1)*30)*(0.75+Math.random()*0.6));   // only now and then: every 15-30 s
     const kd=kinds[Math.floor(Math.random()*kinds.length)], x=player.x+W*0.62+Math.random()*120, gt=groundTopAt(x);
     if(gt!==null && x<LEVEL_LEN) rollers.push({k:kd.k,r:kd.r,x:x,y:gt-kd.r,spd:kd.spd*(1+Math.min(0.3,end*0.03)),rot:0});
   }
