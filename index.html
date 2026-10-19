@@ -1428,7 +1428,7 @@ function loopIndex(lvl){ if(lvl>RL_BASE) return 0; return Math.floor((lvl-1)/(10
 // 25 loops: difficulty climbs fast for the first 3 loops, then keeps creeping up until about loop 17 (then it plateaus)
 function loopDiff(lp){ return lp<=3 ? lp*3 : Math.min(18, 9+(lp-3)*0.5); }   // tops out at loop 21 so late loops stay beatable
 function diffLevel(lvl){ if(lvl>RL_BASE) return Math.min(6,subLevel(lvl)); return subLevel(lvl)+Math.round(loopDiff(loopIndex(lvl))); }
-function coinMul(){ if(level>RL_BASE) return 1; return (1+0.035*biomeIndex(level))*(1+Math.min(2,loopIndex(level)*0.08*loopPayK())); }   // pay climbs +3.5% with every neighbourhood you reach (up to x1.6 in Trippy Town) and +8% per loop (up to x3 overall, at loop 25)
+function coinMul(){ if(level>RL_BASE) return 1; return (1+0.035*biomeIndex(level))*(1+Math.min(2,loopIndex(level)*0.08*loopPayK()))*(specialLevel()?2:1); }   // special streets pay double   // pay climbs +3.5% with every neighbourhood you reach (up to x1.6 in Trippy Town) and +8% per loop (up to x3 overall, at loop 25)
 function levelParams(lvl){
   const houses = Math.min(10, 3 + Math.floor((lvl-1)/2));        // 3 houses L1, +1 every 2 levels, cap 10
   const length = Math.round((1800 + houses*340 + Math.min(lvl*40, 600))*1.3);      // grows with houses + a bit per level (30% longer so hazards have room)
@@ -1739,9 +1739,9 @@ function reset(){ tripT=0; tripAge=0; cv.style.filter=''; cv.style.transform='';
   // enemies
   if(sackRedo>0 && sackRedoLvl===level) srand(level*2654435761+999+sackRedo*7919);   // dropped-bag rerun: same street, new enemies
   let placed=0, tries=0;
-  const minSpacing=loopIndex(level)>=15?185:Math.max(220,340-D*8);   // loops 16-25 pack 25 enemies in, a little closer together
+  const minSpacing=Math.max(210,340-D*8);   // loops 16-25 pack 25 enemies in, a little closer together
   LVL_P=P; LVL_D=D;
-  const enTarget=(isRetLevel(level)||hidden)?Math.ceil(P.enemyCount*(lfx(11)?1.3:1)):Math.min(loopIndex(level)<4?12:(loopIndex(level)<10?13:14),Math.ceil(P.enemyCount*1.25*(lfx(11)?1.12:1)));   /* loops 16-25: a full 25 */   // +25% to match the 30%-longer streets (same spacing as before), capped at the late-game 19
+  const enTarget=(isRetLevel(level)||hidden)?Math.ceil(P.enemyCount*(lfx(11)?1.3:1)):Math.min(16,Math.ceil(levelParams(subLevel(level)).enemyCount*1.25)+Math.floor(loopIndex(level)*0.3));   /* loops 16-25: a full 25 */   // +25% to match the 30%-longer streets (same spacing as before), capped at the late-game 19
   while(placed<enTarget && tries<2500){
     tries++;
     const ex=520+rnd()*(LEVEL_LEN-700), et=groundTopAt(ex);
@@ -2461,35 +2461,28 @@ function drawObstacles(){
   });
 }
 // every lap of the six neighbourhoods adds ONE new thing (and keeps all the earlier ones). Each entry below is really implemented; see lfx() hooks.
-const LOOP_FX=[null,
- {name:'Overtime',        tip:'Golden-hour light. Hard-hat enemies take an extra hit, barrels roll across the bridges, and the gaps in the road are wider.'},
- {name:'Storm Season',    tip:'Rain (or snow) on every street, and even more hard-hat enemies.'},
- {name:'Night Shift',     tip:'Real darkness now. You can only see around your own lantern, so watch the edges of the screen.'},
- {name:'Heart Drops',     tip:'Hearts now sit on the streets. Grab one to heal when you are hurt.'},
- {name:'Gusty Winds',     tip:'Wind gusts push you sideways, left and right. Leaning into a gust slows you down.'},
- {name:'Thick Fog',       tip:'Fog rolls in and hides what is ahead of you.'},
- {name:'Speedy Pups',     tip:'Every enemy runs 10% faster.'},
- {name:'Lightning',       tip:'Lightning flashes light up the whole screen, followed by thunder.'},
- {name:'Falling Debris',  tip:'Junk falls from the sky. A shadow shows where it lands: step away before it drops!'},
- {name:'Slick Streets',   tip:'The ground is slippery everywhere, so you slide when you stop or turn.'},
- {name:'Crowded Streets', tip:'A few more enemies on every street.'},
- {name:'Runaway Barrels', tip:'Barrels roll down the street: jump over them! Enemies are also 20% bigger with an extra hit point, and one more heart drops on each street.'},
- {name:'Loose Tires',     tip:'Big tires roll down the street. Your bag is heavy too: you walk a little slower.'},
- {name:'Bowling Alley',   tip:'Fast bowling balls come rolling. Sprinting drains your stamina 20% faster.'},
- {name:'Rockslide',       tip:'Huge boulders roll slowly down the street. Your mail chute is tighter: you carry 2 fewer letters (never below 4).'},
- {name:'Snowball Fight',  tip:'Giant snowballs roll in. Enemies also notice you from 25% farther away.'},
- {name:'Watermelon Run',  tip:'Watermelons come bouncing along fast. Getting hit knocks you back farther.'},
- {name:'Blood Moon',      tip:'A red moon rises and pumpkins roll in. Every enemy has one more hit point, and one more heart drops on each street.'},
- {name:'Cannon Fire',     tip:'Cannonballs shoot along the ground very fast. After a hit you are protected for a little less time.'},
- {name:'Meteor Shower',   tip:'Falling debris comes twice as often and it burns. Disco balls roll along the street too.'},
- {name:'Donut Disaster',  tip:'Giant donuts roll in, and icy hail pours down across the whole street.'},
- {name:'Soccer Practice', tip:'Soccer balls whiz by. You also throw mail 10% slower.'},
- {name:'Howling Gales',   tip:'Spiked balls roll in, and the wind gusts are 30% stronger.'},
- {name:'Final Overtime',  tip:'Beach balls bounce in, and every enemy runs another 5% faster. Good luck!'}];
-function lfx(n){ return !boss && !tutorial && !hidden && !isRetLevel(level) && loopIndex(level)>=n; }   // is loop feature n active here?
+// What each loop adds now: just gradually more enemies and one new kind of rolling road hazard to jump over (no full-time weather or penalties).
+// Random Night Shift / Storm / Fog / Windy streets pop up from loop 2 on, and pay double.
+const ROLL_NAMES=['Runaway Barrels','Loose Tires','Bowling Alley','Rockslide','Snowball Roll','Watermelon Run','Pumpkin Patch','Cannon Fire','Disco Fever','Donut Disaster','Soccer Practice','Spike Balls','Beach Party'];
+const ROLL_WHAT=['barrels','big tires','fast bowling balls','huge slow boulders','giant snowballs','bouncing watermelons','pumpkins','fast cannonballs','disco balls','giant donuts','soccer balls','spiked balls','beach balls'];
+const LOOP_FX=[null].concat(ROLL_NAMES.map(function(n,i){ const lp=i+1;
+  let tip=ROLL_WHAT[i].charAt(0).toUpperCase()+ROLL_WHAT[i].slice(1)+' now roll down the street: jump over them!';
+  if(lp===1) tip='Hard-hat enemies take an extra hit, barrels roll across the bridges, the gaps get wider, and barrels roll down the street. Watch for surprise Night Shift and bad-weather streets: they pay double!';
+  if(lp===4) tip+=' Hearts now sit on the streets too.';
+  if(lp===8) tip+=' One more heart on each street.';
+  if(lp>=2) tip+=' A few more enemies, too.';
+  return {name:n, tip:tip}; }));
+for(let k=14;k<=24;k++) LOOP_FX.push({name:'Rush Hour '+(k-13), tip:'Rolling hazards come a little more often'+(k===14?' and up to 3 roll at once':'')+(k===16?', one more heart on each street':'')+', and a few more enemies.'});
+
+function lfx(n){ return n===4 && !boss && !tutorial && !hidden && !isRetLevel(level) && loopIndex(level)>=n; }   // only loop feature left: hearts on the street (loop 5+)
+const SPECIAL_INFO={night:{t:'🌙 Night Shift',d:'It is dark out: you can only see around your lantern.'}, storm:{t:'⛈ Storm',d:'Heavy rain (or snow) with lightning and thunder.'}, fog:{t:'🌫 Thick Fog',d:'Fog hides what is ahead.'}, wind:{t:'💨 Windy Day',d:'Gusts push you left and right.'}};
+function specialLevel(){   // about 1 street in 6, from loop 2 on: a random Night Shift / Storm / Fog / Windy street that pays double
+  if(boss||tutorial||hidden||level>RL_BASE||isRetLevel(level)||isAptLevel(level)||loopIndex(level)<1) return null;
+  if(hash(level*1.618+0.37)>=1/6) return null;
+  return ['night','storm','fog','wind'][Math.min(3,Math.floor(hash(level*7.13+2.9)*4))]; }
 function lfxAny(n){ return !tutorial && loopIndex(level)>=n; }
 function loopMood(){ const lp=loopIndex(level); if(lp<=0) return null; if(lp<LOOP_FX.length) return LOOP_FX[lp];
-  const k=lp-(LOOP_FX.length-1); return {name:'Endless Overtime '+k, tip:'Rolling hazards come '+Math.min(30,k*4)+'% more often and roll up to '+Math.min(30,k*3)+'% faster than in the final loop.'}; }
+  const k=lp-(LOOP_FX.length-1); return {name:'Endless Overtime '+k, tip:'Rolling hazards come a bit more often and roll a little faster than in the final loop.'}; }
 // rolling hazards (from loop 12): each loop adds a new kind that rolls along the ground toward you. Jump over them!
 const ROLL_KINDS=[ {k:'barrel',r:16,spd:2.0},{k:'tire',r:18,spd:2.6},{k:'bowling',r:11,spd:4.5},{k:'boulder',r:24,spd:1.4},{k:'snowball',r:20,spd:2.2},{k:'melon',r:15,spd:3.2},{k:'pumpkin',r:17,spd:2.8},{k:'cannon',r:10,spd:6.5},{k:'disco',r:16,spd:3.5},{k:'donut',r:20,spd:2.4},{k:'soccer',r:14,spd:4.0},{k:'spiked',r:16,spd:3.0},{k:'beach',r:16,spd:3.0} ];
 function rollerEndless(){ return Math.max(0,loopIndex(level)-24); }
@@ -2515,11 +2508,11 @@ function drawRoller(o){
 }
 function rollersUpdate(){
   const lp=loopIndex(level);
-  if(lp<12 || boss || tutorial || hidden || apt || isRetLevel(level)){ rollers.length=0; return; }
-  const kinds=ROLL_KINDS.slice(0,Math.min(ROLL_KINDS.length,lp-11)), end=rollerEndless();
+  if(lp<1 || boss || tutorial || hidden || apt || isRetLevel(level)){ rollers.length=0; return; }
+  const kinds=ROLL_KINDS.slice(0,Math.min(ROLL_KINDS.length,lp)), end=rollerEndless();
   if(!state.rlT) state.rlT=240;
-  if(--state.rlT<=0 && rollers.length<2+Math.min(1,Math.floor(end/4))){
-    state.rlT=Math.max(220,Math.round((440-(lp-12)*8)*(1-Math.min(0.3,end*0.04))*(0.75+Math.random()*0.6)));
+  if(--state.rlT<=0 && rollers.length<1+(lp>=5?1:0)+(lp>=14?1:0)){
+    state.rlT=Math.max(230,Math.round((560-(lp-1)*13)*(1-Math.min(0.3,end*0.04))*(0.75+Math.random()*0.6)));
     const kd=kinds[Math.floor(Math.random()*kinds.length)], x=player.x+W*0.62+Math.random()*120, gt=groundTopAt(x);
     if(gt!==null && x<LEVEL_LEN) rollers.push({k:kd.k,r:kd.r,x:x,y:gt-kd.r,spd:kd.spd*(1+Math.min(0.3,end*0.03)),rot:0});
   }
@@ -2532,10 +2525,10 @@ function rollersUpdate(){
 
 let LVL_P=null, LVL_D=1;   // this street's settings, kept for the return-trip enemies
 let sackRedo=0, sackRedoLvl=-1, rollers=[], debris=[], lightT=400, lightFlash=0, pendingSack=false;
-function windNow(){ if(!lfx(5)) return 0; const m=lfx(23)?1.3:1; return (Math.sin(state.time*0.7)*0.6+Math.sin(state.time*1.9+1)*0.4)*0.9*m; }
+function windNow(){ if(specialLevel()!=='wind') return 0; const m=1; return (Math.sin(state.time*0.7)*0.6+Math.sin(state.time*1.9+1)*0.4)*0.9*m; }
 function addLoopHearts(){
   if(!lfx(4) || boss || tutorial) return;
-  const n=1+(lfx(12)?1:0)+(lfx(18)?1:0);
+  const n=1+(loopIndex(level)>=8?1:0)+(loopIndex(level)>=16?1:0);
   for(let k=0;k<n;k++){ const fr=(k+1)/(n+1); let x=Math.round(LEVEL_LEN*fr), gt=groundTopAt(x), t=0;
     while(gt===null && t<40){ x+=24; gt=groundTopAt(x); t++; }
     if(gt!==null) pickups.push({x:x,y:gt-26,bob:rnd()*6,taken:false,kind:'heart',life:1e9}); }
@@ -2553,28 +2546,20 @@ function loopFxUpdate(){
   debris=debris.filter(function(d){ return d.t<92; });
 }
 function drawLoopMood(K,T){
-  if(boss||tutorial||hidden||apt) return; const lp=loopIndex(level); if(lp<=0||isRetLevel(level)) return;
-  ctx.fillStyle=lp===1?'rgba(255,150,60,.10)':'rgba(255,150,60,.04)'; ctx.fillRect(0,0,W,H);   // golden hour
-  if(lp>=2 && K!=='snow' && K!=='cyber'){ ctx.strokeStyle='rgba(200,215,240,.45)'; ctx.lineWidth=1.2; ctx.beginPath();
-    for(let i=0;i<80;i++){ const y=wrap(hash(i)*H+T*10,H+40)-20, x=wrap(hash(i+300)*W-T*2.5-camX*0.3,W); ctx.moveTo(x,y); ctx.lineTo(x-3,y+13); } ctx.stroke();
-    ctx.fillStyle='rgba(40,50,70,.12)'; ctx.fillRect(0,0,W,H); }
-  if(lp>=5){ const w=windNow(); ctx.strokeStyle='rgba(235,240,250,.30)'; ctx.lineWidth=1.4; ctx.beginPath();
-    for(let i=0;i<14;i++){ const y=hash(i*7.7)*H*0.8+20, x=wrap(hash(i*3.1)*W+T*(60+w*90)*(w>=0?1:1),W+80)-40, L=26+Math.abs(w)*40; ctx.moveTo(x,y); ctx.lineTo(x+(w>=0?L:-L),y+2); } ctx.stroke(); }
-  if(lp>=6){ const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(220,228,236,.30)'); g.addColorStop(1,'rgba(220,228,236,.55)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-    for(let i=0;i<5;i++){ const x=wrap(hash(i*5.3)*W*1.4+T*8*(1+i*0.3),W*1.4)-W*0.2, y=GROUND-90-i*26; ctx.fillStyle='rgba(235,240,245,.20)'; ctx.beginPath(); ctx.ellipse(x,y,150,26,0,0,7); ctx.fill(); } }
-  if(lp>=8){ if(--lightT<=0){ lightT=320+Math.floor(Math.random()*480); lightFlash=1; if(!state.over) setTimeout(function(){ noise(0.9,0.28,260); tone(70,0.8,'sawtooth',0.12,40); },220); }
+  if(boss||tutorial||hidden||apt) return; const lp=loopIndex(level); if(isRetLevel(level)) return;
+  if(rollers.length){ ctx.save(); ctx.translate(-camX,-(camY||0)); rollers.forEach(drawRoller); ctx.restore(); }
+  const sp=specialLevel(); if(!sp) return;
+  if(sp==='storm'){
+    if(K==='snow'){ ctx.fillStyle='rgba(255,255,255,.85)'; for(let i=0;i<90;i++){ const y=wrap(hash(i)*H+T*2.2,H+20)-10, x=wrap(hash(i+300)*W-T*0.8+Math.sin(T*0.02+i)*14-camX*0.3,W); ctx.beginPath(); ctx.arc(x,y,1.2+hash(i+50)*1.8,0,7); ctx.fill(); } }
+    else { ctx.strokeStyle='rgba(210,222,245,.7)'; ctx.lineWidth=1.5; ctx.beginPath(); for(let i=0;i<140;i++){ const y=wrap(hash(i)*H+T*12,H+40)-20, x=wrap(hash(i+300)*W-T*3-camX*0.3,W); ctx.moveTo(x,y); ctx.lineTo(x-3,y+14); } ctx.stroke(); }
+    ctx.fillStyle='rgba(28,36,58,.36)'; ctx.fillRect(0,0,W,H);
+    if(--lightT<=0){ lightT=320+Math.floor(Math.random()*480); lightFlash=1; if(!state.over) setTimeout(function(){ noise(0.9,0.28,260); tone(70,0.8,'sawtooth',0.12,40); },220); }
     if(lightFlash>0){ ctx.fillStyle='rgba(235,240,255,'+(lightFlash*0.55).toFixed(3)+')'; ctx.fillRect(0,0,W,H); lightFlash=Math.max(0,lightFlash-0.045); } }
-  if(lp>=18){ ctx.fillStyle='rgba(150,15,30,.13)'; ctx.fillRect(0,0,W,H); }
-  if(lp>=21){ ctx.strokeStyle='rgba(235,245,255,.7)'; ctx.lineWidth=2; ctx.beginPath(); for(let i=0;i<60;i++){ const y=wrap(hash(i+90)*H+T*22,H+40)-20, x=wrap(hash(i+400)*W-T*4,W); ctx.moveTo(x,y); ctx.lineTo(x-2,y+9); } ctx.stroke(); }
-  if(lp>=12){ ctx.save(); ctx.translate(-camX,-(camY||0)); rollers.forEach(drawRoller); ctx.restore(); }
-  if(lp>=9){ ctx.save(); ctx.translate(-camX,-(camY||0));
-    debris.forEach(function(d){ const warn=Math.min(1,d.t/78);
-      if(d.t<78){ ctx.fillStyle='rgba(0,0,0,'+(0.15+warn*0.3).toFixed(2)+')'; ctx.beginPath(); ctx.ellipse(d.x,d.gy-2,10+warn*16,4+warn*3,0,0,7); ctx.fill();
-        ctx.strokeStyle='rgba(255,70,50,'+(0.4+0.4*Math.sin(d.t*0.5)).toFixed(2)+')'; ctx.lineWidth=2; ctx.beginPath(); ctx.ellipse(d.x,d.gy-2,26,8,0,0,7); ctx.stroke();
-        const fy=d.gy-380+warn*warn*372; ctx.fillStyle=lp>=20?'#ff7a2c':'#7d7468'; rr(d.x-9,fy-9,18,18,5); ctx.fill(); if(lp>=20){ ctx.fillStyle='rgba(255,210,90,.8)'; ctx.beginPath(); ctx.arc(d.x,fy-14,6,0,7); ctx.fill(); }
-        ctx.strokeStyle='rgba(30,25,20,.8)'; ctx.lineWidth=1.5; rr(d.x-9,fy-9,18,18,5); ctx.stroke(); } });
-    ctx.restore(); }
-  if(lp>=3){ const px=player.x-camX, py=player.y-(camY||0)-24, dk=(K==='night'||K==='horror'||K==='cyber')?0.55:0.90;
+  if(sp==='wind'){ const w=windNow(); ctx.strokeStyle='rgba(235,240,250,.35)'; ctx.lineWidth=1.4; ctx.beginPath();
+    for(let i=0;i<16;i++){ const y=hash(i*7.7)*H*0.8+20, x=wrap(hash(i*3.1)*W+T*(60+w*90),W+80)-40, L=26+Math.abs(w)*40; ctx.moveTo(x,y); ctx.lineTo(x+(w>=0?L:-L),y+2); } ctx.stroke(); }
+  if(sp==='fog'){ const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'rgba(220,228,236,.30)'); g.addColorStop(1,'rgba(220,228,236,.55)'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+    for(let i=0;i<5;i++){ const x=wrap(hash(i*5.3)*W*1.4+T*8*(1+i*0.3),W*1.4)-W*0.2, y=GROUND-90-i*26; ctx.fillStyle='rgba(235,240,245,.20)'; ctx.beginPath(); ctx.ellipse(x,y,150,26,0,0,7); ctx.fill(); } }
+  if(sp==='night'){ const px=player.x-camX, py=player.y-(camY||0)-24, dk=(K==='night'||K==='horror'||K==='cyber')?0.55:0.90;
     const g=ctx.createRadialGradient(px,py,40,px,py,Math.max(160,Math.min(W,H)*0.46)); g.addColorStop(0,'rgba(6,8,26,0)'); g.addColorStop(0.55,'rgba(6,8,26,'+(dk*0.55).toFixed(2)+')'); g.addColorStop(1,'rgba(6,8,26,'+dk.toFixed(2)+')'); ctx.fillStyle=g; ctx.fillRect(0,0,W,H); }
 }
 // ---------- below-the-road detail: curb, grass verge, layered soil ----------
@@ -7195,6 +7180,7 @@ function startGame(){
   if(isRetLevel(level) && subLevel(level)===1) showBanner('🏖 Retirement Days','Welcome to '+retPlaceName()+'. No rush: a few friendly deliveries, hardly any trouble, and all the time in the world.',7000);
   state.sack=(pendingSack && !boss && !tutorial && !apt && !hidden && !isRetLevel(level) && theme.kind!=='treehouse')?'armed':null; if(state.sack) pendingSack=false;
   const mood=loopMood(); if(mood && !boss && !tutorial && biomeIndex(level)===0 && subLevel(level)===1) showBanner('🔁 Loop '+(loopIndex(level)+1)+': '+mood.name, 'New this loop: '+mood.tip+' Everything from earlier loops stays.', 8000);
+  else if(specialLevel() && !boss && !tutorial){ const si=SPECIAL_INFO[specialLevel()]; showBanner(si.t+' · 💰 Double pay!', si.d+' Every coin on this street counts double.', 6000); }
   else if(!boss && !apt && !tutorial && !state.replay && subLevel(level)===1 && SIGNATURE[theme.kind]) showBanner('🆕 New in '+theme.name, SIGNATURE[theme.kind].tip, 6000);
   if(hidden) showBanner(HIDDEN_LEVELS[hidden.idx].icon+' '+HIDDEN_LEVELS[hidden.idx].name,HIDDEN_LEVELS[hidden.idx].tip,7000);
   if(state.replay){ if((apt||boss) && settings.hints) $('tutStep').textContent+=' · ↻ replay: 10% coins'; else showBanner('↻ Replay','You already beat this level, so coins pay 10% this time.',3500); }
