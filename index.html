@@ -377,6 +377,7 @@
     <div class="btn-stack">
       <button class="menu-btn green" id="startBtn">▶  Start Shift</button>
       <button class="menu-btn" id="levelsBtn">🗺  Levels</button>
+      <button class="menu-btn hidden" id="overtimeBtn">⏱  Overtime</button>
       <button class="menu-btn" id="achBtn">🏆  Achievements</button>
       <button class="menu-btn" id="lbBtn">📊  Leaderboards</button>
       <button class="menu-btn" id="shopMenuBtn">🛒  Upgrade Shop</button>
@@ -442,9 +443,9 @@
       <h2>Choose your career</h2>
       <p class="tip" style="margin:-4px 0 2px">How long until you can retire? You can switch to a longer career later in Settings.</p>
       <div class="btn-stack" style="width:100%">
-        <button class="menu-btn green mode-btn" data-mode="easy">🌱 Easy<small>Retire after 8 loops · 4 resorts to choose from</small></button>
-        <button class="menu-btn mode-btn" data-mode="medium">⚖️ Medium<small>Retire after 16 loops · 6 resorts</small></button>
-        <button class="menu-btn mode-btn" data-mode="hard" style="background:#c0392b;box-shadow:0 4px 0 #8e2a20">🔥 Hard<small>Retire after 25 loops · all 8 resorts</small></button>
+        <button class="menu-btn green mode-btn" data-mode="easy">🌱 Easy<small>Retire after 3 loops · 4 resorts to choose from</small></button>
+        <button class="menu-btn mode-btn" data-mode="medium">⚖️ Medium<small>Retire after 5 loops · 6 resorts</small></button>
+        <button class="menu-btn mode-btn" data-mode="hard" style="background:#c0392b;box-shadow:0 4px 0 #8e2a20">🔥 Hard<small>Retire after 8 loops · all 8 resorts</small></button>
       </div>
       <button class="menu-btn ghost" id="modeBack" style="width:200px">Back</button>
     </div>
@@ -756,7 +757,7 @@ function onResize(){
   shiftWorld(GROUND-oldGround);
   if(apt){ const sc=aptScene(apt.cur); sc.G=GROUND; fitSceneWidth(sc); LEVEL_LEN=sc.LEN; }
   if(typeof camX==='number' && player && W!==oldW){
-    const maxCam=Math.max(0,LEVEL_LEN-W); camX=Math.max(0,Math.min(maxCam,player.x-W*0.4));
+    const maxCam=Math.max(0,LEVEL_LEN-W); camX=Math.max(0,Math.min(maxCam,player.x-W*0.5));
   }
   if(!running && segs) draw();
 }
@@ -921,17 +922,14 @@ function animalSound(kind,x,hurt){
       lfo.frequency.value=6; lg.gain.value=6; lfo.connect(lg); lg.connect(o.frequency);
       g.gain.setValueAtTime(0.0001,now+q[0]); g.gain.linearRampToValueAtTime(0.22,now+q[0]+0.06); g.gain.exponentialRampToValueAtTime(0.0001,now+q[0]+q[2]);
       o.connect(g); g.connect(bus('voices')); o.start(now+q[0]); o.stop(now+q[0]+q[2]+0.05); lfo.start(now+q[0]); lfo.stop(now+q[0]+q[2]+0.05); }); return; }
-  if(kind==='pigeon'){   // mourning dove: a soft rising "coo-AH", then "cooo... coo, coo"
+  if(kind==='pigeon'){   // a regular little bird: quick bright chirps "tweet-tweet-tee-tee" (one short squeak when hit)
     const now=actx.currentTime; if(now-lastAnimalSnd<0.5) return; const sx=x-camX; if(sx<-80||sx>W+80) return; lastAnimalSnd=now;
-    const notes=hurt?[[0,0.22,720,820,640]]:[[0,0.42,520,690,600],[0.5,0.55,600,560,500],[1.15,0.28,500,490,470],[1.55,0.28,500,490,470]];
-    const lp=actx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=1100; lp.Q.value=0.7; lp.connect(bus('voices'));
-    notes.forEach(function(q){ const t=now+q[0], d=q[1], o=actx.createOscillator(), o2=actx.createOscillator(), g=actx.createGain(), g2=actx.createGain(), lfo=actx.createOscillator(), lg=actx.createGain();
-      o.type='sine'; o2.type='triangle';
-      [o,o2].forEach(function(os,i){ const m=i?0.5:1; os.frequency.setValueAtTime(q[2]*m,t); os.frequency.linearRampToValueAtTime(q[3]*m,t+d*0.35); os.frequency.linearRampToValueAtTime(q[4]*m,t+d); });
-      lfo.frequency.value=5.5; lg.gain.value=5; lfo.connect(lg); lg.connect(o.frequency);
-      g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.2,t+0.07); g.gain.setValueAtTime(0.2,t+d*0.6); g.gain.exponentialRampToValueAtTime(0.0001,t+d);
-      g2.gain.value=0.25; o.connect(g); o2.connect(g2); g2.connect(g); g.connect(lp);
-      o.start(t); o2.start(t); lfo.start(t); o.stop(t+d+0.05); o2.stop(t+d+0.05); lfo.stop(t+d+0.05); });
+    const notes=hurt?[[0,0.09,3400,2400]]:[[0,0.09,3000,3900],[0.14,0.09,3100,4000],[0.34,0.06,3800,3000],[0.44,0.06,3800,3000],[0.54,0.08,3300,4200]];
+    const hp=actx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=1200; hp.connect(bus('voices'));
+    notes.forEach(function(q){ const t=now+q[0], d=q[1], o=actx.createOscillator(), g=actx.createGain();
+      o.type='sine'; o.frequency.setValueAtTime(q[2],t); o.frequency.exponentialRampToValueAtTime(q[3],t+d);
+      g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(0.16,t+0.015); g.gain.exponentialRampToValueAtTime(0.0001,t+d);
+      o.connect(g); g.connect(hp); o.start(t); o.stop(t+d+0.03); });
     return; }
   if(kind==='goat'){   // a wobbly "maaaa-aa-aa" bleat (a short, sharper "meh!" when hit)
     const now=actx.currentTime; if(now-lastAnimalSnd<0.3) return; const sx=x-camX; if(sx<-80||sx>W+80) return; lastAnimalSnd=now;
@@ -1428,15 +1426,18 @@ function rndInt(a,b){ return Math.floor(rndRange(a,b+1)); }
 // Difficulty follows the level's place inside its neighbourhood, so every neighbourhood's 1/10 plays like
 // Suburbs 1/10 and ramps up to its boss. After all neighbourhoods loop (Suburbs 2, ...) it starts a bit harder.
 // Career modes: how many loops until you may retire, and how many resorts you can pick from
-const MODES={easy:{loops:8,resorts:4,name:'Easy',icon:'🌱'}, medium:{loops:16,resorts:6,name:'Medium',icon:'⚖️'}, hard:{loops:25,resorts:8,name:'Hard',icon:'🔥'}};
+const MODES={easy:{loops:3,resorts:4,name:'Easy',icon:'🌱'}, medium:{loops:5,resorts:6,name:'Medium',icon:'⚖️'}, hard:{loops:8,resorts:8,name:'Hard',icon:'🔥'}};
+// Careers used to be 8 / 16 / 25 loops. They are shorter now, so difficulty is stretched: effLoop() maps your real loop onto the old scale (the last loop of every career is as hard as the old last loop was).
+const OLD_LOOPS={easy:8,medium:16,hard:25}, EASE_K={easy:0.75,medium:0.9,hard:1};   // Easy and Medium end a little softer than the old careers did
+function effLoop(lvl){ if(lvl>RL_BASE) return 0; const lp=loopIndex(lvl), n=retireLoops(); return n<=1?lp:Math.round(lp*(OLD_LOOPS[gameMode()]-1)/(n-1)*EASE_K[gameMode()]); }
 function gameMode(){ return (progress && MODES[progress.mode])?progress.mode:'hard'; }
 function retireLoops(){ return MODES[gameMode()].loops; }
 function loopPayK(){ return 25/retireLoops(); }   // shorter careers: pay climbs faster per loop, so each mode reaches the same top pay at its finish
 function loopIndex(lvl){ if(lvl>RL_BASE) return 0; return Math.floor((lvl-1)/(10*THEMES.length)); }
 // 25 loops: difficulty climbs fast for the first 3 loops, then keeps creeping up until about loop 17 (then it plateaus)
 function loopDiff(lp){ return lp<=3 ? lp*3 : Math.min(18, 9+(lp-3)*0.5); }   // tops out at loop 21 so late loops stay beatable
-function diffLevel(lvl){ if(lvl>RL_BASE) return Math.min(6,subLevel(lvl)); return subLevel(lvl)+Math.round(loopDiff(loopIndex(lvl))); }
-function coinMul(){ if(level>RL_BASE) return 1; return (1+0.035*biomeIndex(level))*(1+Math.min(2,loopIndex(level)*0.08*loopPayK()))*(specialLevel()?2:1); }   // special streets pay double   // pay climbs +3.5% with every neighbourhood you reach (up to x1.6 in Trippy Town) and +8% per loop (up to x3 overall, at loop 25)
+function diffLevel(lvl){ if(lvl>RL_BASE) return Math.min(6,subLevel(lvl)); return subLevel(lvl)+Math.round(loopDiff(effLoop(lvl))); }
+function coinMul(){ if(level>RL_BASE) return 1; return (1+0.035*biomeIndex(level))*(1+Math.min(2,loopIndex(level)*0.08*loopPayK()))*(specialLevel()?2:1)*otPayBonus(); }   // special streets pay double   // pay climbs +3.5% with every neighbourhood you reach (up to x1.6 in Trippy Town) and +8% per loop (up to x3 overall, at loop 25)
 function levelParams(lvl){
   const houses = Math.min(10, 3 + Math.floor((lvl-1)/2));        // 3 houses L1, +1 every 2 levels, cap 10
   const length = Math.round((1800 + houses*340 + Math.min(lvl*40, 600))*1.3);      // grows with houses + a bit per level (30% longer so hazards have room)
@@ -1594,10 +1595,10 @@ function reset(){ rollSpecial(); tripT=0; tripAge=0; cv.style.filter=''; cv.styl
   if(isRetLevel(level)){ P.enemyCount=Math.min(P.enemyCount,2); P.numGaps=Math.min(P.numGaps,1); P.enemySpeedMul=1; }   // a relaxed stroll
   if(hidden){ P.houses=3; P.length=2700; P.numGaps=0; P.enemyCount=8; P.numFloats=Math.min(P.numFloats,3); }   // a single short street
   if(theme.kind==='river') P.numGaps=Math.min(4,P.numGaps+1);   // more river to cross
-  if(!boss && !hidden && !isRetLevel(level)) P.pickups=Math.min(9,P.pickups+Math.floor(loopIndex(level)/3));   // more mail sacks as the loops get busier (+1 every 3 loops, up to 9 a street)
+  if(!boss && !hidden && !isRetLevel(level)) P.pickups=Math.min(9,P.pickups+Math.floor(effLoop(level)/3));   // more mail sacks as the loops get busier (+1 every 3 loops, up to 9 a street)
   if(theme.kind==='desert'||theme.kind==='candy') P.numGaps=Math.min(3,Math.max(P.numGaps,1+Math.floor(D/3)));   // quicksand / chocolate pits instead of gaps
   // Gaps keep their classic size the first time through all six neighbourhoods; every later loop they grow (x2, x2.75, x3.5, then x4 max)
-  const LP=loopIndex(level), GAP_K = LP===0 ? 1 : Math.min(4, 2+0.75*(LP-1));
+  const LP=effLoop(level), GAP_K = LP===0 ? 1 : Math.min(4, 2+0.75*(LP-1));
   LEVEL_LEN = P.length + (boss||tutorial||isAptLevel(level) ? 0 : Math.round(P.numGaps*180*(GAP_K-1)));   // extra street for wider gaps
 
   state={delivered:0,coins:bankCoins,startCoins:bankCoins,hp:4+armorBonus(),maxhp:4+armorBonus(),bag:bagMax(),time:0,over:false,invuln:0,
@@ -1678,7 +1679,7 @@ function reset(){ rollSpecial(); tripT=0; tripAge=0; cv.style.filter=''; cv.styl
     if(type==='bridge'){
       const br={x:g.x1,y:lowY,w:g.x2-g.x1,h:14,kind:theme.kind==='snow'?'thinice':'bridge',moving:false,stand:0};
       platforms.push(br);
-      if(loopIndex(level)>=1 && br.kind==='bridge') hazards.push({kind:'barrel',pf:br,x:br.x+br.w*0.5,dir:rnd()<0.5?-1:1,spd:1.2+0.25*Math.min(4,loopIndex(level)),r:11,rot:0});
+      if(effLoop(level)>=1 && br.kind==='bridge') hazards.push({kind:'barrel',pf:br,x:br.x+br.w*0.5,dir:rnd()<0.5?-1:1,spd:1.2+0.25*Math.min(4,effLoop(level)),r:11,rot:0});
     }
     else if(type==='mover') platforms.push({x:g.x1+8,y:lowY-4,w:96,h:16,kind:'mover',moving:true,min:g.x1+8,max:g.x2-104,dir:1,spd:Math.min(2.4,1.7+D*0.07)});
     else { const ay=highY-150, span=g.x2-g.x1-68, n=Math.ceil(span/165); for(let k=0;k<=n;k++) swings.push({ax:Math.round(g.x1+34+span*k/n),ay:ay,len:118}); }   // a chain of ropes
@@ -1705,7 +1706,7 @@ function reset(){ rollSpecial(); tripT=0; tripAge=0; cv.style.filter=''; cv.styl
       obstacles.push({kind:'dumpster',x:x,w:78,h:44,base:top}); platforms.push({x:x-39,y:top-44,w:78,h:8,kind:'lid',moving:false}); } }
   // Road obstacles to hop over: cones, boxes, barriers, trash cans and potholes. A couple early on, slowly up to 5 a street in the late loops.
   if(!boss && !tutorial && !hidden && !isRetLevel(level) && !isAptLevel(level)){
-    const lpR=loopIndex(level), sub=subLevel(level), want=Math.min(5, Math.floor(lpR*0.18)+(sub>=4?1:0)+(sub>=8?1:0)), RK=['cone','boxes','barrier','trashcan','pothole'];
+    const lpR=effLoop(level), sub=subLevel(level), want=Math.min(5, Math.floor(lpR*0.18)+(sub>=4?1:0)+(sub>=8?1:0)), RK=['cone','boxes','barrier','trashcan','pothole'];
     let made=0, guard=0;
     while(made<want && guard<300){ guard++; const x=rndInt(640,LEVEL_LEN-440), top=groundTopAt(x);
       if(top===null || !solidUnder(x-60,x+60,top) || nearHouse(x,70) || vents.some(function(v){ return Math.abs(v.x-x)<200; }) || obstacles.some(function(o){ return Math.abs(o.x-x)<380; }) || sands.some(function(q){ return x>q.x1-120 && x<q.x2+120; })) continue;
@@ -1762,7 +1763,7 @@ function reset(){ rollSpecial(); tripT=0; tripAge=0; cv.style.filter=''; cv.styl
   let placed=0, tries=0;
   const minSpacing=Math.max(210,340-D*8);   // loops 16-25 pack 25 enemies in, a little closer together
   LVL_P=P; LVL_D=D;
-  const enTarget=(isRetLevel(level)||hidden)?Math.ceil(P.enemyCount*(lfx(11)?1.3:1)):Math.min(16,Math.ceil(levelParams(subLevel(level)).enemyCount*1.25)+Math.floor(loopIndex(level)*0.3));   /* loops 16-25: a full 25 */   // +25% to match the 30%-longer streets (same spacing as before), capped at the late-game 19
+  const enTarget=(isRetLevel(level)||hidden)?Math.ceil(P.enemyCount*(lfx(11)?1.3:1)):Math.min(16+Math.floor(otExtra()/2),Math.ceil(levelParams(subLevel(level)).enemyCount*1.25)+Math.floor(effLoop(level)*0.3));   /* loops 16-25: a full 25 */   // +25% to match the 30%-longer streets (same spacing as before), capped at the late-game 19
   while(placed<enTarget && tries<2500){
     tries++;
     const ex=520+rnd()*(LEVEL_LEN-700), et=groundTopAt(ex);
@@ -1941,7 +1942,7 @@ function update(){
   if(onTruckRoof()){ if(!ach.stats.roof) statMax('roof',1); state.roofT=(state.roofT||0)+1; if(state.roofT%60===0) stat('roofSec'); }
 
   const maxCam=Math.max(0,LEVEL_LEN-W);
-  let ct=player.x-W*0.4; if(ct<0) ct=0; if(ct>maxCam) ct=maxCam;
+  let ct=player.x-W*0.5; if(ct<0) ct=0; if(ct>maxCam) ct=maxCam;
   if(!isFinite(camX)) camX=0;
   camX += (ct-camX)*0.12;
   if(tree && !boss && !tutorial){   // Treetop Village: the camera climbs with you
@@ -1952,7 +1953,7 @@ function update(){
   projectiles.forEach(function(p){ if(look.trail&&look.trail!=='none'){ (p.tr=p.tr||[]).push([p.x,p.y]); if(p.tr.length>14) p.tr.shift(); } p.x+=p.vx; p.y+=p.vy; p.vy+=0.18; p.life--; });
   projectiles.forEach(function(p){ if(p.life<=0) return;   // mail stops dead against dumpsters, bins, signs and rolling obstacles
     for(let oi=0;oi<obstacles.length;oi++){ const ob=obstacles[oi], bt=(ob.base||GROUND), tp=bt-ob.h; if(p.x>ob.x-ob.w/2 && p.x<ob.x+ob.w/2 && p.y>tp && p.y<bt+4){ p.life=0; p.dead=true; pop(p.x,p.y,'#cfd3d8',5); SFX.thud(); return; } }
-    for(let ri=0;ri<rollers.length;ri++){ const ro=rollers[ri]; if(Math.hypot(p.x-ro.x,p.y-ro.y)<ro.r+4){ p.life=0; p.dead=true; pop(p.x,p.y,'#cfd3d8',5); SFX.thud(); return; } } });
+    for(let ri=0;ri<rollers.length;ri++){ const ro=rollers[ri]; if(Math.hypot(p.x-ro.x,p.y-ro.y)<ro.r+4){ p.life=0; p.dead=true; ro.hp=(ro.hp||1)-1; if(ro.hp<=0){ ro.dead=true; pop(ro.x,ro.y,'#ffcf4a',14); pop(ro.x,ro.y,'#cfd3d8',8); SFX.hit(); stat('rollersSmashed'); addCoins(ro.k==='boulder'?5:(ro.k==='tire'?4:3)); } else { pop(p.x,p.y,'#cfd3d8',6); SFX.thud(); } return; } } });
   if(tree&&!boss) projectiles.forEach(function(p){ if(p.life<=0) return; for(let hi=0;hi<tree.hives.length;hi++){ const h=tree.hives[hi]; if(Math.abs(p.x-h.x)<20 && Math.abs(p.y-(h.y+4))<30){
     tree.hives.splice(hi,1); p.life=0; pop(h.x,h.y,'#e8b030',14); SFX.hit();
     for(let b=0;b<3;b++){ const be=makeEnemy('critter',h.x+(b-1)*14,'bee'); be.y=h.y+(b-1)*10; be.fly=true; be.hx=h.x; be.hy=h.y; be.spd*=1.15; be.maxhp=be.hp; enemies.push(be); }
@@ -2505,7 +2506,7 @@ const LOOP_FX=[null].concat(ROLL_NAMES.map(function(n,i){ const lp=i+1;
   return {name:n, tip:tip}; }));
 for(let k=14;k<=24;k++) LOOP_FX.push({name:'Rush Hour '+(k-13), tip:'More enemies and obstacles.'+(k===16?' +1 heart.':'')});
 
-function lfx(n){ return n===4 && !boss && !tutorial && !hidden && !isRetLevel(level) && loopIndex(level)>=n; }   // only loop feature left: hearts on the street (loop 5+)
+function lfx(n){ return n===4 && !boss && !tutorial && !hidden && !isRetLevel(level) && effLoop(level)>=n; }   // only loop feature left: hearts on the street (loop 5+)
 const SPECIAL_INFO={night:{t:'🌙 Night Shift',d:'Lantern light only.'}, storm:{t:'⛈ Storm',d:'Rain and lightning.'}, fog:{t:'🌫 Thick Fog',d:'Hard to see ahead.'}, wind:{t:'💨 Windy Day',d:'Gusts push you around.'}};
 let curSpecial=null, curSpecialLvl=-1;
 function rollSpecial(){   // rolled fresh every time a street starts: about 1 in 6, from loop 2 on, is a Night Shift / Storm / Fog / Windy street that pays double
@@ -2515,12 +2516,12 @@ function rollSpecial(){   // rolled fresh every time a street starts: about 1 in
 function specialLevel(){
   if(boss||tutorial||hidden||level>RL_BASE||isRetLevel(level)||isAptLevel(level)||loopIndex(level)<1) return null;
   return curSpecialLvl===level ? curSpecial : null; }
-function lfxAny(n){ return !tutorial && loopIndex(level)>=n; }
-function loopMood(){ const lp=loopIndex(level); if(lp<=0) return null; if(lp<LOOP_FX.length) return LOOP_FX[lp];
+function lfxAny(n){ return !tutorial && effLoop(level)>=n; }
+function loopMood(){ const lp=effLoop(level); if(lp<=0) return null; if(lp<LOOP_FX.length) return LOOP_FX[lp];
   const k=lp-(LOOP_FX.length-1); return {name:'Endless Overtime '+k, tip:'Same busy streets. Keep delivering!'}; }
 // rolling hazards (from loop 12): each loop adds a new kind that rolls along the ground toward you. Jump over them!
 const ROLL_KINDS=[ {k:'barrel',r:16,spd:2.0},{k:'tire',r:18,spd:2.6},{k:'bowling',r:11,spd:4.5},{k:'boulder',r:24,spd:1.4},{k:'snowball',r:20,spd:2.2},{k:'melon',r:15,spd:3.2},{k:'pumpkin',r:17,spd:2.8},{k:'cannon',r:10,spd:6.5},{k:'disco',r:16,spd:3.5},{k:'donut',r:20,spd:2.4},{k:'soccer',r:14,spd:4.0},{k:'spiked',r:16,spd:3.0},{k:'beach',r:16,spd:3.0} ];
-function rollerEndless(){ return Math.max(0,loopIndex(level)-24); }
+function rollerEndless(){ return Math.max(0,effLoop(level)-24); }
 function drawRoller(o){
   const r=o.r, a=o.rot; ctx.save(); ctx.translate(o.x,o.y); ctx.rotate(a);
   const ball=function(c){ ctx.fillStyle=c; ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.fill(); outline(2); };
@@ -2546,14 +2547,14 @@ function potholeTick(){ if(!player || !player.onGround || state.invuln>0 || stat
     if(Math.abs(player.x-o.x)<o.w/2-8 && Math.abs(player.y-(o.base||GROUND))<6){ damage(); player.vy=-7; player.onGround=false; pop(player.x,(o.base||GROUND)-4,'#555',6); SFX.thud(); return; } } }
 function rollersUpdate(){
   potholeTick(); rainTick();
-  const lp=loopIndex(level);
+  const lp=effLoop(level);
   if(lp<1 || boss || tutorial || hidden || apt || isRetLevel(level)){ rollers.length=0; return; }
   const kinds=ROLL_KINDS.slice(0,Math.min(ROLL_KINDS.length,lp)), end=rollerEndless();
   if(!state.rlT) state.rlT=600;
   if(--state.rlT<=0 && rollers.length<1){
     state.rlT=Math.round(Math.max(780,1500-(lp-1)*30)*(0.75+Math.random()*0.6));   // only now and then: every 15-30 s
     const kd=kinds[Math.floor(Math.random()*kinds.length)], x=player.x+W*0.62+Math.random()*120, gt=groundTopAt(x);
-    if(gt!==null && x<LEVEL_LEN) rollers.push({k:kd.k,r:kd.r,x:x,y:gt-kd.r,spd:kd.spd*(1+Math.min(0.3,end*0.03)),rot:0});
+    if(gt!==null && x<LEVEL_LEN) rollers.push({k:kd.k,r:kd.r,hp:(kd.k==='boulder'?3:(kd.k==='tire'?2:1)),x:x,y:gt-kd.r,spd:kd.spd*(1+Math.min(0.3,end*0.03)),rot:0});
   }
   rollers.forEach(function(o){
     o.x-=o.spd; o.rot-=o.spd/o.r; const gt=groundTopAt(o.x); if(gt===null){ o.dead=true; return; } o.y=gt-o.r;
@@ -2567,7 +2568,7 @@ let sackRedo=0, sackRedoLvl=-1, rollers=[], debris=[], lightT=400, lightFlash=0,
 function windNow(){ if(specialLevel()!=='wind') return 0; const m=1; return (Math.sin(state.time*0.7)*0.6+Math.sin(state.time*1.9+1)*0.4)*0.9*m; }
 function addLoopHearts(){
   if(!lfx(4) || boss || tutorial) return;
-  const n=1+(loopIndex(level)>=8?1:0)+(loopIndex(level)>=16?1:0);
+  const n=1+(effLoop(level)>=8?1:0)+(effLoop(level)>=16?1:0);
   for(let k=0;k<n;k++){ const fr=(k+1)/(n+1); let x=Math.round(LEVEL_LEN*fr), gt=groundTopAt(x), t=0;
     while(gt===null && t<40){ x+=24; gt=groundTopAt(x); t++; }
     if(gt!==null) pickups.push({x:x,y:gt-26,bob:rnd()*6,taken:false,kind:'heart',life:1e9}); }
@@ -2585,7 +2586,7 @@ function loopFxUpdate(){
   debris=debris.filter(function(d){ return d.t<92; });
 }
 function drawLoopMood(K,T){
-  if(boss||tutorial||hidden||apt) return; const lp=loopIndex(level); if(isRetLevel(level)) return;
+  if(boss||tutorial||hidden||apt) return; const lp=effLoop(level); if(isRetLevel(level)) return;
   if(rollers.length){ ctx.save(); ctx.translate(-camX,-(camY||0)); rollers.forEach(drawRoller); ctx.restore(); }
   const sp=specialLevel(); if(!sp) return;
   if(sp==='storm'){
@@ -3936,10 +3937,60 @@ const ARC_GOALS={
   hits65:{t:'Hit 65 targets in one round',k:'hits',n:65}, plays25:{t:'Play 25 Arcade rounds',k:'plays',n:25}, hits80:{t:'Hit 80 targets in one round',k:'hits',n:80}
 };
 const FACIAL=[['none','Clean'],['stubble','Stubble'],['stache','Mustache'],['goatee','Goatee'],['beard','Beard']];
+// necklaces (drawn on the chest in drawCarrier)
+const NECKLACES=[
+  {id:'none',    name:'No necklace',   price:0},
+  {id:'silver',  name:'Silver Chain',  c:'#d3d9e0', price:150, kind:'chain'},
+  {id:'gold',    name:'Gold Chain',    c:'#e6b800', price:250, kind:'chain', thick:true, pend:'coin'},
+    {id:'solidgold',name:'Solid Gold Chain',c:'#ffcf1f', price:600, kind:'chain', solid:true, pend:'nugget'},
+  {id:'dogtag',  name:'Dog Tag',       c:'#b8c0ca', price:175, kind:'chain', pend:'tag'},
+  {id:'locket',  name:'Heart Locket',  c:'#e6b800', price:225, kind:'chain', pend:'heart'},
+  {id:'pearls',  name:'Pearl Necklace',c:'#f6f1e7', price:200, kind:'beads'},
+  {id:'rbeads',  name:'Rainbow Beads', c:'#ff5f5f', price:175, kind:'beads', rainbow:true}
+];
+function drawNeck(N,x,y,bob){
+  if(!N||N.id==='none') return;
+  const ax=x-9, ay=y-42+bob, mx=x, my=y-30+bob, bx=x+9;
+  const pt=function(t){ const u=1-t; return [u*u*ax+2*u*t*mx+t*t*bx, u*u*ay+2*u*t*(my+8)+t*t*ay]; };
+  ctx.save(); ctx.lineCap='round';
+  if(N.kind==='beads'){
+    const cols=['#ff5f5f','#ffd54a','#4cd964','#2e86de','#9b59b6'];
+    for(let i=0;i<=8;i++){ const q=pt(i/8); ctx.fillStyle=N.rainbow?cols[i%5]:N.c; ctx.beginPath(); ctx.arc(q[0],q[1],2.1,0,7); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.55)'; ctx.lineWidth=0.7; ctx.stroke(); }
+  } else {
+    ctx.strokeStyle='rgba(30,25,40,.7)'; ctx.lineWidth=(N.solid?6.4:(N.thick?3.8:2.6)); ctx.beginPath(); ctx.moveTo(ax,ay); ctx.quadraticCurveTo(mx,my+8,bx,ay); ctx.stroke();
+    ctx.strokeStyle=N.c; ctx.lineWidth=(N.solid?4.6:(N.thick?2.6:1.5)); ctx.beginPath(); ctx.moveTo(ax,ay); ctx.quadraticCurveTo(mx,my+8,bx,ay); ctx.stroke();
+    if(N.solid){ ctx.strokeStyle='#a87a00'; ctx.lineWidth=4.6; ctx.setLineDash([1.2,3.4]); ctx.beginPath(); ctx.moveTo(ax,ay); ctx.quadraticCurveTo(mx,my+8,bx,ay); ctx.stroke(); ctx.setLineDash([]); ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=1.1; ctx.beginPath(); ctx.moveTo(ax+1,ay-1.4); ctx.quadraticCurveTo(mx,my+6.6,bx-1,ay-1.4); ctx.stroke(); }
+    if(N.thick){ ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.setLineDash([2,3]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(ax,ay-0.6); ctx.quadraticCurveTo(mx,my+7.4,bx,ay-0.6); ctx.stroke(); ctx.setLineDash([]); }
+    const py=ay+(my+8-ay)*0.5+1;   // lowest point of the chain
+    if(N.pend==='coin'){ ctx.fillStyle=N.c; ctx.beginPath(); ctx.arc(x,py+3,3.4,0,7); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.75)'; ctx.lineWidth=1; ctx.stroke(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.beginPath(); ctx.arc(x-1,py+2,1,0,7); ctx.fill(); }
+    else if(N.pend==='nugget'){ ctx.fillStyle=N.c; ctx.beginPath(); ctx.moveTo(x-5,py+3); ctx.lineTo(x-2,py-1); ctx.lineTo(x+3,py-1); ctx.lineTo(x+6,py+3); ctx.lineTo(x+3,py+8); ctx.lineTo(x-3,py+8); ctx.closePath(); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.8)'; ctx.lineWidth=1.2; ctx.stroke(); ctx.fillStyle='rgba(255,255,255,.7)'; ctx.fillRect(x-3,py+1,3,1.5); }
+    else if(N.pend==='tag'){ ctx.fillStyle=N.c; rr(x-3,py,6,7,1.5); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.75)'; ctx.lineWidth=1; ctx.stroke(); }
+    else if(N.pend==='heart'){ ctx.fillStyle=N.c; ctx.beginPath(); ctx.moveTo(x,py+7); ctx.bezierCurveTo(x-6,py+2,x-3,py-1,x,py+2); ctx.bezierCurveTo(x+3,py-1,x+6,py+2,x,py+7); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.75)'; ctx.lineWidth=1; ctx.stroke(); }
+  }
+  ctx.restore();
+}
+// pants / shorts colours the player can pick (free). 'auto' = match the uniform
+const LEG_COLORS=[
+  {id:'auto',  name:'Match uniform', price:0},
+  {id:'black', name:'Black',        c:'#1b1b1f', price:100},
+  {id:'navy',  name:'Navy',         c:'#22345a', price:100},
+  {id:'gray',  name:'Gray',         c:'#7a7f87', price:100},
+  {id:'jeans', name:'Blue Jeans',   c:'#3b5998', price:125},
+  {id:'khaki', name:'Khaki',        c:'#c8b68a', price:125},
+  {id:'brown', name:'Brown',        c:'#6b4a2b', price:125},
+  {id:'green', name:'Green',        c:'#2f7a45', price:125},
+  {id:'red',   name:'Red',          c:'#c0392b', price:125},
+  {id:'white', name:'White',        c:'#f1f1f1', price:150},
+  {id:'purple',name:'Purple',       c:'#7b3fa0', price:150},
+  {id:'pink',  name:'Pink',         c:'#ff7eb6', price:150},
+  {id:'orange',name:'Orange',       c:'#f39c12', price:150},
+  {id:'gold',  name:'Gold',         c:'#efc325', price:450}   // same gold as the Gold Medal shirt
+];
+function legColorOutfit(O,lk){ const c=findItem(LEG_COLORS,lk.legc||'auto'); return (c&&c.c)?Object.assign({},O,{pants:c.c}):O; }
 const PLAYER_HAIR=['#2b1d14','#5a3a1e','#8a4b22','#c98b3a','#e8c070','#7a2e1a','#1a1a1a','#9a9a9a'];
-const LOOK_DEFAULT={skin:1,outfit:'blue',shades:'none',truck:'navy',wheels:'standard',body:'m',hair:1,bag:'leather',legs:'pants',facial:'none',shoes:'black',letter:'white',trail:'none',hat:'postal',cart:'resort'};
-const OWNED_DEFAULT=function(){ return {outfit:['blue','red','green','purple'],shades:['none'],truck:['navy'],wheels:['standard'],bag:['leather'],shoes:['black'],letter:['white'],trail:['none'],hat:['postal'],cart:['resort']}; };
-const STYLE_CATS={outfit:function(){return OUTFITS;},shades:function(){return SHADES;},truck:function(){return TRUCKS;},wheels:function(){return WHEELS;},bag:function(){return BAGS;},shoes:function(){return SHOES;},letter:function(){return LETTERS;},trail:function(){return TRAILS;},hat:function(){return HATS;},cart:function(){return CARTS;}};
+const LOOK_DEFAULT={skin:1,outfit:'blue',shades:'none',truck:'navy',wheels:'standard',body:'m',hair:1,bag:'leather',legs:'pants',facial:'none',shoes:'black',letter:'white',trail:'none',hat:'postal',cart:'resort',legc:'auto',neck:'none'};
+const OWNED_DEFAULT=function(){ return {outfit:['blue','red','green','purple'],shades:['none'],truck:['navy'],wheels:['standard'],bag:['leather'],shoes:['black'],letter:['white'],trail:['none'],hat:['postal'],cart:['resort'],neck:['none'],legc:['auto']}; };
+const STYLE_CATS={outfit:function(){return OUTFITS;},shades:function(){return SHADES;},truck:function(){return TRUCKS;},wheels:function(){return WHEELS;},bag:function(){return BAGS;},shoes:function(){return SHOES;},letter:function(){return LETTERS;},trail:function(){return TRAILS;},hat:function(){return HATS;},cart:function(){return CARTS;},neck:function(){return NECKLACES;},legc:function(){return LEG_COLORS;}};
 function hoodReached(k){ return Math.floor((frontier().level-1)/10)>=k; }
 let look=Object.assign({},LOOK_DEFAULT);
 let owned=OWNED_DEFAULT();
@@ -3947,14 +3998,14 @@ function loadLook(){
   try{
     const l=JSON.parse(localStorage.getItem('pp_look')||'null'); if(l) look=Object.assign({},LOOK_DEFAULT,l);
     const o=JSON.parse(localStorage.getItem('pp_owned')||'null');
-    if(o){ ['outfit','shades','truck','wheels','bag','shoes','letter','trail','hat','cart'].forEach(function(k){ if(Array.isArray(o[k])) o[k].forEach(function(id){ if(owned[k].indexOf(id)<0) owned[k].push(id); }); }); }
+    if(o){ ['outfit','shades','truck','wheels','bag','shoes','letter','trail','hat','cart','neck','legc'].forEach(function(k){ if(Array.isArray(o[k])) o[k].forEach(function(id){ if(owned[k].indexOf(id)<0) owned[k].push(id); }); }); }
   }catch(e){}
 }
 function saveLook(){ try{ localStorage.setItem('pp_look',JSON.stringify(look)); localStorage.setItem('pp_owned',JSON.stringify(owned)); }catch(e){} }
 function findItem(list,id){ for(let i=0;i<list.length;i++) if(list[i].id===id) return list[i]; return list[0]; }
 loadLook();
 // every shop item gets its own unlock level (neighbourhood items unlock when you reach their neighbourhood)
-(function(){ const cats=[OUTFITS,SHADES,TRUCKS,WHEELS,BAGS,SHOES,LETTERS,TRAILS,HATS];
+(function(){ const cats=[OUTFITS,SHADES,TRUCKS,WHEELS,BAGS,SHOES,LETTERS,TRAILS,HATS,LEG_COLORS];
   cats.forEach(function(L){ const plain=L.filter(function(it){ return it.hood===undefined && it.price>0; }).sort(function(a,b){ return a.price-b.price; }); let prev=1;
     plain.forEach(function(it){ prev=Math.max(prev+1,Math.round(it.price/10)); it.unl=prev; });
     L.forEach(function(it){ if(it.hood!==undefined) it.unl=it.hood*10+1; }); }); })();
@@ -4011,7 +4062,8 @@ function drawShades(x,y,f,kind){
 
 // draws the mail carrier at feet (x,y) using a given look
 function drawCarrier(x,y,f,bob,sw,armUp,lk){
-  const O=findItem(OUTFITS,lk.outfit), skin=LOOK_SKINS[lk.skin]||LOOK_SKINS[1];
+  const O0=findItem(OUTFITS,lk.outfit), O=legColorOutfit(O0,lk), skin=LOOK_SKINS[lk.skin]||LOOK_SKINS[1];
+  if(lk.legc==='gold'){ const gg=ctx.createLinearGradient(0,y-21,0,y+2); gg.addColorStop(0,'#ffd54a'); gg.addColorStop(1,'#e0b100'); O.pants=gg; }   // same gold as the Gold Medal shirt
   const skinC=LOOK_SKINS[lk.skin]||LOOK_SKINS[1];
   if(lk.legs==='shorts'){   // shorts: bare legs below the knee
     ctx.fillStyle=skinC; rr(x-9,y-12,7,13+sw*0.4,3); ctx.fill(); outline(1.5); rr(x+2,y-12,7,13-sw*0.4,3); ctx.fill(); outline(1.5);
@@ -4020,12 +4072,13 @@ function drawCarrier(x,y,f,bob,sw,armUp,lk){
   } else { ctx.fillStyle=O.pants; rr(x-10,y-20,9,22+sw*0.4,3); ctx.fill(); outline(2); rr(x+1,y-20,9,22-sw*0.4,3); ctx.fill(); outline(2); }
   { const SH=findItem(SHOES,lk.shoes||'black');
     [[x-12,y-2+sw*0.4],[x-1,y-2-sw*0.4]].forEach(function(q){
+      if(SH.kind==='cowboy') q=[q[0]+(f>0?2:-2),q[1]];   // slide cowboy boots forward so the back of the tall shaft lines up with the back of the pant leg
       if(SH.flame && !player.onGround && lk===look){ const fl=ctx.createLinearGradient(0,q[1]+6,0,q[1]+16); fl.addColorStop(0,'rgba(255,200,60,.95)'); fl.addColorStop(1,'rgba(255,60,30,0)'); ctx.fillStyle=fl; ctx.beginPath(); ctx.moveTo(q[0]+2,q[1]+6); ctx.lineTo(q[0]+11,q[1]+6); ctx.lineTo(q[0]+6.5,q[1]+16+Math.random()*4); ctx.closePath(); ctx.fill(); }
       if(SH.rainbow){ const g=ctx.createLinearGradient(q[0],0,q[0]+13,0); ['#ff5f5f','#ffd54a','#4cd964','#2e86de','#9b59b6'].forEach(function(c,i){ g.addColorStop(i/4,c); }); ctx.fillStyle=g; } else ctx.fillStyle=SH.c;
       if(SH.kind==='clown'){ rr(q[0]+(f>0?0:-6),q[1]-1,19,7,3.5); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.75)'; ctx.lineWidth=1; ctx.stroke(); ctx.fillStyle='#ffd54a'; ctx.beginPath(); ctx.arc(q[0]+6.5,q[1]+0.5,1.8,0,7); ctx.fill(); return; }
-      if(SH.kind==='cowboy'){ rr(q[0],q[1]-5,9,11,2); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.75)'; ctx.lineWidth=1; ctx.stroke(); }
+      if(SH.kind==='cowboy'){ rr(q[0]+(f>0?0:4),q[1]-5,9,11,2); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.75)'; ctx.lineWidth=1; ctx.stroke(); }
       rr(q[0],q[1],13,6,2); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.75)'; ctx.lineWidth=1; ctx.stroke();
-      if(SH.kind==='cowboy'){ ctx.fillStyle='#3a2a1a'; ctx.fillRect(q[0]+(f>0?0:9),q[1]+5,4,2); ctx.strokeStyle='#e8c88a'; ctx.lineWidth=0.7; ctx.beginPath(); ctx.moveTo(q[0]+2,q[1]-3); ctx.lineTo(q[0]+7,q[1]-1); ctx.stroke(); return; }
+      if(SH.kind==='cowboy'){ ctx.fillStyle='#3a2a1a'; ctx.fillRect(q[0]+(f>0?0:9),q[1]+5,4,2); ctx.strokeStyle='#e8c88a'; ctx.lineWidth=0.7; ctx.beginPath(); ctx.moveTo(q[0]+(f>0?2:11),q[1]-3); ctx.lineTo(q[0]+(f>0?7:6),q[1]-1); ctx.stroke(); return; }
       if(SH.kind==='checker'){ ctx.save(); rr(q[0],q[1],13,6,2); ctx.clip(); ctx.fillStyle='#1c1c1c'; for(let c=0;c<7;c++) for(let r=0;r<3;r++) if((r+c)%2) ctx.fillRect(q[0]+c*2,q[1]+r*2,2,2); ctx.restore(); return; }
       if(SH.kind==='lights'){ ctx.fillStyle='#fff'; ctx.fillRect(q[0]+0.5,q[1]+4.2,12,1.6); ['#ff5f5f','#4cd964','#2e86de','#ffd54a'].forEach(function(c,i){ if(Math.floor(drawT/6+i)%2) return; ctx.fillStyle=c; ctx.beginPath(); ctx.arc(q[0]+2+i*3,q[1]+5,1.1,0,7); ctx.fill(); }); return; }
       if(SH.kind==='roller'){ ctx.fillStyle='#fff'; ctx.fillRect(q[0]+0.5,q[1]+4.2,12,1.6); ctx.fillStyle='#ffd54a'; [3,10].forEach(function(dx){ ctx.beginPath(); ctx.arc(q[0]+dx,q[1]+7.5,1.9,0,7); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.6)'; ctx.lineWidth=0.6; ctx.stroke(); }); return; }
@@ -4058,6 +4111,7 @@ function drawCarrier(x,y,f,bob,sw,armUp,lk){
   rr(x-14,y-44+bob,28,30,6); ctx.fillStyle=sg; ctx.fill(); outline(3);
   if(O.pat) outfitPattern(O,x,y-44+bob,28,30);
   ctx.strokeStyle=BG.strap; ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(x-10,y-44+bob); ctx.lineTo(x+10,y-20+bob); ctx.stroke();
+  drawNeck(findItem(NECKLACES,lk.neck||'none'),x,y,bob);
   ctx.fillStyle=O.a; rr(x+(f>0?10:-16),y-40+bob,7,armUp?-14:16,3); ctx.fill();
   ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(x+(f>0?13:-13),y-40+bob+(armUp?-12:16),4,0,7); ctx.fill();
   ctx.fillStyle=skin; ctx.beginPath(); ctx.arc(x,y-52+bob,12,0,7); ctx.fill(); outline(2.5);
@@ -4067,7 +4121,8 @@ function drawCarrier(x,y,f,bob,sw,armUp,lk){
   else { ctx.moveTo(x-f*4,y-60+bob); ctx.lineTo(x-f*12.5,y-58+bob); ctx.lineTo(x-f*12,y-50+bob); ctx.lineTo(x-f*7,y-52+bob); }
   ctx.closePath(); ctx.fill();
   // postal cap: a rounded crown over the whole top of the head, band, brim, top button and badge
-  if(lk.hat && lk.hat!=='postal') drawHat(lk.hat,x,y-54+bob,f,O); else { const cy=y-54+bob;
+  const customHat=!!(lk.hat && lk.hat!=='postal');   // other hats are drawn after the hair so hair never pokes through the brim
+  if(!customHat){ const cy=y-54+bob;
     const cg=ctx.createLinearGradient(0,cy-14,0,cy); cg.addColorStop(0,shade(O.cap,26)); cg.addColorStop(1,O.cap);
     ctx.fillStyle=cg; ctx.beginPath(); ctx.moveTo(x-13.5,cy); ctx.bezierCurveTo(x-14,cy-17,x+14,cy-17,x+13.5,cy); ctx.closePath(); ctx.fill(); outline(2.5);
     ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.lineWidth=1.2; ctx.beginPath(); ctx.moveTo(x-f*2,cy-12.5); ctx.quadraticCurveTo(x+f*5,cy-8,x+f*6,cy-1); ctx.stroke();
@@ -4083,13 +4138,20 @@ function drawCarrier(x,y,f,bob,sw,armUp,lk){
   if(fem){ ctx.lineTo(x-f*14,y-44+bob); ctx.quadraticCurveTo(x-f*9,y-45+bob,x-f*7,y-50+bob); }
   else { ctx.quadraticCurveTo(x-f*15,y-49+bob,x-f*12.5,y-45+bob); ctx.lineTo(x-f*9,y-48+bob); ctx.lineTo(x-f*6,y-51+bob); }
   ctx.closePath(); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.55)'; ctx.lineWidth=1.2; ctx.stroke();
+  if(customHat) drawHat(lk.hat,x,y-54+bob,f,O);
   // eyes / sunglasses sit just under the cap brim and are drawn on top of it
   if(lk.shades==='none'){ ctx.fillStyle='#1a1a1a'; ctx.beginPath(); ctx.arc(x+f*3,y-49+bob,1.9,0,7); ctx.arc(x+f*8,y-49+bob,1.9,0,7); ctx.fill();
     if(fem){ ctx.strokeStyle='#1a1a1a'; ctx.lineWidth=1.1; ctx.beginPath(); [3,8].forEach(function(ex){ ctx.moveTo(x+f*(ex+1),y-50.5+bob); ctx.lineTo(x+f*(ex+3),y-52.5+bob); }); ctx.stroke(); } }
   else drawShades(x,y-49+bob,f,lk.shades);
-  if(fem){ ctx.fillStyle='rgba(255,120,140,.35)'; ctx.beginPath(); ctx.arc(x+f*9,y-46+bob,2.4,0,7); ctx.fill(); }
+  if(fem){ ctx.save(); ctx.beginPath(); ctx.arc(x,y-52+bob,11,0,7); ctx.clip();   // soft cheeks, clipped to the face so they never spill over the outline
+    ctx.fillStyle='rgba(255,110,135,.32)'; [0.2,9.2].forEach(function(dx){ ctx.beginPath(); ctx.ellipse(x+f*dx,y-45.8+bob,2.3,1.5,0,0,7); ctx.fill(); }); ctx.restore(); }
   if(!fem && lk.facial && lk.facial!=='none') facialHair(lk.facial,x,y-52+bob,f,hairC,skin);
-  ctx.strokeStyle=fem?'rgba(190,60,80,.85)':'rgba(60,30,20,.7)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(x+f*5,y-44+bob,3,0.25,Math.PI-0.25); ctx.stroke();
+  if(fem){   // lips: a small pink mouth with an upper and lower lip, sitting on the face (not on the chin outline)
+    const L=function(dx,dy){ return [x+f*dx,y+dy+bob]; }; let a=L(3.3,-45), c1=L(4.5,-46.5), m=L(5.6,-45.6), c2=L(6.7,-46.5), e=L(7.9,-45), c3=L(5.6,-41.7);
+    ctx.fillStyle='rgba(214,70,100,.95)'; ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.quadraticCurveTo(c1[0],c1[1],m[0],m[1]); ctx.quadraticCurveTo(c2[0],c2[1],e[0],e[1]); ctx.quadraticCurveTo(c3[0],c3[1],a[0],a[1]); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(120,25,50,.8)'; ctx.lineWidth=0.7; ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.quadraticCurveTo(m[0],L(5.6,-43.9)[1],e[0],e[1]); ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.55)'; ctx.beginPath(); ctx.ellipse(L(5.2,-44.3)[0],L(5.2,-44.3)[1],1,0.45,0,0,7); ctx.fill();
+  } else { ctx.strokeStyle='rgba(60,30,20,.7)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(x+f*5,y-45+bob,2.5,0.3,Math.PI-0.3); ctx.stroke(); }   // sits just inside the chin and lines up with the beard's mouth patch
 }
 
 function drawHat(kind,x,cy,f,O){
@@ -4376,10 +4438,12 @@ function renderLook(containerId,canvasId,canBuy,coinsElId){
   }
   function freeRow(title,opts,key){ const curO=opts.find(function(o){ return (look[key]||opts[0][0])===o[0]; }); const r=section(title,null,curO?curO[1]:''); opts.forEach(function(o){ r.appendChild(chip(o[1],null,(look[key]||opts[0][0])===o[0]?'sel':'',0,function(){ look[key]=o[0]; tryOn=null; saveLook(); SFX.click(); rerender(); })); }); }
   freeRow('Legs',[['pants','👖 Pants'],['shorts','🩳 Shorts']],'legs');
+  catRow('legc','Pants & shorts color',LEG_COLORS,function(it){ return it.c||null; });
   if((look.body||'m')==='m') freeRow('Facial hair',FACIAL,'facial');
   catRow('outfit','Uniform',OUTFITS,function(it){ return it.a; });
   catRow('hat','Hats',HATS,function(it){ return it.c; });
   catRow('shades','Sunglasses',SHADES,null);
+  catRow('neck','Necklaces',NECKLACES,function(it){ return it.id==='none'?null:(it.rainbow?'linear-gradient(90deg,#ff5f5f,#ffd54a,#4cd964,#2e86de,#9b59b6)':it.c); });
   catRow('shoes','Shoes',SHOES,function(it){ return it.rainbow?'linear-gradient(90deg,#ff5f5f,#ffd54a,#4cd964,#2e86de,#9b59b6)':(it.kind==='checker'?'repeating-conic-gradient(#1c1c1c 0 25%,#f4f4f4 0 50%) 0 0/8px 8px':it.c); });
   catRow('bag','Mail bag',BAGS,function(it){ return ({rainbow:'linear-gradient(90deg,#ff5f5f,#ffd54a,#4cd964,#2e86de,#9b59b6)', checker:'repeating-conic-gradient(#1c1c1c 0 25%,#f4f4f4 0 50%) 0 0/8px 8px', galaxy:'radial-gradient(circle at 55% 45%,#ff78dc,#2a1a4a 70%)', tartan:'repeating-linear-gradient(90deg,#c0392b 0 5px,#3a2a20 5px 8px),#c0392b', leopard:'radial-gradient(circle,#5a3a1a 25%,transparent 30%) 0 0/7px 7px,#e0b060', denim:'repeating-linear-gradient(45deg,#3b5f8f 0 2px,#4a6f9f 2px 4px)', floral:'radial-gradient(circle,#ff7eb6 30%,transparent 35%) 0 0/8px 8px,#fff3e0', space:'linear-gradient(90deg,#e8ecf2,#9aa3ab,#e8ecf2)'})[it.pat]||it.c; });
   catRow('letter','Letters',LETTERS,function(it){ return it.holo?'linear-gradient(90deg,#ff9ff3,#a8d8ff,#b8f5d0)':it.c; });
@@ -4646,7 +4710,7 @@ function makeEnemy(type,x,kind){
     moonbug:  {w:36,h:20,hp:2,spd:2.2,range:300,sc:1}
   }[kind];
   e.w=S.w; e.h=S.h; e.hp=Math.max(1,Math.floor(S.hp*(1+0.25*(upg.dmg||0)))); e.spd=S.spd; e.range=S.range; e.sc=S.sc; e.spd0=e.spd; e.hp0=e.hp;
-  const lp=loopIndex(level); if(lp>=1 && !boss && (type==='dog'||type==='goose'||type==='neighbor') && kind!=='janitor' && Math.random()<(lp<=3?[0,0.2,0.3,0.4][lp]:Math.min(0.6,0.4+(lp-3)*0.02))){ e.hp+=1+(lp>=12?1:0); e.spd*=1+Math.min(0.12,lp*0.008);   // tougher from the second loop on
+  const lp=effLoop(level); if(lp>=1 && !boss && (type==='dog'||type==='goose'||type==='neighbor') && kind!=='janitor' && Math.random()<(lp<=3?[0,0.2,0.3,0.4][lp]:Math.min(0.6,0.4+(lp-3)*0.02))){ e.hp+=1+(lp>=12?1:0); e.spd*=1+Math.min(0.12,lp*0.008);   // tougher from the second loop on
     if(type==='neighbor' || theme.kind==='city') e.helmet=true;   // hard hats: people anywhere, animals only in the city
     else e.gear=GEAR[theme.kind]||GEAR.suburbs; }   // elsewhere animals get a look that fits the neighbourhood
   if(lfx(25) && kind!=='janitor') e.spd*=1+Math.min(0.2,rollerEndless()*0.03);
@@ -5237,7 +5301,7 @@ function drawBird(b){
     const x=b.x,y=b.y,f=b.dir,flap=Math.sin(b.t*14);
     const C={crow:{body:'#2b2b33',wing:'#1b1b22',belly:'#3a3a44',beak:'#f1c40f'},
              seagull:{body:'#f4f6f8',wing:'#9aa5b1',belly:'#ffffff',beak:'#f39c12'},
-             pigeon:{body:'#8a93a6',wing:'#6b7488',belly:'#a3aec2',beak:'#4a4a4a'}}[b.kind];
+             pigeon:{body:'#8d6b47',wing:'#5f4630',belly:'#e9dcc0',beak:'#e0a030'}}[b.kind];   // 'pigeon' is now a plain brown songbird
     ctx.save(); if(b.hitCd>0) ctx.globalAlpha=0.6;
     if(b.cd<50) drawRockShape(x,y+16,0,0.8);   // carrying a rock = about to drop
     if(!b.noWings){ ctx.fillStyle=C.wing; ctx.beginPath(); ctx.moveTo(x-4,y-2); ctx.quadraticCurveTo(x-10,y-14-flap*12,x-24*f,y-6-flap*16); ctx.lineTo(x+4,y); ctx.closePath(); ctx.fill(); outline(2); }
@@ -5245,7 +5309,6 @@ function drawBird(b){
     ctx.fillStyle=C.belly; ctx.beginPath(); ctx.ellipse(x+f*2,y+3,9,4,0,0,7); ctx.fill();
     ctx.fillStyle=C.body; ctx.beginPath(); ctx.moveTo(x-f*14,y-2); ctx.lineTo(x-f*24,y-6); ctx.lineTo(x-f*24,y+4); ctx.closePath(); ctx.fill(); outline(2);
     ctx.fillStyle=C.body; ctx.beginPath(); ctx.arc(x+f*14,y-5,7,0,7); ctx.fill(); outline(2);
-    if(b.kind==='pigeon'){ ctx.fillStyle='rgba(80,180,140,.6)'; ctx.beginPath(); ctx.arc(x+f*10,y-1,4,0,7); ctx.fill(); }
     if(b.mo>0.04){ const o=b.mo; 
       ctx.fillStyle=C.beak; ctx.beginPath(); ctx.moveTo(x+f*20,y-7); ctx.lineTo(x+f*28.5,y-5-o*3); ctx.lineTo(x+f*20,y-4.6); ctx.closePath(); ctx.fill(); ctx.beginPath(); ctx.moveTo(x+f*20,y-4); ctx.lineTo(x+f*27,y-1.5+o*3.2); ctx.lineTo(x+f*20,y-2); ctx.closePath(); ctx.fill(); }
     else { ctx.fillStyle=C.beak; ctx.beginPath(); ctx.moveTo(x+f*20,y-7); ctx.lineTo(x+f*28,y-4); ctx.lineTo(x+f*20,y-2); ctx.closePath(); ctx.fill(); }
@@ -5718,7 +5781,7 @@ function goToScene(i,px,slow,after){
   setTimeout(function(){
     saveScene(); loadScene(i);
     player.x=px; player.y=GROUND; player.vx=0; player.vy=0; player.onGround=true; player.swing=null; state.invuln=Math.max(state.invuln,40);
-    const maxCam=Math.max(0,LEVEL_LEN-W); camX=Math.max(0,Math.min(maxCam,player.x-W*0.4));
+    const maxCam=Math.max(0,LEVEL_LEN-W); camX=Math.max(0,Math.min(maxCam,player.x-W*0.5));
     fade.classList.remove('on'); apt.transitioning=false; if(after) after(); syncHUD(); musicSwitch();
   }, slow?400:220);
 }
@@ -6307,7 +6370,7 @@ const BOSSES=[
 function bossDef(){ return BOSSES[biomeIndex(level)]; }
 function bossCycleE(){ const c=bossCycle(); return Math.min(c,5)+Math.max(0,c-5)*0.1; }   // speed scaling flattens out so loop 25 stays beatable
 function bossHpAdd(){ const c=bossCycle(); return c<=5 ? c*6 : 30+Math.round(c-5); }   // a bit gentler growth than before
-function bossCycle(){ return Math.floor((level-1)/(10*THEMES.length)); }           // bosses get tougher each time the 5 neighborhoods loop
+function bossCycle(){ return effLoop(level); }           // bosses get tougher each time the 5 neighborhoods loop
 function bossReward(){ const c=bossCycle(); return 140+40*Math.min(c,10)+80*Math.max(0,c-10); }
 
 function buildBoss(G){
@@ -7210,7 +7273,7 @@ let simT=0;
 function startGame(){
   resortMode=false; arcadeMode=false; setArcadeUI(false); $('hud').classList.remove('resort');
   fitCanvas(); reset(); running=true; paused=false; setSprintToggle(false);
-  state.replay = !tutorial && !hidden && isReplay(level,boss); state.coinFrac=0;
+  state.replay = !tutorial && !hidden && !overtime && isReplay(level,boss); state.coinFrac=0;
   $('startScreen').classList.add('hidden'); $('howToScreen').classList.add('hidden');
   $('pauseScreen').classList.add('hidden'); $('endScreen').classList.add('hidden');
   $('hud').classList.remove('hidden'); $('controls').classList.remove('hidden'); if(!rotHintDone){ $('rotateHint').classList.add('show'); clearTimeout(rotTimer); rotTimer=setTimeout(function(){ $('rotateHint').classList.remove('show'); rotHintDone=true; try{ localStorage.setItem('pp_rotseen','1'); }catch(e){} },10000); }
@@ -7228,8 +7291,9 @@ function startGame(){
   audioInit(); musicStop(); musicStart();
   cancelAnimationFrame(raf); lastFrameT=0; frameAcc=0; loop();
 }
-function newGame(){ tutorial=false; bossNext=false; bossWon=false; restoreRun(); const f=frontier(); level=f.level; boss=f.boss; startGame(); }      // continue from saved progress
+function newGame(){ overtime=false; tutorial=false; bossNext=false; bossWon=false; restoreRun(); const f=frontier(); level=f.level; boss=f.boss; startGame(); }      // continue from saved progress
 function nextOrRetry(){
+  if(overtime && !tutorial && !boss){ if(pendingAdvance) level=otRoll(); startGame(); return; }
   if(bossNext && !tutorial){ bossNext=false; boss=true; startGame(); return; }
   if(boss){ if(bossWon){ boss=false; bossWon=false; level++; } startGame(); return; }
   if(tutorial){ if(tutDone){ tutorial=false; $('startScreen').classList.add('hidden'); $('endScreen').classList.add('hidden'); $('lookScreen').classList.remove('hidden'); renderLook('lookList','lookCanvas',false,null); return; } startGame(); return; }
@@ -7248,7 +7312,7 @@ function quitToMenu(){
   menuMusic(50); resortMode=false; arcadeMode=false; setArcadeUI(false); AR=null; cv.style.cursor=''; ARSAVE=null; $('hud').classList.remove('resort');
   boss=false; bossNext=false; bossWon=false; $('bossBar').classList.add('hidden');
   elevOpen=false; $('elevPanel').classList.add('hidden'); $('fadeBox').classList.remove('on');
-  tutorial=false;
+  tutorial=false; overtime=false;
   running=false; paused=false; cancelAnimationFrame(raf); musicStop();
   restoreRun(); level=frontier().level;
   $('pauseScreen').classList.add('hidden'); $('endScreen').classList.add('hidden'); $('shopScreen').classList.add('hidden');
@@ -7332,6 +7396,9 @@ function endGame(won,skipHid){
     pendingAdvance=false;
     SFX.lose();
   }
+  if(overtime && !boss && !tutorial && !hidden){
+    if(won){ $('endTitle').textContent='⏱ OVERTIME SHIFT DONE'; $('endMsg').textContent='You earned '+Math.max(0,state.coins-(state.startCoins||0))+' coins. Ready for another overtime shift?'; $('retryBtn').textContent='▶  Next overtime shift'; }
+    else { $('endTitle').textContent='💥 OVERTIME SHIFT FAILED'; $('endMsg').textContent='A failed shift pays nothing. Try this one again?'; $('retryBtn').textContent='↻  Retry'; } }
   if(won) afterRunMoney(false);
   $('shopBtn').classList.remove('hidden');
 }
@@ -7350,7 +7417,7 @@ const RETIRE_PLACES=[
 function retireBal(){ return Math.floor(progress.retire||0); }
 function retUnlocked(){ return !!(devMode || progress.retiredTo || (progress.bosses && progress.bosses[retireLoops()*10*THEMES.length])); }   // after your career's last loop you may pull money out too
 function resortOk(p){ return devMode || RETIRE_PLACES.indexOf(p)<MODES[gameMode()].resorts; }
-function resortCost(p){ return Math.round(p.need*({easy:3,medium:1.5,hard:1})[gameMode()]); }   // shorter careers ramp pay faster, so their resorts cost more savings
+function resortCost(p){ return Math.round(p.need*({easy:1,medium:0.32,hard:0.25})[gameMode()]); }   // shorter careers earn less in total, so the resorts cost less; the top resort costs about half of everything a career pays
 function resortNeed(p){ return RETIRE_PLACES.indexOf(p)<6?'Medium':'Hard'; }
 function modeCanPick(m){ if(m===gameMode()||MODES[m].loops>=retireLoops()) return true; let lp=0; try{ lp=loopIndex(frontier().level); }catch(e){} return lp<MODES[m].loops; }
 function modeRender(){
@@ -7445,7 +7512,8 @@ const LIFE_EVENTS=[
 let rotHintDone=false, rotTimer=null; try{ rotHintDone=localStorage.getItem('pp_rotseen')==='1'; }catch(e){}
 function showLifeEvent(marketOnly){
   const pool=LIFE_EVENTS.filter(function(e){ return marketOnly ? !!e.needRet : (!e.needRet || retireBal()>0); });
-  const rec=(progress.evRecent||[]); let e=null; for(let t=0;t<12;t++){ const c=pool[Math.floor(Math.random()*pool.length)]; if(rec.indexOf(c.t)<0){ e=c; break; } } if(!e) e=pool[Math.floor(Math.random()*pool.length)];
+  const rec=(progress.evRecent||[]); let e=null; for(let t=0;t<12;t++){ const c=pool[Math.floor(Math.random()*pool.length)]; if(c.ret<0 && Math.random()<0.6) continue;   /* retirement-plan losses show up about 40% as often as before */
+    if(rec.indexOf(c.t)<0){ e=c; break; } } if(!e) e=pool[Math.floor(Math.random()*pool.length)];
   progress.evRecent=rec.concat([e.t]).slice(-14); let line='';
   if(e.sack){ pendingSack=true; line='🎒 Next shift restarts at the end'; } else
   if(e.ret){ const d=Math.round((progress.retire||0)*e.ret); progress.retire=Math.max(0,(progress.retire||0)+d); line=(d>=0?'+':'−')+'🪙 '+Math.abs(d)+' in retirement'; }
@@ -7456,7 +7524,7 @@ function showLifeEvent(marketOnly){
 }
 function offerRetirement(){
   const bal=retireBal(); $('retTitle').textContent='Time to retire?'; $('retIcon').textContent='🏖';
-  $('retText').textContent="You've delivered mail through "+retireLoops()+" full loops of every neighborhood. You can retire now, and your retirement savings ("+bal+" 🪙) decide which resorts you can live in: drive a golf cart around, enjoy the scenery and the music. Or keep going: you can take savings out in the shop any time, keep adding to them, and the market will move them up and down.";
+  $('retText').textContent="You've delivered mail through "+retireLoops()+" full loops of every neighborhood. You can retire now, and your retirement savings ("+bal+" 🪙) decide which resorts you can live in: drive a golf cart around, enjoy the scenery and the music. Or keep going: you can take savings out in the shop any time, keep adding to them, and the market will move them up and down. The Overtime button on the main menu is open now too: random shifts that start at the difficulty your career ended on and get harder.";
   const L=$('retList'); L.innerHTML='';
   RETIRE_PLACES.forEach(function(p){ const tierOk=resortOk(p), ok=tierOk&&bal>=resortCost(p); const b=document.createElement('button'); b.className='menu-btn'+(ok?' green':' ghost'); b.disabled=!ok; b.style.opacity=ok?1:0.5;
     b.textContent=p.icon+' '+p.name+(ok?'':(tierOk?'  🔒 needs '+resortCost(p)+' 🪙':'  🔒 '+resortNeed(p)+' career')); b.addEventListener('click',function(){ chooseRetirement(p); }); L.appendChild(b); });
@@ -7569,7 +7637,7 @@ $('arcMenuBtn').addEventListener('click',function(){ audioInit(); SFX.click(); r
 $('shopDone').addEventListener('click',function(){ SFX.click(); closeShop(); });
 // ---------- Level select ----------
 const HOOD_ICON={suburbs:'🏡',autumn:'🍂',dusk:'🌆',snow:'❄️',night:'🌙',cyber:'🌃',patriot:'🦅',farm:'🐄',desert:'🌵',city:'🏙',alley:'🌃',river:'🛶',horror:'🎃',fantasy:'🏰',candy:'🍭',pirate:'🏴‍☠️',treehouse:'🌳',trippy:'🍄'};
-function updateStartButton(){ const f=frontier(); $('startBtn').textContent = hasProgress() ? '▶  Continue · '+levelName(f.level,f.boss) : '▶  Start Shift'; }
+function updateStartButton(){ $('overtimeBtn').classList.toggle('hidden',!retUnlocked()); const f=frontier(); $('startBtn').textContent = hasProgress() ? '▶  Continue · '+levelName(f.level,f.boss) : '▶  Start Shift'; }
 function openLevels(){
   const list=$('levelsList'); list.innerHTML='';
   const f=frontier(), lastHood=devMode?THEMES.length*25-1:Math.floor((f.level-1)/10)+1;
@@ -7601,8 +7669,18 @@ function openLevels(){
   $('startScreen').classList.add('hidden'); $('levelsScreen').classList.remove('hidden');
   const curBtn=list.querySelector('.lv.cur'); if(curBtn) curBtn.scrollIntoView({block:'center'});
 }
-function playLevel(L,b){ $('levelsScreen').classList.add('hidden'); tutorial=false; bossNext=false; bossWon=false; restoreRun(); level=L; boss=b; startGame(); }
+function playLevel(L,b){ $('levelsScreen').classList.add('hidden'); overtime=false; tutorial=false; bossNext=false; bossWon=false; restoreRun(); level=L; boss=b; startGame(); }
 $('levelsBtn').addEventListener('click',function(){ audioInit(); SFX.click(); openLevels(); });
+// ---------- Overtime: unlocks when your career is finished. Random streets from anywhere in the career, within the difficulty range you pick, paid at that street's full rate ----------
+let overtime=false;
+const OT_MAX=7;   // the pool: from the difficulty your career ended on (step 0) up to 7 steps harder
+function otExtra(){ return overtime?Math.max(0,loopIndex(level)-(retireLoops()-1)):0; }   // how many steps past the end of the career this street is
+function otEnemies(l,ex){ return Math.min(16+Math.floor(ex/2),Math.ceil(levelParams(subLevel(l)).enemyCount*1.25)+Math.floor(effLoop(l)*0.3)); }   // enemies on a street (same formula the street builder uses)
+function otPayBonus(){ if(!overtime) return 1; const L0=(retireLoops()-1)*10*THEMES.length+((level-1)%(10*THEMES.length))+1;   // pay follows difficulty: the street's enemy count compared with the same street at the end of your career
+  return Math.max(1,otEnemies(level,otExtra())/otEnemies(L0,0)); }
+function otRoll(){ const lp=retireLoops()-1+Math.floor(Math.random()*(OT_MAX+1)); return lp*10*THEMES.length+Math.floor(Math.random()*THEMES.length)*10+1+Math.floor(Math.random()*9); }   // any neighbourhood, any street 1-9 (no bosses)
+function startOvertime(){ tutorial=false; bossNext=false; bossWon=false; restoreRun(); overtime=true; level=otRoll(); boss=false; startGame(); }
+$('overtimeBtn').addEventListener('click',function(){ audioInit(); SFX.click(); startOvertime(); });
 $('levelsBack').addEventListener('click',function(){ SFX.click(); $('levelsScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); });
 
 // ---------- Resorts: free-roam golf cart cruising (retirement savings decide which resorts you can live in) ----------
@@ -7825,11 +7903,11 @@ function rsHzList(R,from,to){   // obstacles are scattered at random distances (
 function rsHazards(R){
   const hs=rsHzList(R,R.x-60,R.x+60);
   for(let a=0;a<hs.length;a++){ const h=hs[a]; if(R.hz[h.i]) continue;
-    if(Math.abs(h.x-R.x)<48 && R.y<22){ R.hz[h.i]=R.t; R.v*=0.25; R.vy=Math.max(R.vy,2.6); if(R.y===0) R.y=0.01; tone(150,0.12,'square',0.07,70); pop(W*0.42+(h.x-R.x),GROUND+6,'rgba(230,220,200,.8)',4); if(h.k==='shroom'){ tripT=Math.max(tripT,260); showToast('🍄 Whoa... the colors!'); } }
+    if(Math.abs(h.x-R.x)<48 && R.y<22){ R.hz[h.i]=R.t; R.v*=0.25; R.vy=Math.max(R.vy,2.6); if(R.y===0) R.y=0.01; tone(150,0.12,'square',0.07,70); pop(W*0.5+(h.x-R.x),GROUND+6,'rgba(230,220,200,.8)',4); if(h.k==='shroom'){ tripT=Math.max(tripT,260); showToast('🍄 Whoa... the colors!'); } }
   }
 }
 function rsDrawHazards(R,T){
-  const cx=Math.round(W*0.42), by=GROUND+10, hs=rsHzList(R,R.x-cx-80,R.x+W-cx+80);
+  const cx=Math.round(W*0.5), by=GROUND+10, hs=rsHzList(R,R.x-cx-80,R.x+W-cx+80);
   for(let a=0;a<hs.length;a++){ const h=hs[a], hit=R.hz[h.i]; let dt=hit?T-hit:0; if(hit&&dt>40) continue;
     let sx=cx+(h.x-R.x), sy=by, rot=0; if(hit){ sx+=dt*3*(R.face); sy-=Math.sin(Math.min(1,dt/40)*Math.PI)*60; rot=dt*0.3; ctx.globalAlpha=1-dt/40; }
     ctx.fillStyle='rgba(0,0,0,.22)'; if(!hit){ ctx.beginPath(); ctx.ellipse(sx,by+1,22,5,0,0,7); ctx.fill(); }
@@ -7848,7 +7926,7 @@ function rsDrawHazards(R,T){
   }
 }
 function drawCart(R){
-  const x=Math.round(W*0.42), y=GROUND+8-R.y, f=R.face, bob=R.y>0?0:Math.sin(R.t*0.5)*Math.min(1.3,Math.abs(R.v)*0.28), O=findItem(OUTFITS,look.outfit)||OUTFITS[0], H0=findItem(HATS,look.hat)||HATS[0], skin=LOOK_SKINS[look.skin]||LOOK_SKINS[1], cc=(look.cart&&look.cart!=='resort')?findItem(CARTS,look.cart).c:rsCartColor(R.id);
+  const x=Math.round(W*0.5), y=GROUND+8-R.y, f=R.face, bob=R.y>0?0:Math.sin(R.t*0.5)*Math.min(1.3,Math.abs(R.v)*0.28), O=findItem(OUTFITS,look.outfit)||OUTFITS[0], H0=findItem(HATS,look.hat)||HATS[0], skin=LOOK_SKINS[look.skin]||LOOK_SKINS[1], cc=(look.cart&&look.cart!=='resort')?findItem(CARTS,look.cart).c:rsCartColor(R.id);
   ctx.fillStyle='rgba(0,0,0,'+(0.25*Math.max(0.3,1-R.y/120))+')'; ctx.beginPath(); ctx.ellipse(x,GROUND+11,74*Math.max(0.6,1-R.y/200),9,0,0,7); ctx.fill();
   ctx.save(); ctx.translate(x,y+bob); ctx.rotate(-f*R.vy*0.012); ctx.scale(f*1.2,1.2);
   // golf bag with clubs behind the seat
@@ -7863,7 +7941,7 @@ function drawCart(R){
   ctx.strokeStyle='#333'; ctx.lineWidth=3; ctx.beginPath(); ctx.moveTo(27,-50); ctx.lineTo(34,-66); ctx.stroke(); ctx.lineWidth=4; ctx.beginPath(); ctx.moveTo(30,-70); ctx.lineTo(38,-62); ctx.stroke();
   ctx.fillStyle='#ffe9a0'; ctx.beginPath(); ctx.arc(55,-38,4,0,7); ctx.fill();
   { // seated legs: thighs forward from the seat, shins down to the floor, shoes pointing the way the cart drives
-    const SHc=findItem(SHOES,look.shoes||'black'), shorts=look.legs==='shorts', pc=O.pants||'#3a4a6a';
+    const SHc=findItem(SHOES,look.shoes||'black'), shorts=look.legs==='shorts', pc=legColorOutfit(O,look).pants||'#3a4a6a';
     ctx.lineCap='round'; ctx.lineJoin='round';
     ctx.strokeStyle='rgba(30,25,40,.85)'; ctx.lineWidth=11.5; ctx.beginPath(); ctx.moveTo(-8,-35); ctx.lineTo(12,-37); ctx.stroke(); ctx.beginPath(); ctx.moveTo(12,-37); ctx.lineTo(17,-22); ctx.stroke();
     ctx.strokeStyle=pc; ctx.lineWidth=8.5; ctx.beginPath(); ctx.moveTo(-8,-35); ctx.lineTo(12,-37); ctx.stroke();
@@ -7887,10 +7965,10 @@ function resortUpdate(){
   if(R.hon>0) R.hon--;
   if(consume('throw')){ R.hon=26; rsHorn(); }
   if(consume('jump') && R.y===0){ R.vy=10.5; R.sq=0; tone(260,0.16,'sine',0.06,520); }
-  if(R.y>0||R.vy>0){ R.vy-=0.4; R.y+=R.vy; if(R.y<=0){ R.y=0; R.vy=0; pop(W*0.42,GROUND+10,'rgba(210,190,150,.7)',3); tone(110,0.08,'triangle',0.06,70); } }
+  if(R.y>0||R.vy>0){ R.vy-=0.4; R.y+=R.vy; if(R.y<=0){ R.y=0; R.vy=0; pop(W*0.5,GROUND+10,'rgba(210,190,150,.7)',3); tone(110,0.08,'triangle',0.06,70); } }
   rsHazards(R);
   consume('interact');
-  if(Math.abs(R.v)>1.5 && R.t%7===0) pop(W*0.42-R.face*40,GROUND+8,'rgba(210,190,150,.6)',1);
+  if(Math.abs(R.v)>1.5 && R.t%7===0) pop(W*0.5-R.face*40,GROUND+8,'rgba(210,190,150,.6)',1);
   for(let i=particles.length-1;i>=0;i--){ const q=particles[i]; q.x+=q.vx*0.3-R.v*0.9; q.y+=q.vy*0.3; q.vy+=0.1; if(--q.life<=0) particles.splice(i,1); }
 }
 function resortDraw(){
