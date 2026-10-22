@@ -3941,9 +3941,8 @@ const FACIAL=[['none','Clean'],['stubble','Stubble'],['stache','Mustache'],['goa
 const NECKLACES=[
   {id:'none',    name:'No necklace',   price:0},
   {id:'silver',  name:'Silver Chain',  c:'#d3d9e0', price:150, kind:'chain'},
-  {id:'gold',    name:'Gold Chain',    c:'#e6b800', price:250, kind:'chain', thick:true, pend:'coin'},
-    {id:'solidgold',name:'Solid Gold Chain',c:'#ffcf1f', price:600, kind:'chain', solid:true, pend:'nugget'},
-  {id:'dogtag',  name:'Dog Tag',       c:'#b8c0ca', price:175, kind:'chain', pend:'tag'},
+  {id:'gold',    name:'Gold Chain',    c:'#e6b800', price:250, kind:'chain'},   // same plain chain as the silver one, in gold
+    {id:'dogtag',  name:'Dog Tag',       c:'#b8c0ca', price:175, kind:'chain', pend:'tag'},
   {id:'locket',  name:'Heart Locket',  c:'#e6b800', price:225, kind:'chain', pend:'heart'},
   {id:'pearls',  name:'Pearl Necklace',c:'#f6f1e7', price:200, kind:'beads'},
   {id:'rbeads',  name:'Rainbow Beads', c:'#ff5f5f', price:175, kind:'beads', rainbow:true}
@@ -3957,13 +3956,10 @@ function drawNeck(N,x,y,bob){
     const cols=['#ff5f5f','#ffd54a','#4cd964','#2e86de','#9b59b6'];
     for(let i=0;i<=8;i++){ const q=pt(i/8); ctx.fillStyle=N.rainbow?cols[i%5]:N.c; ctx.beginPath(); ctx.arc(q[0],q[1],2.1,0,7); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.55)'; ctx.lineWidth=0.7; ctx.stroke(); }
   } else {
-    ctx.strokeStyle='rgba(30,25,40,.7)'; ctx.lineWidth=(N.solid?6.4:(N.thick?3.8:2.6)); ctx.beginPath(); ctx.moveTo(ax,ay); ctx.quadraticCurveTo(mx,my+8,bx,ay); ctx.stroke();
-    ctx.strokeStyle=N.c; ctx.lineWidth=(N.solid?4.6:(N.thick?2.6:1.5)); ctx.beginPath(); ctx.moveTo(ax,ay); ctx.quadraticCurveTo(mx,my+8,bx,ay); ctx.stroke();
-    if(N.solid){ ctx.strokeStyle='#a87a00'; ctx.lineWidth=4.6; ctx.setLineDash([1.2,3.4]); ctx.beginPath(); ctx.moveTo(ax,ay); ctx.quadraticCurveTo(mx,my+8,bx,ay); ctx.stroke(); ctx.setLineDash([]); ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=1.1; ctx.beginPath(); ctx.moveTo(ax+1,ay-1.4); ctx.quadraticCurveTo(mx,my+6.6,bx-1,ay-1.4); ctx.stroke(); }
-    if(N.thick){ ctx.strokeStyle='rgba(255,255,255,.55)'; ctx.setLineDash([2,3]); ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(ax,ay-0.6); ctx.quadraticCurveTo(mx,my+7.4,bx,ay-0.6); ctx.stroke(); ctx.setLineDash([]); }
+    ctx.strokeStyle='rgba(30,25,40,.7)'; ctx.lineWidth=2.6; ctx.beginPath(); ctx.moveTo(ax,ay); ctx.quadraticCurveTo(mx,my+8,bx,ay); ctx.stroke();
+    ctx.strokeStyle=N.c; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(ax,ay); ctx.quadraticCurveTo(mx,my+8,bx,ay); ctx.stroke();
     const py=ay+(my+8-ay)*0.5+1;   // lowest point of the chain
     if(N.pend==='coin'){ ctx.fillStyle=N.c; ctx.beginPath(); ctx.arc(x,py+3,3.4,0,7); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.75)'; ctx.lineWidth=1; ctx.stroke(); ctx.fillStyle='rgba(255,255,255,.6)'; ctx.beginPath(); ctx.arc(x-1,py+2,1,0,7); ctx.fill(); }
-    else if(N.pend==='nugget'){ ctx.fillStyle=N.c; ctx.beginPath(); ctx.moveTo(x-5,py+3); ctx.lineTo(x-2,py-1); ctx.lineTo(x+3,py-1); ctx.lineTo(x+6,py+3); ctx.lineTo(x+3,py+8); ctx.lineTo(x-3,py+8); ctx.closePath(); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.8)'; ctx.lineWidth=1.2; ctx.stroke(); ctx.fillStyle='rgba(255,255,255,.7)'; ctx.fillRect(x-3,py+1,3,1.5); }
     else if(N.pend==='tag'){ ctx.fillStyle=N.c; rr(x-3,py,6,7,1.5); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.75)'; ctx.lineWidth=1; ctx.stroke(); }
     else if(N.pend==='heart'){ ctx.fillStyle=N.c; ctx.beginPath(); ctx.moveTo(x,py+7); ctx.bezierCurveTo(x-6,py+2,x-3,py-1,x,py+2); ctx.bezierCurveTo(x+3,py-1,x+6,py+2,x,py+7); ctx.fill(); ctx.strokeStyle='rgba(30,25,40,.75)'; ctx.lineWidth=1; ctx.stroke(); }
   }
