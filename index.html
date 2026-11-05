@@ -2060,6 +2060,7 @@ function update(){
 
   updatePrompt();
   if(tutorial) tutorialTick();
+  if(state.sack==='armed') sackTick();
   if(!boss && state.delivered>=state.goal && nearTruck() && !state.over) endGame(true);
   if(state.hp<=0 && !state.over) endGame(false);
   syncHUD();
@@ -2069,6 +2070,17 @@ function update(){
 function truckRoof(){ if(!truck || (apt && apt.cur>=0)) return null; return {x:truck.x+6,y:truck.y+6+(look.truck==='lowrider'?14:0),w:truck.w-12,h:6,kind:'truckroof',moving:false}; }
 function standables(){ const r=truckRoof(), pl=platforms.filter(function(p){ return !p.broken; }); return r ? pl.concat([r]) : pl; }
 function onTruckRoof(){ const r=truckRoof(); return !!r && player.onGround && Math.abs(player.y-r.y)<2 && player.x>r.x-4 && player.x<r.x+r.w+4; }
+// Dropped mail bag: some time before the last delivery the bag falls off back at the truck. You keep what you delivered,
+// but the bag is empty until you run back and load up at the truck.
+function sackTick(){
+  if(state.delivered>=state.goal){ state.sack=null; return; }
+  if(state.delivered<state.sackAt) return;
+  if(state.sackWait>0){ state.sackWait--; return; }
+  if(!player.onGround || player.x<truck.x+truck.w+400) return;   // only once you are well away from the truck
+  state.sack='lost'; state.bag=0;
+  showBanner('🎒 You dropped your mail bag!','It fell off back at the truck. Run back and load up before you can deliver again. Your deliveries so far still count.',5000);
+  SFX.damage(); tone(330,0.15,'square',0.05); setTimeout(function(){ tone(260,0.2,'square',0.05); },160);
+}
 function nearTruck(){ if(apt && apt.cur>=0) return false; return Math.abs(player.x-(truck.x+truck.w/2))<80 && player.y>truck.y-20; }
 function atMailbox(h){ return Math.abs(player.x-h.mailX)<46 && Math.abs(player.y-h.mailTop)<110; }
 function atCrate(){ return !!(tree && tree.crate) && Math.abs(player.x-tree.crate.x)<40 && Math.abs(player.y-tree.crate.y)<20; }
@@ -2083,12 +2095,14 @@ function handleInteract(){
   if(atCrate()){ if(state.bag<bagMax()){ state.bag=bagMax(); pop(player.x,player.y-30,'#3498db',6); SFX.pickup(); } else SFX.click(); return; }
   if(nearTruck()){
     if(!boss && state.delivered>=state.goal){ if(!state.over) endGame(true); return; }
+    if(state.sack==='lost'){ state.sack=null; showBanner('🎒 Got your bag back!','Back to your route.',2200); }
     state.bag=bagMax(); if(!tutorial) state.ammo=ammoCap(); pop(player.x,player.y-30,'#3498db',6); SFX.pickup(); return;
   }
   for(let i=0;i<houses.length;i++){
     const h=houses[i];
     if(!h.delivered && atMailbox(h)){
-      if(state.bag>0){ state.bag--; h.delivered=true; state.delivered++; addCoins(7); if(state.delivered===state.goal && !tutorial){ setTimeout(spawnReturnWave,400); showBanner('🏁 Route complete!','All '+state.goal+' packages delivered. Head back to the truck to finish your shift.',4500,true); } stat('delivered'); if(tree) stat('treehouses'); pop(h.mailX,h.mailTop-58,'#27ae60',10); SFX.deliver(); }
+      if(state.sack==='lost'){ SFX.click(); showBanner('🎒 No bag!','Your mail bag is back at the truck.',1800); }
+      else if(state.bag>0){ state.bag--; h.delivered=true; state.delivered++; addCoins(7); if(state.delivered===state.goal && !tutorial){ setTimeout(spawnReturnWave,400); showBanner('🏁 Route complete!','All '+state.goal+' packages delivered. Head back to the truck to finish your shift.',4500,true); } stat('delivered'); if(tree) stat('treehouses'); pop(h.mailX,h.mailTop-58,'#27ae60',10); SFX.deliver(); }
       return;
     }
   }
@@ -2108,10 +2122,10 @@ function updatePrompt(){
   }
   if(boss && B && B.state==='intro') msg='⚔ Get ready…';
   if(msg){} else if(player.swing) msg='Jump to release! ◀ ▶ to pump';
-  else if(nearTruck()){ if(boss){ if(state.ammo<ammoCap()) msg='Press 📦 — Restock mail ✉️'; } else if(state.delivered>=state.goal) msg='Press 📦 — Finish Shift! 🎉'; else if(state.bag<BAG_MAX) msg='Press 📦 — Load packages 📦'; }
+  else if(nearTruck()){ if(boss){ if(state.ammo<ammoCap()) msg='Press 📦 — Restock mail ✉️'; } else if(state.delivered>=state.goal) msg='Press 📦 — Finish Shift! 🎉'; else if(state.sack==='lost') msg='Press 📦 — Pick up your mail bag 🎒'; else if(state.bag<BAG_MAX) msg='Press 📦 — Load packages 📦'; }
   else if(nearSwing()) msg='Press ⤒ to grab the rope 🪢';
   else if(atCrate()) msg = state.bag<bagMax() ? 'Press 📦 — Restock from the mail pulley 📦' : 'Mail pulley — your bag is full';
-  else { for(let i=0;i<houses.length;i++){ const h=houses[i]; if(!h.delivered && atMailbox(h)){ msg= state.bag>0?'Press 📦 — Deliver 📬':'Bag empty! Back to truck'; break; } } }
+  else { for(let i=0;i<houses.length;i++){ const h=houses[i]; if(!h.delivered && atMailbox(h)){ msg= state.sack==='lost'?'Your bag is back at the truck ◀':state.bag>0?'Press 📦 — Deliver 📬':'Bag empty! Back to truck'; break; } } }
   if(!settings.prompts && !tutorial) msg='';
   if(msg){ hudTE(promptEl,msg); hudC(promptEl,'hidden',false); } else hudC(promptEl,'hidden',true);
 }
@@ -2328,7 +2342,7 @@ function draw(){
   drawWeather(K,T);
   drawAmbientLife(K,T);
   drawLoopMood(K,T);
-  if(state.sack==='lost'){ const a=0.75+0.25*Math.sin(T*0.2); ctx.save(); ctx.globalAlpha=a; ctx.font='bold 15px system-ui,sans-serif'; ctx.textAlign='center'; const msg='🎒 You dropped your sack! Run back to the truck ◀'; const w=ctx.measureText(msg).width+24; ctx.fillStyle='rgba(20,20,30,.82)'; rr(W/2-w/2,52,w,28,14); ctx.fill(); ctx.fillStyle='#ffd45e'; ctx.fillText(msg,W/2,71); ctx.restore(); }
+  if(state.sack==='lost'){ const a=0.75+0.25*Math.sin(T*0.2); ctx.save(); ctx.globalAlpha=a; ctx.font='bold 15px system-ui,sans-serif'; ctx.textAlign='center'; const msg='🎒 You dropped your bag! Run back to the truck ◀'; const w=ctx.measureText(msg).width+24; let y0=52; try{ const cr=cv.getBoundingClientRect(), hb=$('hud').getBoundingClientRect(), tb=$('tutBox'); y0=Math.max(y0,hb.bottom-cr.top+6); if(!tb.classList.contains('hidden')) y0=Math.max(y0,tb.getBoundingClientRect().bottom-cr.top+6); }catch(e){} ctx.fillStyle='rgba(20,20,30,.82)'; rr(W/2-w/2,y0,w,28,14); ctx.fill(); ctx.fillStyle='#ffd45e'; ctx.fillText(msg,W/2,y0+19); ctx.restore(); }
 }
 
 
@@ -7304,7 +7318,8 @@ function startGame(){
   if(boss && B){ showBanner('⚔ Boss fight', B.D.name+', '+B.D.title+'. Hit it with mail until its health runs out. Watch for the ! before each attack. Mail sacks drop in, and the truck restocks your ammo.',3000); setTimeout(function(){ if(boss) $('tutBox').classList.add('hidden'); },3000); }
   if(apt) showBanner((BUILDING_KINDS[theme.kind]?BUILDING_KINDS[theme.kind].icon+' '+BUILDING_KINDS[theme.kind].word:'🏢 Apartment')+' delivery','Go inside '+apt.name+' and deliver to every door. Take the elevator between floors, and restock your bag at the lobby mailroom.',6000);
   if(isRetLevel(level) && subLevel(level)===1) showBanner('🏖 Retirement Days','Welcome to '+retPlaceName()+'. No rush: a few friendly deliveries, hardly any trouble, and all the time in the world.',7000);
-  state.sack=(pendingSack && !boss && !tutorial && !apt && !hidden && !isRetLevel(level) && theme.kind!=='treehouse')?'armed':null; if(state.sack) pendingSack=false;
+  const sackOK=!boss && !tutorial && !apt && !hidden && !isRetLevel(level) && theme.kind!=='treehouse' && state.goal>=2;
+  state.sack=(sackOK && (pendingSack || Math.random()<0.025))?'armed':null; if(state.sack){ pendingSack=false; state.sackAt=Math.floor(Math.random()*state.goal); state.sackWait=120+Math.floor(Math.random()*780); }
   const mood=loopMood(); if(mood && !boss && !tutorial && biomeIndex(level)===0 && subLevel(level)===1) showBanner('🔁 Loop '+(loopIndex(level)+1)+': '+mood.name, mood.tip, 4500);
   else if(specialLevel() && !boss && !tutorial){ const si=SPECIAL_INFO[specialLevel()]; showBanner(si.t+' · 💰 Double pay!', si.d, 3500); }
   else if(!boss && !apt && !tutorial && !state.replay && subLevel(level)===1 && SIGNATURE[theme.kind]) showBanner('🆕 New in '+theme.name, SIGNATURE[theme.kind].tip, 6000);
@@ -7344,7 +7359,6 @@ function quitToMenu(){
   $('startScreen').classList.remove('hidden'); reset(); draw(); updateStartButton();
 }
 function endGame(won,skipHid){
-  if(won && !boss && !tutorial && !apt && !hidden && !isRetLevel(level) && theme.kind!=='treehouse' && state.delivered>=state.goal && !state.sackRedoDone && Math.random()<0.025){ startSackDetour(); return; }
   if(hidden){ finishHidden(won); return; }
   if(won && !skipHid && shouldHidden()){ startHiddenDetour(); return; }
   elevOpen=false; $('elevPanel').classList.add('hidden'); $('fadeBox').classList.remove('on');
@@ -7538,7 +7552,7 @@ function showLifeEvent(marketOnly){
   const rec=(progress.evRecent||[]); let e=null; for(let t=0;t<12;t++){ const c=pool[Math.floor(Math.random()*pool.length)]; if(c.ret<0 && Math.random()<0.6) continue;   /* retirement-plan losses show up about 40% as often as before */
     if(rec.indexOf(c.t)<0){ e=c; break; } } if(!e) e=pool[Math.floor(Math.random()*pool.length)];
   progress.evRecent=rec.concat([e.t]).slice(-14); let line='';
-  if(e.sack){ pendingSack=true; line='🎒 Next shift restarts at the end'; } else
+  if(e.sack){ pendingSack=true; line='🎒 You will drop your bag on your next shift'; } else
   if(e.ret){ const d=Math.round((progress.retire||0)*e.ret); progress.retire=Math.max(0,(progress.retire||0)+d); line=(d>=0?'+':'−')+'🪙 '+Math.abs(d)+' in retirement'; }
   else { let amt=Math.max(Math.round(e.min*(1+level/60)),Math.round(bankCoins*e.pct)); if(e.k<0){ const paid=Math.min(amt,bankCoins); bankCoins-=paid; line='−🪙 '+paid+(paid<amt?' (all you had)':''); } else { bankCoins+=amt; line='+🪙 '+amt; } }
   saveProgress(); $('endCoins').textContent=bankCoins;
