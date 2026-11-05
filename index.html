@@ -7312,6 +7312,7 @@ function pauseGame(){
 }
 function resumeGame(){ if(!paused) return; paused=false; running=true; $('pauseScreen').classList.add('hidden'); musicStart(musicFor()); cancelAnimationFrame(raf); lastFrameT=0; frameAcc=0; loop(); }
 function quitToMenu(){
+  logLeftShift();
   if(hidden){ if(hidSave) bankCoins=hidSave.bank; hidden=null; hidSave=null; $('hiddenScreen').classList.add('hidden'); }
   menuMusic(50); resortMode=false; arcadeMode=false; setArcadeUI(false); AR=null; cv.style.cursor=''; ARSAVE=null; $('hud').classList.remove('resort');
   boss=false; bossNext=false; bossWon=false; $('bossBar').classList.add('hidden');
@@ -8965,9 +8966,13 @@ function openAch(){
 
 // ---------- Leaderboards ----------
 // Every record goes through lbSubmit(). Today it keeps a local copy and queues the entry; when the online service ships, send progress.lbQueue to it from here.
-function lbSubmit(board,value){ try{ progress.lbQueue=(progress.lbQueue||[]).concat([{b:board,v:value,n:progress.playerName||'',t:Date.now()}]).slice(-60); }catch(e){} }
+function lbSubmit(board,value){ try{ progress.lbQueue=(progress.lbQueue||[]).filter(function(e){ return board!=='playTime' || e.b!=='playTime'; }).concat([{b:board,v:value,n:progress.playerName||'',t:Date.now()}]).slice(-60); }catch(e){} }
+// Total play time: each shift's seconds are counted once, whether it is finished, quit, restarted or left when the app goes to the background
+function logPlayTime(){ if(!state) return; const d=(state.time||0)-(state.logged||0); if(d>0){ progress.playSec=(progress.playSec||0)+d; state.logged=state.time; } }
+function logLeftShift(){ try{ if(state && !state.over && !tutorial && !arcadeMode){ logPlayTime(); saveProgress(); } }catch(e){} }
+document.addEventListener('visibilitychange',function(){ if(document.hidden) logLeftShift(); });
 function lbRecordRun(won){
-  progress.playSec=(progress.playSec||0)+(state?state.time:0);
+  logPlayTime(); lbSubmit('playTime',Math.round(progress.playSec||0));
   if(won && state && state.time>1 && !hidden){ progress.lvTimes=progress.lvTimes||{}; const k=(boss?'b':'')+level, t=Math.round(state.time*10)/10;
     if(!progress.lvTimes[k] || t<progress.lvTimes[k]){ progress.lvTimes[k]=t; lbSubmit('level:'+k,t); } }
   saveProgress();
@@ -9146,7 +9151,7 @@ $('pauseBtn').addEventListener('click',pauseGame);
 $('muteBtn').addEventListener('click',function(ev){ ev.preventDefault(); toggleMute(); });
 try{ if(localStorage.getItem('pp_muted')==='1'){ muted=true; $('muteBtn').textContent='🔇'; } }catch(e){}
 $('resumeBtn').addEventListener('click',function(){ SFX.click(); resumeGame(); });
-$('restartBtn').addEventListener('click',function(){ SFX.click(); if(arcadeMode) arcadeAbort(); else if(resortMode&&RS) startResort(RS.p); else startGame(); });
+$('restartBtn').addEventListener('click',function(){ SFX.click(); if(arcadeMode) arcadeAbort(); else{ logLeftShift(); if(resortMode&&RS) startResort(RS.p); else startGame(); } });
 $('quitBtn').addEventListener('click',function(){ SFX.click(); quitToMenu(); });
 $('endMenuBtn').addEventListener('click',function(){ SFX.click(); quitToMenu(); });
 applyCtlAlpha();
