@@ -260,6 +260,8 @@
   .lv-loop[open] > summary::before { transform:rotate(90deg); }
   .lv-loop > .lv-hood { margin:6px 10px 10px; }
 #hud.resort .pill:not(.hudbtn){display:none !important}
+#controls.ctl-peek{z-index:70} #controls.ctl-peek, #controls.ctl-peek *{pointer-events:none !important}
+#settingsScreen.peek{background:rgba(10,18,28,.45);transition:background .2s}
 #hud.resort ~ #controls [data-key=interact]{display:none}
 
   /* iPhone Dynamic Island / notch: keep every stat bar clear of it */
@@ -2103,7 +2105,7 @@ function updatePrompt(){
   else if(atCrate()) msg = state.bag<bagMax() ? 'Press 📦 — Restock from the mail pulley 📦' : 'Mail pulley — your bag is full';
   else { for(let i=0;i<houses.length;i++){ const h=houses[i]; if(!h.delivered && atMailbox(h)){ msg= state.bag>0?'Press 📦 — Deliver 📬':'Bag empty! Back to truck'; break; } } }
   if(!settings.prompts && !tutorial) msg='';
-  if(msg){ promptEl.textContent=msg; promptEl.classList.remove('hidden'); } else promptEl.classList.add('hidden');
+  if(msg){ hudTE(promptEl,msg); hudC(promptEl,'hidden',false); } else hudC(promptEl,'hidden',true);
 }
 
 // ---------- Render ----------
@@ -5781,8 +5783,9 @@ function loadScene(i){
 }
 function goToScene(i,px,slow,after){
   if(apt.transitioning) return; apt.transitioning=true;
-  const fade=$('fadeBox'); fade.style.transitionDuration=(slow?380:200)+'ms'; fade.classList.add('on');
+  const fade=$('fadeBox'), A=apt, S=state; fade.style.transitionDuration=(slow?380:200)+'ms'; fade.classList.add('on');
   setTimeout(function(){
+    if(apt!==A || state!==S || !state || state.over){ fade.classList.remove('on'); A.transitioning=false; return; }   // the shift ended or was quit during the fade
     saveScene(); loadScene(i);
     player.x=px; player.y=GROUND; player.vx=0; player.vy=0; player.onGround=true; player.swing=null; state.invuln=Math.max(state.invuln,40);
     const maxCam=Math.max(0,LEVEL_LEN-W); camX=Math.max(0,Math.min(maxCam,player.x-W*0.5));
@@ -5823,7 +5826,7 @@ window.__elevKey=function(ev){
 function showBanner(step,text,ms,force){
   if(!settings.hints && !tutorial && !force) return;   // force: warnings that matter (like the dropped mail sack) always show
   const box=$('tutBox'); $('tutStep').textContent=step; $('tutText').textContent=text;
-  box.classList.remove('hidden'); box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop');
+  box.classList.remove('hidden'); box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop'); placeTutBox();
   clearTimeout(bannerTimer); bannerTimer=setTimeout(function(){ if(!tutorial) box.classList.add('hidden'); }, ms||5000);
 }
 
@@ -7238,19 +7241,24 @@ function drawBoss(){
 
 // ---------- HUD ----------
 function $(id){ return document.getElementById(id); }
+// HUD writes only touch the page when a value really changes (it runs every frame, and rewriting the same text makes phones redo layout)
+function hudTE(e,v){ if(!e) return; v=String(v); if(e._hv!==v){ e._hv=v; e.textContent=v; } }
+function hudT(id,v){ hudTE($(id),v); }
+function hudC(e,c,on){ if(e && e.classList.contains(c)!==!!on) e.classList.toggle(c,!!on); }
+function hudS(e,k,v){ if(!e) return; v=String(v); const c='_hs'+k; if(e[c]!==v){ e[c]=v; e.style[k]=v; } }
 function syncHUD(){
-  { const fp=$('floorPill'); if(apt && apt.cur>=0){ fp.classList.remove('hidden'); $('floorNum').textContent=floorName(apt.cur); } else fp.classList.add('hidden'); }
-  $('themeName').textContent=(hidden?HIDDEN_LEVELS[hidden.idx].icon+' '+HIDDEN_LEVELS[hidden.idx].name:(tutorial?'Tutorial':(boss?'Boss':theme.name)))+(state&&state.replay?' ↻':''); $('subLevel').textContent=(tutorial||boss||hidden)?'':subLevel(level); $('subMax').textContent=(tutorial||boss||hidden)?'':'/10';
-  $('housesPill').classList.toggle('hidden',!!boss);
-  if(boss && B){ $('bossBar').classList.remove('hidden'); $('bossName').textContent=B.D.name; $('bossTitle').textContent=B.D.title; $('bossFill').style.width=Math.max(0,B.hp/B.maxhp*100)+'%'; $('bossBar').classList.toggle('angry',B.hp<=B.maxhp/2); }
-  else $('bossBar').classList.add('hidden');
-  $('bag').textContent=state.bag; $('bagMax').textContent=bagMax();
-  { const tn=$('throwNTag'); if(tn){ const mx=1+(upg.multi||0), c=Math.min(throwN,mx); tn.textContent=mx>1?' ×'+c:''; } }
-  const am=$('ammo'); am.textContent=state.ammo; am.style.color=state.ammo===0?'#e74c3c':(state.ammo<=4?'#f39c12':'#ffe14d');
-  $('delivered').textContent=state.delivered; $('goal').textContent=state.goal;
-  $('hp').textContent=Math.max(0,state.hp);
-  $('coins').textContent=state.coins; $('time').textContent=Math.floor(state.time);
-  const fl=$('stamFill'); fl.style.width=player.stamina+'%'; fl.style.background=player.exhausted?'#e74c3c':(player.stamina<35?'#f39c12':'#2ecc71');
+  { const fp=$('floorPill'); if(apt && apt.cur>=0){ hudC(fp,'hidden',false); hudT('floorNum',floorName(apt.cur)); } else hudC(fp,'hidden',true); }
+  hudT('themeName',(hidden?HIDDEN_LEVELS[hidden.idx].icon+' '+HIDDEN_LEVELS[hidden.idx].name:(tutorial?'Tutorial':(boss?'Boss':theme.name)))+(state&&state.replay?' ↻':'')); hudT('subLevel',(tutorial||boss||hidden)?'':subLevel(level)); hudT('subMax',(tutorial||boss||hidden)?'':'/10');
+  hudC($('housesPill'),'hidden',!!boss);
+  if(boss && B){ hudC($('bossBar'),'hidden',false); hudT('bossName',B.D.name); hudT('bossTitle',B.D.title); hudS($('bossFill'),'width',Math.max(0,B.hp/B.maxhp*100)+'%'); hudC($('bossBar'),'angry',B.hp<=B.maxhp/2); }
+  else hudC($('bossBar'),'hidden',true);
+  hudT('bag',state.bag); hudT('bagMax',bagMax());
+  { const tn=$('throwNTag'); if(tn){ const mx=1+(upg.multi||0), c=Math.min(throwN,mx); hudTE(tn,mx>1?' ×'+c:''); } }
+  const am=$('ammo'); hudTE(am,state.ammo); hudS(am,'color',state.ammo===0?'#e74c3c':(state.ammo<=4?'#f39c12':'#ffe14d'));
+  hudT('delivered',state.delivered); hudT('goal',state.goal);
+  hudT('hp',Math.max(0,state.hp));
+  hudT('coins',state.coins); hudT('time',Math.floor(state.time));
+  const fl=$('stamFill'); hudS(fl,'width',player.stamina+'%'); hudS(fl,'background',player.exhausted?'#e74c3c':(player.stamina<35?'#f39c12':'#2ecc71'));
 }
 
 // ---------- Loop / lifecycle ----------
@@ -9119,8 +9127,16 @@ function playSample(kind){
 [['volMusic','music'],['volSfx','sfx'],['volVoices','voices']].forEach(function(p){
   $(p[0]).addEventListener('input',function(){ settings[p[1]]=$(p[0]).value/100; $(p[0]+'Val').textContent=$(p[0]).value+'%'; applySettings(); playSample(p[1]); });
 });
-$('ctlScale').addEventListener('input',function(){ settings.ctlScale=$('ctlScale').value/100; $('ctlScaleVal').textContent=$('ctlScale').value+'%'; applySettings(); });
-$('ctlAlpha').addEventListener('input',function(){ settings.ctlAlpha=$('ctlAlpha').value/100; $('ctlAlphaVal').textContent=$('ctlAlpha').value+'%'; applySettings(); });
+// Live preview: while a button slider moves, the on-screen buttons show on top of Settings (look-only, they can't be tapped)
+let ctlPeekT=null, ctlPeekWasHidden=false;
+function ctlPeek(){ const c=$('controls'), st=$('settingsScreen'); if(!c||!st) return;
+  if(!c.classList.contains('ctl-peek')){ ctlPeekWasHidden=c.classList.contains('hidden'); c.classList.remove('hidden'); c.classList.add('ctl-peek'); st.classList.add('peek'); }
+  clearTimeout(ctlPeekT); ctlPeekT=setTimeout(ctlPeekEnd,1600); }
+function ctlPeekEnd(){ clearTimeout(ctlPeekT); const c=$('controls'), st=$('settingsScreen'); if(!c||!c.classList.contains('ctl-peek')) return;
+  c.classList.remove('ctl-peek'); if(st) st.classList.remove('peek'); if(ctlPeekWasHidden) c.classList.add('hidden'); }
+$('settingsDone').addEventListener('click',ctlPeekEnd);
+$('ctlScale').addEventListener('input',function(){ settings.ctlScale=$('ctlScale').value/100; $('ctlScaleVal').textContent=$('ctlScale').value+'%'; applySettings(); ctlPeek(); });
+$('ctlAlpha').addEventListener('input',function(){ settings.ctlAlpha=$('ctlAlpha').value/100; $('ctlAlphaVal').textContent=$('ctlAlpha').value+'%'; applySettings(); ctlPeek(); });
 $('settingsBtn').addEventListener('click',function(){ SFX.click(); openSettings('startScreen'); });
 $('pauseSettingsBtn').addEventListener('click',function(){ SFX.click(); openSettings('pauseScreen'); });
 function syncToggles(){ [['togHints','hints'],['togPrompts','prompts'],['togArrows','arrows'],['togDtSprint','dtSprint']].forEach(function(p){ const b=$(p[0]); b.classList.toggle('on',!!settings[p[1]]); b.setAttribute('aria-checked',settings[p[1]]?'true':'false'); }); ppStoreRender(); }
