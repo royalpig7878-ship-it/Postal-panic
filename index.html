@@ -242,7 +242,7 @@
   .hidden { display:none !important; }
   .hudbtn { pointer-events:auto; cursor:pointer; border:none; color:#fff; font:inherit; font-weight:bold; }
   .shop-row { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,.07); border-radius:12px; padding:8px 12px; }
-  .shop-row .ico { font-size:26px; }
+  .shop-row .ico { font-size:26px; flex:0 0 36px; width:36px; text-align:center; line-height:1; }
   .shop-row .info { flex:1; text-align:left; }
   .shop-row .info .nm { font-weight:bold; font-size:15px; }
   .shop-row .info .ds { font-size:12px; opacity:.75; }
@@ -1465,8 +1465,8 @@ const UPGRADES=[
   // Tuned so a steady player buys the whole shop (upgrades ~120k + cosmetics ~45k) by about loop 6 (roughly 30 hours); the last tiers cost 8k-16k and every coin after that feeds the retirement plan.
   {key:'bag',   name:'Bigger Bag',   icon:'📦', desc:'+1 package slot',  max:6, base:90,  mult:2.8},
   {key:'boots', name:'Faster Boots', icon:'👟', desc:'+5% walk speed',   max:5, base:100, mult:3.3},
-  {key:'armor', name:'Armor',        icon:'🛡', desc:'+1 max health',     max:4, base:125, mult:4.8},
-  {key:'ammo',  name:'Ammo Belt',    icon:'✉', desc:'+5 ammo capacity',  max:5, base:70,  mult:3.3},
+  {key:'armor', name:'Armor',        icon:'🛡️', desc:'+1 max health',     max:4, base:125, mult:4.8},
+  {key:'ammo',  name:'Ammo Belt',    icon:'✉️', desc:'+5 ammo capacity',  max:5, base:70,  mult:3.3},
   {key:'dmg',   name:'Power Mail',   icon:'💥', desc:'+1 damage per letter. Enemies and bosses get a little tougher to match, but every level still hits much harder', max:4, base:160, mult:3.9},
   {key:'stam',  name:'Stamina',      icon:'💨', desc:'Sprint longer',     max:4, base:90,  mult:4.3},
   {key:'fire',  name:'Rapid Fire',   icon:'🔥', desc:'Throw mail faster · helps in the Arcade too', max:5, base:80, mult:3.2},
@@ -1482,7 +1482,7 @@ const REPLAY_RATE=0.1;
 const PROGRESS_EMPTY=function(){ return {done:{},bosses:{},coins:0,upg:null,retire:0,retiredTo:null}; };
 let progress=PROGRESS_EMPTY();
 function loadProgress(){ try{ const p=JSON.parse(localStorage.getItem('pp_progress')||'null'); if(p) progress=Object.assign(PROGRESS_EMPTY(),p); }catch(e){} }
-function saveProgress(){ progress.coins=bankCoins; progress.upg=Object.assign({},upg); try{ localStorage.setItem('pp_progress',JSON.stringify(progress)); }catch(e){} }
+function saveProgress(){ if(!tutorial){ progress.coins=bankCoins; progress.upg=Object.assign({},upg); } try{ localStorage.setItem('pp_progress',JSON.stringify(progress)); }catch(e){} }
 function frontier(){ for(let L=1;L<100000;L++){ if(!progress.done[L]) return {level:L,boss:false}; if(L%10===0 && !progress.bosses[L]) return {level:L,boss:true}; } return {level:1,boss:false}; }
 function lkey(L,b){ return L*2+(b?1:0); }
 function isUnlocked(L,b){ if(devMode) return true; const f=frontier(); return lkey(L,b)<=lkey(f.level,f.boss); }
@@ -1566,9 +1566,17 @@ const TUT_STEPS=[
   {t:'Stand by the 📬 mailbox and press 📦 to deliver', done:function(){ return state.delivered>=state.goal; }},
   {t:'Delivered! Head back to the 🚚 truck to finish. Tap 💨 to sprint', done:function(){ return false; }}
 ];
+function placeTutBox(){
+  const box=$('tutBox'), hud=$('hud'); if(!box || !hud || box.classList.contains('hidden')) return;
+  let b=hud.getBoundingClientRect().bottom;
+  ['muteBtn','pauseBtn'].forEach(function(id){ const e=$(id); if(e){ const q=e.getBoundingClientRect(); if(q.height && q.bottom>b) b=q.bottom; } });
+  const par=box.offsetParent, top=par?par.getBoundingClientRect().top:0;
+  box.style.top=Math.round(b-top+6)+'px';
+}
+window.addEventListener('resize',function(){ setTimeout(placeTutBox,80); }); window.addEventListener('orientationchange',function(){ setTimeout(placeTutBox,300); });
 function showTutStep(){
   const box=$('tutBox'); $('tutStep').textContent='Tutorial · step '+(tutStep+1)+' of '+TUT_STEPS.length; $('tutText').textContent=TUT_STEPS[tutStep].t;
-  box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop');
+  box.classList.remove('pop'); void box.offsetWidth; box.classList.add('pop'); placeTutBox(); setTimeout(placeTutBox,60);
 }
 function tutorialTick(){
   if(tutStep<TUT_STEPS.length-1 && TUT_STEPS[tutStep].done()){ tutStep++; SFX.ammo(); showTutStep(); }
@@ -8893,7 +8901,7 @@ let achQueue=[], achShowing=false, achQuiet=false;
 function achCheck(statName){
   let paid=0, n=0;
   ACHS.forEach(function(a){ if(a.stat!==statName || ach.got[a.id]) return; if((ach.stats[a.stat]||0)>=a.goal){ ach.got[a.id]=Date.now(); paid+=a.coins; n++; if(!achQuiet) achQueue.push(a); } });
-  if(paid){ bankCoins+=paid; if(state && !state.over) state.coins+=paid; saveProgress(); syncCoinsUI(); }
+  if(paid){ if(tutorial) progress.coins=(progress.coins||0)+paid; else bankCoins+=paid; if(state && !state.over) state.coins+=paid; saveProgress(); syncCoinsUI(); }
   saveAch(); if(n){ achBtnLabel(); if(!achQuiet) achNext(); }
   return paid;
 }
@@ -9120,6 +9128,20 @@ $('elevCancel').addEventListener('click',function(){ SFX.click(); closeElevator(
 $('tutorialBtn').addEventListener('click',function(){ audioInit(); SFX.click(); tutorial=true; level=1; bankCoins=0; upg={bag:0,boots:0,armor:0,ammo:0,stam:0,dj:0,fire:0,tj:0,dmg:0,multi:0}; $('startScreen').classList.add('hidden'); startGame(); });
 $('howToBtn').addEventListener('click',function(){ SFX.click(); $('startScreen').classList.add('hidden'); $('howToScreen').classList.remove('hidden'); });
 $('howToBack').addEventListener('click',function(){ SFX.click(); $('howToScreen').classList.add('hidden'); $('startScreen').classList.remove('hidden'); });
+// Android Back button: MainActivity calls window.ppBack(). It pauses a shift, closes the top screen like its own Back/Done button,
+// and only answers 'exit' on the title screen (the app then goes to the background instead of closing).
+const BACK_MAP=[['adScreen',null],['hiddenScreen',null],['resetScreen','resetCancel'],['settingsScreen','settingsDone'],['retireScreen','retKeep'],['lifeScreen','lifeOk'],
+  ['arcadeEnd','arcBack'],['elevPanel','elevCancel'],['howToScreen','howToBack'],['modeScreen','modeBack'],['lookScreen','lookBack'],['levelsScreen','levelsBack'],
+  ['lbScreen','lbBack'],['achScreen','achBack'],['radioScreen','radioBack'],['shopScreen','shopDone'],['pauseScreen','resumeBtn'],['endScreen','endMenuBtn']];
+window.ppBack=function(){
+  try{
+    if(running && !paused){ pauseGame(); return 'ok'; }
+    for(let i=0;i<BACK_MAP.length;i++){ const s=$(BACK_MAP[i][0]); if(s && !s.classList.contains('hidden')){ const b=BACK_MAP[i][1] && $(BACK_MAP[i][1]); if(b && b.offsetParent!==null && !b.disabled) b.click(); return 'ok'; } }
+    const sp=$('splash'); if(sp && !sp.classList.contains('gone')) return 'exit';
+    if(!$('startScreen').classList.contains('hidden')) return 'exit';
+  }catch(e){}
+  return 'ok';
+};
 $('pauseBtn').addEventListener('click',pauseGame);
 $('muteBtn').addEventListener('click',function(ev){ ev.preventDefault(); toggleMute(); });
 try{ if(localStorage.getItem('pp_muted')==='1'){ muted=true; $('muteBtn').textContent='🔇'; } }catch(e){}
