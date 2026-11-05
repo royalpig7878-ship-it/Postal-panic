@@ -519,6 +519,13 @@
       <div class="btn-stack" style="width:100%"><button class="menu-btn ghost" id="retKeep">Keep going</button></div>
     </div>
   </div>
+  <div id="resumeScreen" class="overlay hidden" style="z-index:30">
+    <div class="panel" style="width:min(380px,92vw);text-align:center">
+      <h2 style="font-size:24px;margin:2px 0 4px">📬 Finish your shift?</h2>
+      <p id="resumeText" style="font-size:15px;margin:4px 0 10px"></p>
+      <div class="btn-stack" style="width:100%"><button class="menu-btn green" id="resumeYes">▶  Resume shift</button><button class="menu-btn ghost" id="resumeNo">No thanks</button></div>
+    </div>
+  </div>
   <div id="toast" class="hidden"></div>
   <div id="achPop"><span class="ai"></span><div><div class="at">🏆 Achievement unlocked</div><div class="an"></div></div><span class="ar"></span></div>
   <div id="lbScreen" class="overlay hidden">
@@ -1316,7 +1323,8 @@ function menuMusic(delay){ setTimeout(function(){ if(!running && !paused && actx
     const fresh=function(){ if(!running && !paused){ musicStop(); musicStart('menu'); } };   // sound was blocked until now: start the menu music fresh inside this tap
     if(was==='running'){ if(!running && !paused) musicStart('menu'); }
     else if(actx){ let done=false; const once=function(){ if(done) return; done=true; fresh(); }; try{ const pr=actx.resume(); if(pr&&pr.then) pr.then(once,once); else once(); }catch(e){ once(); } setTimeout(once,400); }
-    else fresh(); }
+    else fresh();
+    setTimeout(function(){ try{ if(window.ppOfferResume) window.ppOfferResume(); }catch(e){} },350); }
   function key(e){ if(e.key==='Shift'||e.key==='Control'||e.key==='Alt'||e.key==='Meta') return; go(); }
   sp.addEventListener('click',go); window.addEventListener('keydown',key);
 })();
@@ -2518,9 +2526,10 @@ for(let k=14;k<=24;k++) LOOP_FX.push({name:'Rush Hour '+(k-13), tip:'More enemie
 
 function lfx(n){ return n===4 && !boss && !tutorial && !hidden && !isRetLevel(level) && effLoop(level)>=n; }   // only loop feature left: hearts on the street (loop 5+)
 const SPECIAL_INFO={night:{t:'🌙 Night Shift',d:'Lantern light only.'}, storm:{t:'⛈ Storm',d:'Rain and lightning.'}, fog:{t:'🌫 Thick Fog',d:'Hard to see ahead.'}, wind:{t:'💨 Windy Day',d:'Gusts push you around.'}};
-let curSpecial=null, curSpecialLvl=-1;
+let curSpecial=null, curSpecialLvl=-1, resumeSpecial=undefined;
 function rollSpecial(){   // rolled fresh every time a street starts: about 1 in 6, from loop 2 on, is a Night Shift / Storm / Fog / Windy street that pays double
   curSpecialLvl=level; curSpecial=null;
+  if(resumeSpecial!==undefined){ curSpecial=resumeSpecial; resumeSpecial=undefined; return; }
   if(boss||tutorial||hidden||level>RL_BASE||isRetLevel(level)||isAptLevel(level)||loopIndex(level)<1) return;
   if(Math.random()<1/6) curSpecial=['night','storm','fog','wind'][Math.floor(Math.random()*4)]; }
 function specialLevel(){
@@ -7283,6 +7292,7 @@ function loop(t){
 let simT=0;
 
 function startGame(){
+  clearShift();
   resortMode=false; arcadeMode=false; setArcadeUI(false); $('hud').classList.remove('resort');
   fitCanvas(); reset(); running=true; paused=false; setSprintToggle(false);
   state.replay = !tutorial && !hidden && !overtime && isReplay(level,boss); state.coinFrac=0;
@@ -7317,10 +7327,11 @@ function pauseGame(){
   for(const k in keys) keys[k]=false; musicStart('pause');
   $('pauseDelivered').textContent=state.delivered; $('pauseGoal').textContent=state.goal; $('pauseDelWrap').style.display=(boss||tutorial)?'none':''; $('pauseCoins').textContent=state.coins; $('pauseScreen').querySelector('.stat-row').style.display=(resortMode||arcadeMode)?'none':''; $('restartBtn').textContent=resortMode?'↻  Back to the start':(arcadeMode?'↩  Forfeit bet, leave':'↻  Restart Shift');
   $('prompt').classList.add('hidden'); $('pauseScreen').classList.remove('hidden');
+  saveShift();
 }
 function resumeGame(){ if(!paused) return; paused=false; running=true; $('pauseScreen').classList.add('hidden'); musicStart(musicFor()); cancelAnimationFrame(raf); lastFrameT=0; frameAcc=0; loop(); }
 function quitToMenu(){
-  logLeftShift();
+  logLeftShift(); clearShift();
   if(hidden){ if(hidSave) bankCoins=hidSave.bank; hidden=null; hidSave=null; $('hiddenScreen').classList.add('hidden'); }
   menuMusic(50); resortMode=false; arcadeMode=false; setArcadeUI(false); AR=null; cv.style.cursor=''; ARSAVE=null; $('hud').classList.remove('resort');
   boss=false; bossNext=false; bossWon=false; $('bossBar').classList.add('hidden');
@@ -7337,7 +7348,7 @@ function endGame(won,skipHid){
   if(hidden){ finishHidden(won); return; }
   if(won && !skipHid && shouldHidden()){ startHiddenDetour(); return; }
   elevOpen=false; $('elevPanel').classList.add('hidden'); $('fadeBox').classList.remove('on');
-  state.over=true; running=false; paused=false; cancelAnimationFrame(raf); musicStop(); menuMusic(1600);   // let the win/lose jingle play first
+  state.over=true; clearShift(); running=false; paused=false; cancelAnimationFrame(raf); musicStop(); menuMusic(1600);   // let the win/lose jingle play first
   $('hud').classList.add('hidden'); $('controls').classList.add('hidden'); $('prompt').classList.add('hidden'); $('rotateHint').classList.remove('show'); $('tutBox').classList.add('hidden');
   $('endScreen').classList.remove('hidden');
   if(!tutorial) lbRecordRun(won);
@@ -8975,6 +8986,59 @@ function openAch(){
 // ---------- Leaderboards ----------
 // Every record goes through lbSubmit(). Today it keeps a local copy and queues the entry; when the online service ships, send progress.lbQueue to it from here.
 function lbSubmit(board,value){ try{ progress.lbQueue=(progress.lbQueue||[]).filter(function(e){ return board!=='playTime' || e.b!=='playTime'; }).concat([{b:board,v:value,n:progress.playerName||'',t:Date.now()}]).slice(-60); }catch(e){} }
+// S-02 Keep a shift: the street in progress is saved when you pause, every few seconds while playing, and when the app goes to the background.
+// If the phone closes the game, the next launch offers to pick the shift up again. Quitting, finishing or starting another shift throws the save away.
+// The street layout is rebuilt from its level number (it is seeded), then everything that moved or changed is put back from the save.
+const SHIFT_KEY='pp_shift';
+function shiftSaveable(){ return !!state && !state.over && (running||paused) && !tutorial && !hidden && !arcadeMode && !resortMode && !elevOpen && !(apt && apt.transitioning); }
+function saveShift(){
+  try{ if(!shiftSaveable()) return;
+    const S={v:1,t:Date.now(),mode:gameMode(),level:level,boss:!!boss,ot:!!overtime,special:curSpecial,G:GROUND,LEN:LEVEL_LEN,camX:camX,camY:camY,tumbleT:tumbleT,bossSackT:bossSackT,bank:bankCoins,
+      w:{state:state,player:player,rollers:rollers,enemies:enemies,birds:birds,rocks:rocks,pickups:pickups,houses:houses,gaps:gaps,platforms:platforms,swings:swings,eShots:eShots,ices:ices,
+         obstacles:obstacles,hazards:hazards,sands:sands,vents:vents,truck:truck,segs:segs,tree:tree,apt:apt,B:B,bossShots:bossShots,waves:waves}};
+    localStorage.setItem(SHIFT_KEY,JSON.stringify(S));
+  }catch(e){}
+}
+function clearShift(){ try{ localStorage.removeItem(SHIFT_KEY); }catch(e){} }
+function loadShift(){
+  try{ const S=JSON.parse(localStorage.getItem(SHIFT_KEY)||'null');
+    if(!S || S.v!==1 || !S.w || !S.w.state || S.mode!==gameMode() || Date.now()-S.t>14*86400000) return null;
+    if(S.level>RL_BASE && !progress.retiredTo) return null;
+    return S;
+  }catch(e){ return null; }
+}
+function resumeShift(){
+  const S=loadShift(); $('resumeScreen').classList.add('hidden'); if(!S){ clearShift(); return; }
+  $('startScreen').classList.add('hidden');
+  tutorial=false; hidden=null; bossNext=false; bossWon=false; restoreRun(); overtime=S.ot; level=S.level; boss=S.boss; resumeSpecial=S.special;
+  startGame();   // rebuilds the same street, the top bar and the music
+  const w=S.w;
+  state=w.state; player=w.player; debris=[]; projectiles=[]; particles=[];
+  rollers=w.rollers||[]; enemies=w.enemies||[]; birds=w.birds||[]; rocks=w.rocks||[]; pickups=w.pickups||[]; houses=w.houses||[]; gaps=w.gaps||[]; platforms=w.platforms||[];
+  swings=w.swings||[]; eShots=w.eShots||[]; ices=w.ices||[]; obstacles=w.obstacles||[]; hazards=w.hazards||[]; sands=w.sands||[]; vents=w.vents||[]; truck=w.truck||truck; segs=w.segs||segs;
+  tree=w.tree||null; apt=w.apt||null; B=w.B||null; bossShots=w.bossShots||[]; waves=w.waves||[];
+  LEVEL_LEN=S.LEN||LEVEL_LEN; camY=S.camY||0; tumbleT=S.tumbleT||0; bossSackT=S.bossSackT||0;
+  const dc=(progress.coins||0)-(S.bank||0); if(dc){ state.coins+=dc; state.startCoins=(state.startCoins||0)+dc; }   // coins banked since the save (achievements) stay counted once
+  state.over=false; state.invuln=Math.max(state.invuln||0,90); state.logged=state.time;   // play time before the save was already counted
+  if(apt) apt.transitioning=false;
+  shiftWorld(GROUND-(S.G||GROUND));   // the screen may be a different size now
+  if(apt){ const sc=aptScene(apt.cur); sc.G=GROUND; fitSceneWidth(sc); LEVEL_LEN=sc.LEN; }
+  const maxCam=Math.max(0,LEVEL_LEN-W); camX=Math.max(0,Math.min(maxCam,typeof S.camX==='number'?S.camX:player.x-W*0.5));
+  syncHUD(); pauseGame();   // start paused so the player is ready
+  showToast('📬 Shift restored. Tap Resume when you are ready.');
+}
+window.ppOfferResume=function(){
+  try{ if(running || paused || !$('resumeScreen').classList.contains('hidden')) return; const S=loadShift(); if(!S) return;
+    const d=S.w.state, t=Math.floor(d.time||0);
+    $('resumeText').textContent=levelName(S.level,S.boss)+(S.ot?' (Overtime)':'')+': '+(S.boss?'boss fight':d.delivered+' of '+d.goal+' delivered')+', '+Math.floor(t/60)+'m '+(t%60)+'s in. Pick up where you left off?';
+    $('resumeScreen').classList.remove('hidden');
+  }catch(e){}
+};
+$('resumeYes').addEventListener('click',function(){ SFX.click(); audioInit(); resumeShift(); });
+$('resumeNo').addEventListener('click',function(){ SFX.click(); clearShift(); $('resumeScreen').classList.add('hidden'); });
+setInterval(function(){ if(running) saveShift(); },8000);
+document.addEventListener('visibilitychange',function(){ if(document.hidden){ if(running && !state.over) pauseGame(); else saveShift(); } });   // leaving the app pauses the shift (pauseGame saves it)
+window.addEventListener('pagehide',saveShift);
 // Total play time: each shift's seconds are counted once, whether it is finished, quit, restarted or left when the app goes to the background
 function logPlayTime(){ if(!state) return; const d=(state.time||0)-(state.logged||0); if(d>0){ progress.playSec=(progress.playSec||0)+d; state.logged=state.time; } }
 function logLeftShift(){ try{ if(state && !state.over && !tutorial && !arcadeMode){ logPlayTime(); saveProgress(); } }catch(e){} }
@@ -9097,7 +9161,7 @@ $('radioStop').addEventListener('click',function(){ SFX.click(); if(radioNow) ra
 function showToast(msg){ const t=$('toast'); t.textContent=msg; t.classList.remove('hidden'); clearTimeout(showToast.tm); showToast.tm=setTimeout(function(){ t.classList.add('hidden'); },3000); }
 function wipeEverything(){
   ['pp_progress','pp_look','pp_owned','pp_settings','pp_muted','pp_ach'].forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
-  progress=PROGRESS_EMPTY(); restoreRun(); level=1; boss=false; bossNext=false; bossWon=false;
+  progress=PROGRESS_EMPTY(); clearShift(); restoreRun(); level=1; boss=false; bossNext=false; bossWon=false;
   look=Object.assign({},LOOK_DEFAULT); owned=OWNED_DEFAULT();
   settings=Object.assign({},SETTINGS_DEFAULT); applySettings();
   if(muted){ muted=false; $('muteBtn').textContent='🔊'; musicMute(false); }
@@ -9156,6 +9220,7 @@ const BACK_MAP=[['adScreen',null],['hiddenScreen',null],['resetScreen','resetCan
   ['lbScreen','lbBack'],['achScreen','achBack'],['radioScreen','radioBack'],['shopScreen','shopDone'],['pauseScreen','resumeBtn'],['endScreen','endMenuBtn']];
 window.ppBack=function(){
   try{
+    if(!$('resumeScreen').classList.contains('hidden')){ $('resumeScreen').classList.add('hidden'); return 'ok'; }
     if(running && !paused){ pauseGame(); return 'ok'; }
     for(let i=0;i<BACK_MAP.length;i++){ const s=$(BACK_MAP[i][0]); if(s && !s.classList.contains('hidden')){ const b=BACK_MAP[i][1] && $(BACK_MAP[i][1]); if(b && b.offsetParent!==null && !b.disabled) b.click(); return 'ok'; } }
     const sp=$('splash'); if(sp && !sp.classList.contains('gone')) return 'exit';
