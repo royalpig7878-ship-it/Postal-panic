@@ -99,6 +99,8 @@
   }
   @media (max-width: 460px) { #hud { flex-wrap:wrap; row-gap:5px; font-size:15px; } }
   .panel.scroll { max-height:94vh; overflow-y:auto; }
+  .panel-x { position:sticky; top:-20px; align-self:flex-end; flex:0 0 auto; margin:-20px -24px -40px 0; width:40px; height:40px; padding:0; border-radius:50%; border:2px solid rgba(255,255,255,.28); background:rgba(28,42,58,.97); color:#fff; font-size:18px; font-weight:bold; line-height:1; cursor:pointer; z-index:5; box-shadow:0 3px 8px rgba(0,0,0,.4); }
+  .panel-x:active { transform:scale(.92); }
   /* medium-height screens (small phones, laptops): two-column button grid so every menu button fits */
   @media (max-height: 900px) {
     #startScreen .btn-stack { display:grid; grid-template-columns:1fr 1fr; gap:10px; width:min(560px,92vw); }
@@ -2107,7 +2109,8 @@ function handleInteract(){
     }
   }
 }
-function damage(){ state.hurt=(state.hurt||0)+1; state.hp--; state.invuln=lfx(19)?58:70; pop(player.x,player.y-26,'#e74c3c',8); SFX.damage(); player.x-=player.face*(lfx(17)?44:30); }
+function damage(){ if(tutorial){ state.invuln=70; pop(player.x,player.y-26,'#f5b041',6); SFX.click(); player.x-=player.face*30; return; }   // tutorial: hits bump you back but never cost a heart, so new players can read in peace
+  state.hurt=(state.hurt||0)+1; state.hp--; state.invuln=lfx(19)?58:70; pop(player.x,player.y-26,'#e74c3c',8); SFX.damage(); player.x-=player.face*(lfx(17)?44:30); }
 function pop(x,y,color,n){ for(let i=0;i<(n||5);i++) particles.push({x:x,y:y,vx:(Math.random()-0.5)*5,vy:-Math.random()*4-1,life:24+Math.random()*16,color:color,r:2+Math.random()*3}); }
 function hit(ax,ay,aw,ah,bx,by,bw,bh){ return ax<bx+bw && ax+aw>bx && ay<by+bh && ay+ah>by; }
 
@@ -9152,7 +9155,9 @@ function radioRender(){
       list.appendChild(r);
     });
   });
-  $('radioTitle').textContent=radioNow?'🔊 '+radioNow.grp+' · '+radioNow.label:'Pick a song to play';
+  const anySong=radioFlat().length>0;
+  $('radioTitle').textContent=radioNow?'🔊 '+radioNow.grp+' · '+radioNow.label:(anySong?'Pick a song to play':'🔒 Beat your first boss to unlock a song');
+  ['radioPrev','radioStop','radioNext'].forEach(function(id){ $(id).disabled=!anySong; });
 }
 function radioPlay(s){
   if(!s||!s.file) return; audioInit();
@@ -9232,6 +9237,13 @@ $('howToBack').addEventListener('click',function(){ SFX.click(); $('howToScreen'
 const BACK_MAP=[['adScreen',null],['hiddenScreen',null],['resetScreen','resetCancel'],['settingsScreen','settingsDone'],['retireScreen','retKeep'],['lifeScreen','lifeOk'],
   ['arcadeEnd','arcBack'],['elevPanel','elevCancel'],['howToScreen','howToBack'],['modeScreen','modeBack'],['lookScreen','lookBack'],['levelsScreen','levelsBack'],
   ['lbScreen','lbBack'],['achScreen','achBack'],['radioScreen','radioBack'],['shopScreen','shopDone'],['pauseScreen','resumeBtn'],['endScreen','endMenuBtn']];
+[['achScreen','achBack'],['lbScreen','lbBack'],['levelsScreen','levelsBack'],['radioScreen','radioBack'],['settingsScreen','settingsDone'],['shopScreen','shopDone'],['lookScreen','lookBack'],['howToScreen','howToBack']].forEach(function(m){
+  const ov=$(m[0]), p=ov && ov.querySelector('.panel'), b=$(m[1]); if(!p || !b) return;
+  const x=document.createElement('button'); x.type='button'; x.className='panel-x'; x.setAttribute('aria-label','Close'); x.textContent='✕';
+  x.addEventListener('click',function(e){ e.stopPropagation(); b.click(); });
+  p.insertBefore(x,p.firstChild);
+  ov.addEventListener('click',function(e){ if(e.target===ov) b.click(); });
+});
 window.ppBack=function(){
   try{
     if(!$('resumeScreen').classList.contains('hidden')){ $('resumeScreen').classList.add('hidden'); return 'ok'; }
