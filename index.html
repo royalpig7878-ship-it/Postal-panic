@@ -8227,7 +8227,7 @@ function arcNoteStart(){
   upd(); arcNoteTimer=setInterval(upd,1000);
 }
 // ----- Remove Ads purchase: real store purchase through RevenueCat (iPhone now, Android once its key is added); a pretend purchase in test mode elsewhere -----
-const PP_RC_KEYS={ ios:'appl_lHmrHKFNWFrVoYeUbowdbRMOYiK', android:'' };   // public SDK keys (safe to ship). Android's goog_ key goes here later.
+const PP_RC_KEYS={ ios:'appl_lHmrHKFNWFrVoYeUbowdbRMOYiK', android:'goog_AMHdryLfOaqGoLAgOofwWofvIRT' };   // public SDK keys (safe to ship). Android's goog_ key goes here later.
 const PP_RC_ENTITLEMENT='noads';
 function ppRC(){ try{ const pl=ppPlatform(); if(pl==='web') return null; if(!PP_RC_KEYS[pl==='ios'?'ios':'android']) return null; return (window.Capacitor.Plugins&&window.Capacitor.Plugins.Purchases)||null; }catch(e){ return null; } }
 let ppRcInitP=null;
